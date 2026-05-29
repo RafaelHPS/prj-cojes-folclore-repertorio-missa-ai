@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Repertório de Missas - Gestão</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+    darkMode: "class",
+    theme: {
+        extend: {
+            "colors": {
+                "primary": "#bc0100",
+                "on-primary": "#ffffff",
+                "primary-container": "#eb0000",
+                "on-primary-container": "#fffbff",
+                "secondary": "#b72114",
+                "on-secondary": "#ffffff",
+                "secondary-container": "#ff5541",
+                "tertiary": "#5b5c5c",
+                "on-tertiary": "#ffffff",
+                "tertiary-container": "#737575",
+                "background": "#fff8f6",
+                "surface": "#fff8f6",
+                "surface-container-low": "#fff0ee",
+                "surface-container": "#ffe9e6",
+                "surface-container-high": "#ffe2dd",
+                "surface-container-highest": "#ffdad4",
+                "surface-dim": "#f8d1cb",
+                "on-surface": "#2b1613",
+                "on-surface-variant": "#603e39",
+                "outline": "#956d67",
+                "outline-variant": "#ebbbb4",
+                "error": "#ba1a1a",
+                "surface-container-lowest": "#ffffff"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "fontFamily": {
+                "headline": ["Plus Jakarta Sans"],
+                "body": ["Manrope"],
+                "label": ["Manrope"]
+            }
+        }
+    }
+}
+</script>
+<style>
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+body {
+    font-family: 'Manrope', sans-serif;
+    background-color: #fff8f6;
+    color: #2b1613;
+}
+h1, h2, h3, .brand-font {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.glass-effect {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.tonal-layer {
+    box-shadow: 0 4px 20px rgba(188, 1, 0, 0.03);
+}
+</style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+
+<!-- TopNavBar -->
+<nav class="bg-neutral-50/80 backdrop-blur-md sticky top-0 z-50 tonal-layer">
+  <div class="flex justify-between items-center px-6 py-3 w-full max-w-screen-2xl mx-auto">
+    <div class="flex items-center gap-8">
+      <span class="text-lg font-bold tracking-tight text-red-600 brand-font">Repertório de Missas</span>
+      <div class="hidden md:flex items-center gap-6">
+        <a class="text-neutral-600 hover:text-red-600 transition-colors font-medium" href="#">Dashboard</a>
+        <a class="text-red-600 font-semibold border-b-2 border-red-600 pb-1" href="#">Músicas</a>
+        <a class="text-neutral-600 hover:text-red-600 transition-colors font-medium" href="#">Agenda</a>
+        <a class="text-neutral-600 hover:text-red-600 transition-colors font-medium" href="#">Equipe</a>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="flex items-center bg-surface-container-low px-3 py-1.5 rounded-full">
+        <span class="material-symbols-outlined text-outline text-sm mr-2">search</span>
+        <input class="bg-transparent border-none focus:ring-0 text-sm w-32 lg:w-48" placeholder="Buscar..." type="text"/>
+      </div>
+      <button class="p-2 text-neutral-500 hover:bg-neutral-200/50 rounded-lg transition-all">
+        <span class="material-symbols-outlined">notifications</span>
+      </button>
+      <button class="p-2 text-neutral-500 hover:bg-neutral-200/50 rounded-lg transition-all">
+        <span class="material-symbols-outlined">settings</span>
+      </button>
+      <div class="flex items-center gap-3">
+        <div class="text-right hidden lg:block">
+          <p class="text-xs font-bold text-on-surface">Equipe São José</p>
+          <p class="text-[10px] text-outline uppercase tracking-wider">Ministério</p>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-red-600 to-red-400 flex items-center justify-center text-white font-bold">E</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="max-w-screen-2xl mx-auto px-6 py-10">
+
+  <!-- Header -->
+  <header class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div class="space-y-4">
+      <nav class="flex items-center gap-2 text-sm text-outline font-medium">
+        <a class="hover:text-primary transition-colors" href="#">Home</a>
+        <span class="material-symbols-outlined text-xs">chevron_right</span>
+        <span class="text-primary-container font-semibold">Missas</span>
+      </nav>
+      <div class="space-y-1">
+        <h1 class="text-4xl lg:text-5xl font-extrabold tracking-tight text-on-surface">Missas</h1>
+        <p class="text-lg text-outline font-body">Gerencie e visualize todos os repertórios da sua paróquia.</p>
+      </div>
+    </div>
+    <button class="bg-primary hover:bg-secondary text-on-primary px-8 py-3.5 rounded-full font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/20 w-fit">
+      <span class="material-symbols-outlined">add</span>
+      Nova Missa
+    </button>
+  </header>
+
+  <!-- Filter Bar -->
+  <section class="bg-surface-container-low rounded-3xl p-4 mb-8">
+    <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+      <div class="flex bg-surface-container rounded-2xl p-1 w-full lg:w-auto">
+        <button class="flex-1 lg:flex-none px-6 py-2.5 rounded-xl text-sm font-bold bg-surface-container-lowest text-primary shadow-sm">Próximas</button>
+        <button class="flex-1 lg:flex-none px-6 py-2.5 rounded-xl text-sm font-semibold text-outline hover:text-on-surface transition-colors">Passadas</button>
+        <button class="flex-1 lg:flex-none px-6 py-2.5 rounded-xl text-sm font-semibold text-outline hover:text-on-surface transition-colors">Todas</button>
+      </div>
+      <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+        <div class="relative flex-grow lg:flex-grow-0 min-w-[240px]">
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+          <input class="w-full pl-12 pr-4 py-3 bg-surface-container-lowest border-none rounded-2xl focus:ring-2 focus:ring-primary/20 text-sm" placeholder="Buscar missa..." type="text"/>
+        </div>
+        <button class="flex items-center gap-2 px-4 py-3 bg-surface-container-lowest text-on-surface rounded-2xl text-sm font-semibold hover:bg-white transition-all">
+          <span class="material-symbols-outlined text-outline">calendar_today</span>
+          Período
+        </button>
+        <button class="flex items-center gap-2 px-4 py-3 bg-surface-container-lowest text-on-surface rounded-2xl text-sm font-semibold hover:bg-white transition-all">
+          <span class="material-symbols-outlined text-outline">filter_list</span>
+          Celebração
+        </button>
+        <div class="flex bg-surface-container rounded-xl p-1">
+          <button class="p-2 rounded-lg bg-surface-container-lowest text-primary shadow-sm">
+            <span class="material-symbols-outlined">format_list_bulleted</span>
+          </button>
+          <button class="p-2 rounded-lg text-outline hover:text-primary">
+            <span class="material-symbols-outlined">grid_view</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Table -->
+  <div class="bg-surface-container-lowest rounded-[2rem] overflow-hidden tonal-layer border border-outline-variant/10">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low/50">
+          <th class="px-8 py-5 text-sm font-bold text-outline uppercase tracking-wider">Nome da Missa</th>
+          <th class="px-6 py-5 text-sm font-bold text-outline uppercase tracking-wider">Data & Horário</th>
+          <th class="px-6 py-5 text-sm font-bold text-outline uppercase tracking-wider">Tipo</th>
+          <th class="px-6 py-5 text-sm font-bold text-outline uppercase tracking-wider text-center">Nº de músicas</th>
+          <th class="px-6 py-5 text-sm font-bold text-outline uppercase tracking-wider">Atualização</th>
+          <th class="px-8 py-5 text-sm font-bold text-outline uppercase tracking-wider text-right">Ações</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant/10">
+        <tr class="group hover:bg-surface-container-low/30 transition-colors">
+          <td class="px-8 py-6">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined">church</span>
+              </div>
+              <div>
+                <p class="text-base font-bold text-on-surface">32º Domingo do Tempo Comum</p>
+                <p class="text-xs text-outline">Liturgia Dominical</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-6">
+            <span class="font-bold text-on-surface">12 Nov, 2023</span>
+            <span class="block text-sm text-outline">19:30</span>
+          </td>
+          <td class="px-6 py-6">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-secondary-container/10 text-secondary">Solenidade</span>
+          </td>
+          <td class="px-6 py-6 text-center">
+            <span class="text-base font-bold text-on-surface">12</span>
+          </td>
+          <td class="px-6 py-6">
+            <span class="text-sm text-outline italic">há 2 horas</span>
+          </td>
+          <td class="px-8 py-6 text-right">
+            <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button class="p-2 text-outline hover:text-primary hover:bg-primary/5 rounded-lg transition-all">
+                <span class="material-symbols-outlined">edit</span>
+              </button>
+              <button class="bg-primary-container text-on-primary-container px-4 py-2 rounded-xl text-sm font-bold hover:brightness-110 transition-all">Ver Repertório</button>
+              <button class="p-2 text-outline hover:text-error hover:bg-error/5 rounded-lg transition-all">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr class="group hover:bg-surface-container-low/30 transition-colors">
+          <td class="px-8 py-6">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-tertiary/5 flex items-center justify-center text-tertiary">
+                <span class="material-symbols-outlined">celebration</span>
+              </div>
+              <div>
+                <p class="text-base font-bold text-on-surface">Missa com as Crianças</p>
+                <p class="text-xs text-outline">Sábado Manhã</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-6">
+            <span class="font-bold text-on-surface">11 Nov, 2023</span>
+            <span class="block text-sm text-outline">09:00</span>
+          </td>
+          <td class="px-6 py-6">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-tertiary/10 text-tertiary">Especial</span>
+          </td>
+          <td class="px-6 py-6 text-center">
+            <span class="text-base font-bold text-on-surface">08</span>
+          </td>
+          <td class="px-6 py-6">
+            <span class="text-sm text-outline italic">há 1 dia</span>
+          </td>
+          <td class="px-8 py-6 text-right">
+            <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button class="p-2 text-outline hover:text-primary hover:bg-primary/5 rounded-lg transition-all">
+                <span class="material-symbols-outlined">edit</span>
+              </button>
+              <button class="bg-primary-container text-on-primary-container px-4 py-2 rounded-xl text-sm font-bold hover:brightness-110 transition-all">Ver Repertório</button>
+              <button class="p-2 text-outline hover:text-error hover:bg-error/5 rounded-lg transition-all">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr class="group hover:bg-surface-container-low/30 transition-colors">
+          <td class="px-8 py-6">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined">favorite</span>
+              </div>
+              <div>
+                <p class="text-base font-bold text-on-surface">Missa de Casamento (Ana & João)</p>
+                <p class="text-xs text-outline">Sacramento</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-6">
+            <span class="font-bold text-on-surface">18 Nov, 2023</span>
+            <span class="block text-sm text-outline">17:00</span>
+          </td>
+          <td class="px-6 py-6">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary">Ritual</span>
+          </td>
+          <td class="px-6 py-6 text-center">
+            <span class="text-base font-bold text-on-surface">15</span>
+          </td>
+          <td class="px-6 py-6">
+            <span class="text-sm text-outline italic">há 3 dias</span>
+          </td>
+          <td class="px-8 py-6 text-right">
+            <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button class="p-2 text-outline hover:text-primary hover:bg-primary/5 rounded-lg transition-all">
+                <span class="material-symbols-outlined">edit</span>
+              </button>
+              <button class="bg-primary-container text-on-primary-container px-4 py-2 rounded-xl text-sm font-bold hover:brightness-110 transition-all">Ver Repertório</button>
+              <button class="p-2 text-outline hover:text-error hover:bg-error/5 rounded-lg transition-all">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="px-8 py-6 bg-surface-container-low/50 flex items-center justify-between border-t border-outline-variant/10">
+      <span class="text-sm text-outline font-medium">Mostrando <span class="text-on-surface font-bold">1-10</span> de <span class="text-on-surface font-bold">42</span> missas</span>
+      <div class="flex items-center gap-2">
+        <button class="p-2 rounded-xl text-outline hover:bg-surface-container-highest transition-all" disabled>
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <button class="w-10 h-10 rounded-xl bg-primary text-on-primary font-bold shadow-sm">1</button>
+        <button class="w-10 h-10 rounded-xl text-outline font-bold hover:bg-surface-container-highest transition-all">2</button>
+        <button class="w-10 h-10 rounded-xl text-outline font-bold hover:bg-surface-container-highest transition-all">3</button>
+        <span class="px-2 text-outline">...</span>
+        <button class="w-10 h-10 rounded-xl text-outline font-bold hover:bg-surface-container-highest transition-all">5</button>
+        <button class="p-2 rounded-xl text-outline hover:bg-surface-container-highest transition-all">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</main>
+</body>
+</html>
