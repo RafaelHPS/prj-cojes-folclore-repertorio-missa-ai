@@ -6,26 +6,31 @@ interface Props {
 }
 
 const FILE_FIELDS = [
-  { key: 'partitura_url', label: 'Partitura' },
-  { key: 'letra_url',     label: 'Letra' },
-  { key: 'cifra_url',     label: 'Cifra' },
+  { key: 'partitura_url', label: 'Partitura', icon: 'description' },
+  { key: 'letra_url', label: 'Letra', icon: 'article' },
+  { key: 'cifra_url', label: 'Cifra', icon: 'piano' },
 ] as const
 
 export function FileBadges({ song, onView }: Props) {
   const existing = FILE_FIELDS.filter((f) => !!song[f.key])
-
   if (existing.length === 0) return null
 
   return (
-    <div className="mt-2 flex flex-wrap gap-1">
+    <div className="mt-2 flex flex-wrap gap-1.5">
       {existing.map((f) => (
         <button
           key={f.key}
-          onClick={(e) => { e.stopPropagation(); onView(f.label, song[f.key]!) }}
+          onClick={(e) => {
+            e.stopPropagation()
+            onView(f.label, song[f.key]!)
+          }}
           aria-label={`Visualizar ${f.label}`}
-          className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
+          className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary transition hover:bg-primary/20"
         >
-          📄 {f.label}
+          <span aria-hidden="true" className="material-symbols-outlined text-xs">
+            {f.icon}
+          </span>
+          {f.label}
         </button>
       ))}
     </div>

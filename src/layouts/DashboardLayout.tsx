@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 
 import { useLogout } from '@/features/auth/hooks/useAuth'
@@ -6,18 +6,18 @@ import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { useAppStore } from '@/app/app.store'
 
 const NAV_ITEMS = [
-  { to: '/dashboard',     label: 'Dashboard',    icon: '◈' },
-  { to: '/missas',        label: 'Missas',        icon: '✦' },
-  { to: '/musicas',       label: 'Músicas',       icon: '♪' },
-  { to: '/estatisticas',  label: 'Estatísticas',  icon: '◉' },
-  { to: '/configuracoes', label: 'Configurações', icon: '⚙' },
+  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/missas', label: 'Missas' },
+  { to: '/musicas', label: 'Músicas' },
+  { to: '/estatisticas', label: 'Estatísticas' },
+  { to: '/configuracoes', label: 'Configurações' },
 ] as const
 
-interface SidebarProps {
-  onClose?: () => void
-}
+export function DashboardLayout() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
-function Sidebar({ onClose }: SidebarProps) {
   const logout = useLogout()
   const activeTeam = useActiveTeam()
   const setActiveTeam = useAppStore((s) => s.setActiveTeam)
@@ -26,110 +26,146 @@ function Sidebar({ onClose }: SidebarProps) {
   function handleSwitchTeam() {
     setActiveTeam(null)
     navigate('/selecionar-equipe')
+    setIsUserMenuOpen(false)
   }
 
-  return (
-    <aside className="flex h-full w-64 flex-shrink-0 flex-col bg-violet-900 text-white">
-      <div className="flex items-center justify-between border-b border-violet-800 px-6 py-5">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">Equipe</p>
-          <p className="mt-1 truncate font-semibold">{activeTeam?.name}</p>
-          <p className="text-xs capitalize text-violet-400">{activeTeam?.role}</p>
-        </div>
-        {onClose && (
-          <button
-            onClick={onClose}
-            aria-label="Fechar menu"
-            className="ml-3 flex-shrink-0 rounded-lg p-1 text-violet-300 transition hover:bg-violet-800 hover:text-white lg:hidden"
-          >
-            ✕
-          </button>
-        )}
-      </div>
+  async function handleLogout() {
+    setIsUserMenuOpen(false)
+    await logout()
+  }
 
-      <nav aria-label="Navegação principal" className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={onClose}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                isActive
-                  ? 'bg-violet-700 text-white'
-                  : 'text-violet-200 hover:bg-violet-800 hover:text-white'
-              }`
-            }
-          >
-            <span aria-hidden="true" className="text-lg leading-none">{item.icon}</span>
-            {item.label}
-          </NavLink>
-        ))}
+  const initial = activeTeam?.name?.[0]?.toUpperCase() ?? 'E'
+
+  return (
+    <div className="min-h-screen bg-surface">
+      {/* ── Top Nav ─────────────────────────────────── */}
+      <nav className="sticky top-0 z-50 bg-surface-container-lowest/80 glass-nav tonal-shadow border-b border-outline-variant/20">
+        <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-3">
+          {/* Logo + links desktop */}
+          <div className="flex items-center gap-8">
+            <span className="font-headline text-lg font-bold tracking-tight text-primary">
+              Repertório de Missas
+            </span>
+            <div
+              className="hidden items-center gap-6 md:flex"
+              role="navigation"
+              aria-label="Navegação principal"
+            >
+              {NAV_ITEMS.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'border-b-2 border-primary pb-0.5 text-sm font-semibold text-primary'
+                      : 'text-sm font-medium text-on-surface-variant transition-colors hover:text-primary'
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+
+          {/* Ações direita */}
+          <div className="flex items-center gap-3">
+            {/* User menu */}
+            <div ref={userMenuRef} className="relative">
+              <button
+                onClick={() => setIsUserMenuOpen((v) => !v)}
+                aria-label="Menu do usuário"
+                aria-expanded={isUserMenuOpen}
+                className="flex items-center gap-3"
+              >
+                <div className="hidden text-right lg:block">
+                  <p className="text-xs font-bold text-on-surface">{activeTeam?.name}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-outline capitalize">
+                    {activeTeam?.role}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary-container font-bold text-white">
+                  {initial}
+                </div>
+              </button>
+
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-lowest shadow-lg tonal-shadow">
+                  <div className="border-b border-outline-variant/10 px-4 py-3">
+                    <p className="text-xs font-bold text-on-surface">{activeTeam?.name}</p>
+                    <p className="text-[10px] capitalize text-outline">{activeTeam?.role}</p>
+                  </div>
+                  <button
+                    onClick={handleSwitchTeam}
+                    className="flex w-full items-center gap-2 px-4 py-3 text-sm text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface"
+                  >
+                    <span aria-hidden="true" className="material-symbols-outlined text-base">
+                      swap_horiz
+                    </span>
+                    Trocar equipe
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 px-4 py-3 text-sm text-error transition-colors hover:bg-error/5"
+                  >
+                    <span aria-hidden="true" className="material-symbols-outlined text-base">
+                      logout
+                    </span>
+                    Sair
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Hamburger mobile */}
+            <button
+              onClick={() => setIsMobileMenuOpen((v) => !v)}
+              aria-label={isMobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-expanded={isMobileMenuOpen}
+              className="rounded-xl p-2 text-on-surface-variant transition hover:bg-surface-container-low md:hidden"
+            >
+              <span aria-hidden="true" className="material-symbols-outlined">
+                {isMobileMenuOpen ? 'close' : 'menu'}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile menu dropdown */}
+        {isMobileMenuOpen && (
+          <div className="border-t border-outline-variant/10 md:hidden">
+            {NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  `block px-6 py-3 text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-primary/5 text-primary font-semibold'
+                      : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+        )}
       </nav>
 
-      <div className="border-t border-violet-800 px-4 py-4 space-y-1">
-        <button
-          onClick={handleSwitchTeam}
-          className="w-full rounded-lg px-3 py-2 text-left text-sm text-violet-300 transition-colors hover:bg-violet-800 hover:text-white"
-        >
-          Trocar equipe
-        </button>
-        <button
-          onClick={logout}
-          className="w-full rounded-lg px-3 py-2 text-left text-sm text-violet-300 transition-colors hover:bg-violet-800 hover:text-white"
-        >
-          Sair
-        </button>
-      </div>
-    </aside>
-  )
-}
-
-export function DashboardLayout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const activeTeam = useActiveTeam()
-
-  return (
-    <div className="flex h-screen overflow-hidden bg-gray-100">
-      {isSidebarOpen && (
+      {/* Overlay para fechar user menu ao clicar fora */}
+      {isUserMenuOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40"
           aria-hidden="true"
-          onClick={() => setIsSidebarOpen(false)}
+          onClick={() => setIsUserMenuOpen(false)}
         />
       )}
 
-      <div className="hidden lg:flex">
-        <Sidebar />
-      </div>
-
-      <div
-        className={`fixed inset-y-0 left-0 z-30 transition-transform duration-200 lg:hidden ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <Sidebar onClose={() => setIsSidebarOpen(false)} />
-      </div>
-
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 lg:hidden">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            aria-label="Abrir menu de navegação"
-            aria-expanded={isSidebarOpen}
-            className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100"
-          >
-            <span aria-hidden="true" className="block h-0.5 w-5 bg-current mb-1" />
-            <span aria-hidden="true" className="block h-0.5 w-5 bg-current mb-1" />
-            <span aria-hidden="true" className="block h-0.5 w-5 bg-current" />
-          </button>
-          <span className="truncate font-semibold text-gray-800">{activeTeam?.name}</span>
-        </header>
-
-        <main className="flex-1 overflow-y-auto">
-          <Outlet />
-        </main>
-      </div>
+      {/* ── Conteúdo ────────────────────────────────── */}
+      <main className="mx-auto max-w-screen-2xl px-6 py-10">
+        <Outlet />
+      </main>
     </div>
   )
 }

@@ -47,7 +47,14 @@ export default function SelectTeamPage() {
 
       const mapped: TeamWithRole[] = ((data ?? []) as TeamRow[]).flatMap((row) => {
         if (!row.teams) return []
-        return [{ id: row.teams.id, name: row.teams.name, slug: row.teams.slug, role: row.role as UserRole }]
+        return [
+          {
+            id: row.teams.id,
+            name: row.teams.name,
+            slug: row.teams.slug,
+            role: row.role as UserRole,
+          },
+        ]
       })
 
       setTeams(mapped)
@@ -63,26 +70,54 @@ export default function SelectTeamPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-xl">
-        <div className="mb-8 text-center">
-          <div aria-hidden="true" className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600 text-2xl text-white shadow-lg">✦</div>
-          <h1 className="text-2xl font-bold text-gray-900">Selecionar equipe</h1>
-          <p className="mt-1 text-sm text-gray-500">Escolha com qual equipe deseja trabalhar</p>
+    <div className="flex min-h-screen items-center justify-center px-4 py-12">
+      <div className="w-full max-w-lg">
+        {/* Header */}
+        <div className="mb-10 text-center">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary shadow-lg shadow-primary/30">
+            <span aria-hidden="true" className="material-symbols-outlined text-3xl text-on-primary">
+              groups
+            </span>
+          </div>
+          <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface">
+            Selecionar equipe
+          </h1>
+          <p className="mt-1 text-sm text-outline">Escolha com qual equipe deseja trabalhar</p>
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-12" role="status" aria-live="polite" aria-label="Carregando equipes">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
+          <div
+            className="flex justify-center py-12"
+            role="status"
+            aria-live="polite"
+            aria-label="Carregando equipes"
+          >
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           </div>
         ) : error ? (
-          <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-            <p className="text-sm font-medium text-red-700">Erro ao carregar equipes</p>
-            <p className="mt-1 text-xs text-red-500">{error}</p>
+          <div
+            role="alert"
+            className="rounded-3xl border border-error/20 bg-error/5 p-6 text-center"
+          >
+            <span
+              aria-hidden="true"
+              className="material-symbols-outlined text-3xl text-error mb-2 block"
+            >
+              error
+            </span>
+            <p className="text-sm font-semibold text-error">Erro ao carregar equipes</p>
+            <p className="mt-1 text-xs text-outline">{error}</p>
           </div>
         ) : teams.length === 0 ? (
-          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
-            <p className="text-gray-500">Você não pertence a nenhuma equipe ainda.</p>
+          <div className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-10 text-center tonal-shadow">
+            <span
+              aria-hidden="true"
+              className="material-symbols-outlined text-4xl text-outline mb-3 block"
+            >
+              group_off
+            </span>
+            <p className="font-semibold text-on-surface">Nenhuma equipe encontrada</p>
+            <p className="mt-1 text-sm text-outline">Você não pertence a nenhuma equipe ainda.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -90,14 +125,21 @@ export default function SelectTeamPage() {
               <button
                 key={team.id}
                 onClick={() => handleSelectTeam(team)}
-                className="w-full rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition-all hover:border-violet-400 hover:shadow-md"
+                className="group w-full rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 text-left tonal-shadow transition-all hover:border-primary/30 hover:bg-surface-container-low"
               >
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-gray-900">{team.name}</p>
-                    {team.slug && <p className="mt-0.5 text-sm text-gray-400">{team.slug}</p>}
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/5 text-primary transition-colors group-hover:bg-primary/10">
+                      <span aria-hidden="true" className="material-symbols-outlined">
+                        church
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-headline font-bold text-on-surface">{team.name}</p>
+                      {team.slug && <p className="text-xs text-outline">{team.slug}</p>}
+                    </div>
                   </div>
-                  <span className="ml-4 rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700">
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
                     {ROLE_LABEL[team.role]}
                   </span>
                 </div>
@@ -108,8 +150,11 @@ export default function SelectTeamPage() {
 
         <button
           onClick={logout}
-          className="mt-6 w-full text-center text-sm text-gray-400 transition hover:text-gray-600 hover:underline"
+          className="mt-8 flex w-full items-center justify-center gap-1.5 text-sm font-medium text-outline transition hover:text-primary"
         >
+          <span aria-hidden="true" className="material-symbols-outlined text-base">
+            logout
+          </span>
           Sair da conta
         </button>
       </div>

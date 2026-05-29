@@ -1,5 +1,4 @@
 import { useState } from 'react'
-
 import type { Song } from '../types'
 
 interface Props {
@@ -20,37 +19,51 @@ export function DeleteConfirmModal({ song, onClose, onConfirm }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 px-4"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="delete-dialog-title"
-        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+        className="w-full max-w-sm overflow-hidden rounded-3xl bg-surface-container-lowest shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="delete-dialog-title" className="text-lg font-semibold text-gray-900">
-          Remover música?
-        </h2>
-        <p className="mt-2 text-sm text-gray-500">
-          <span className="font-medium text-gray-800">"{song.title}"</span> será removida do
-          repertório. Esta ação não pode ser desfeita.
-        </p>
-        <div className="mt-5 flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={isLoading}
-            className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
-          >
-            {isLoading ? 'Removendo…' : 'Remover'}
-          </button>
+        <div className="p-6">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-error/10">
+            <span aria-hidden="true" className="material-symbols-outlined text-error">
+              delete
+            </span>
+          </div>
+          <h2 id="delete-dialog-title" className="font-headline text-lg font-bold text-on-surface">
+            Remover música?
+          </h2>
+          <p className="mt-2 text-sm text-on-surface-variant">
+            <span className="font-bold text-on-surface">"{song.title}"</span> será removida do
+            repertório permanentemente.
+          </p>
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 rounded-full border border-outline-variant px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition hover:bg-surface-container-low"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={isLoading}
+              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-error px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
+            >
+              {isLoading ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                <span aria-hidden="true" className="material-symbols-outlined text-base">
+                  delete
+                </span>
+              )}
+              {isLoading ? 'Removendo…' : 'Remover'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -43,9 +43,9 @@ export function FileRow({ label, accept, url, onUpload, onRemove, onView }: Prop
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between py-2.5">
-        <span className="w-20 text-sm font-medium text-gray-600">{label}</span>
+    <div className="py-2.5">
+      <div className="flex items-center justify-between">
+        <span className="w-20 text-sm font-semibold text-on-surface-variant">{label}</span>
 
         <div className="flex flex-1 items-center justify-end gap-2">
           {url ? (
@@ -53,25 +53,34 @@ export function FileRow({ label, accept, url, onUpload, onRemove, onView }: Prop
               <button
                 onClick={() => onView(url)}
                 aria-label={`Visualizar ${label}`}
-                className="flex items-center gap-1.5 rounded-lg bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700 transition hover:bg-violet-100"
+                className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary transition hover:bg-primary/20"
               >
-                📄 Ver arquivo
+                <span aria-hidden="true" className="material-symbols-outlined text-xs">
+                  visibility
+                </span>
+                Ver arquivo
               </button>
               <button
                 onClick={() => inputRef.current?.click()}
                 disabled={isUploading}
                 aria-label={`Substituir ${label}`}
-                className="rounded-lg px-2 py-1 text-xs text-gray-500 transition hover:bg-gray-100"
+                className="rounded-xl p-1.5 text-outline transition hover:bg-surface-container-low hover:text-on-surface"
+                title="Substituir"
               >
-                {isUploading ? '…' : '↑'}
+                <span aria-hidden="true" className="material-symbols-outlined text-sm">
+                  upload
+                </span>
               </button>
               <button
                 onClick={handleRemove}
                 disabled={isRemoving}
                 aria-label={`Remover ${label}`}
-                className="rounded-lg px-2 py-1 text-xs text-red-400 transition hover:bg-red-50"
+                className="rounded-xl p-1.5 text-outline transition hover:bg-error/5 hover:text-error"
+                title="Remover"
               >
-                {isRemoving ? '…' : '✕'}
+                <span aria-hidden="true" className="material-symbols-outlined text-sm">
+                  {isRemoving ? 'hourglass_empty' : 'delete'}
+                </span>
               </button>
             </>
           ) : (
@@ -79,14 +88,21 @@ export function FileRow({ label, accept, url, onUpload, onRemove, onView }: Prop
               onClick={() => inputRef.current?.click()}
               disabled={isUploading}
               aria-label={`Enviar ${label}`}
-              className="flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs text-gray-500 transition hover:border-violet-400 hover:text-violet-600"
+              className="flex items-center gap-1.5 rounded-full border border-dashed border-outline-variant px-3 py-1.5 text-xs font-semibold text-outline transition hover:border-primary hover:text-primary"
             >
-              {isUploading ? 'Enviando…' : '↑ Enviar arquivo'}
+              <span aria-hidden="true" className="material-symbols-outlined text-sm">
+                {isUploading ? 'hourglass_empty' : 'upload'}
+              </span>
+              {isUploading ? 'Enviando…' : 'Enviar arquivo'}
             </button>
           )}
         </div>
       </div>
-      {error && <p role="alert" className="pb-1 text-xs text-red-500">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-1 text-xs text-error">
+          {error}
+        </p>
+      )}
       <input
         ref={inputRef}
         type="file"

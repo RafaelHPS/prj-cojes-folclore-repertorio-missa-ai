@@ -25,7 +25,10 @@ export function SongModal({ defaultValues, song, onClose, onSave, onFileUpdate }
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SongFormData>({ resolver: zodResolver(songSchema), defaultValues })
+  } = useForm<SongFormData>({
+    resolver: zodResolver(songSchema),
+    defaultValues,
+  })
 
   const [viewer, setViewer] = useState<{ label: string; url: string } | null>(null)
   const [fileUrls, setFileUrls] = useState({
@@ -64,123 +67,152 @@ export function SongModal({ defaultValues, song, onClose, onSave, onFileUpdate }
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 px-4"
         onClick={onClose}
       >
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby="song-dialog-title"
-          className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+          className="w-full max-w-md overflow-hidden rounded-3xl bg-surface-container-lowest shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <h2 id="song-dialog-title" className="mb-5 text-lg font-semibold text-gray-900">
-            {song ? 'Editar música' : 'Nova música'}
-          </h2>
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-outline-variant/10 px-6 py-4">
+            <h2 id="song-dialog-title" className="font-headline text-lg font-bold text-on-surface">
+              {song ? 'Editar música' : 'Nova música'}
+            </h2>
+            <button
+              onClick={onClose}
+              aria-label="Fechar"
+              className="rounded-xl p-2 text-outline transition hover:bg-surface-container-low hover:text-on-surface"
+            >
+              <span aria-hidden="true" className="material-symbols-outlined">
+                close
+              </span>
+            </button>
+          </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-            <div>
-              <label htmlFor="song-title" className="mb-1 block text-sm font-medium text-gray-700">
-                Título *
-              </label>
-              <input
-                id="song-title"
-                type="text"
-                autoFocus
-                aria-describedby={errors.title ? 'song-title-error' : undefined}
-                aria-invalid={!!errors.title}
-                placeholder="Nome da música"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
-                {...register('title')}
-              />
-              {errors.title && (
-                <p id="song-title-error" role="alert" className="mt-1 text-xs text-red-600">
-                  {errors.title.message}
+          <div className="px-6 py-5">
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+              <div>
+                <label
+                  htmlFor="song-title"
+                  className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+                >
+                  Título *
+                </label>
+                <input
+                  id="song-title"
+                  type="text"
+                  autoFocus
+                  placeholder="Nome da música"
+                  aria-describedby={errors.title ? 'song-title-error' : undefined}
+                  aria-invalid={!!errors.title}
+                  className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  {...register('title')}
+                />
+                {errors.title && (
+                  <p id="song-title-error" role="alert" className="mt-1 text-xs text-error">
+                    {errors.title.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="song-artist"
+                  className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+                >
+                  Artista / Autor
+                </label>
+                <input
+                  id="song-artist"
+                  type="text"
+                  placeholder="Ex: Padre Zezinho"
+                  className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  {...register('artist')}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="song-key"
+                  className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+                >
+                  Tom
+                </label>
+                <select
+                  id="song-key"
+                  className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  {...register('key')}
+                >
+                  <option value="">Selecionar tom</option>
+                  {MUSICAL_KEYS.map((k) => (
+                    <option key={k} value={k}>
+                      {k}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {saveError && (
+                <p role="alert" className="rounded-2xl bg-error/5 px-4 py-3 text-sm text-error">
+                  {saveError}
                 </p>
               )}
-            </div>
 
-            <div>
-              <label htmlFor="song-artist" className="mb-1 block text-sm font-medium text-gray-700">
-                Artista / Autor
-              </label>
-              <input
-                id="song-artist"
-                type="text"
-                placeholder="Ex: Padre Zezinho"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
-                {...register('artist')}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="song-key" className="mb-1 block text-sm font-medium text-gray-700">
-                Tom
-              </label>
-              <select
-                id="song-key"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
-                {...register('key')}
-              >
-                <option value="">Selecionar tom</option>
-                {MUSICAL_KEYS.map((k) => (
-                  <option key={k} value={k}>{k}</option>
-                ))}
-              </select>
-            </div>
-
-            {saveError && (
-              <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-                {saveError}
-              </p>
-            )}
-
-            <div className="flex gap-3 pt-1">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-              >
-                {song ? 'Fechar' : 'Cancelar'}
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-60"
-              >
-                {isSubmitting ? 'Salvando…' : 'Salvar'}
-              </button>
-            </div>
-          </form>
-
-          {song && (
-            <div className="mt-5 border-t border-gray-100 pt-4">
-              <p className="mb-1 text-sm font-semibold text-gray-700">Arquivos</p>
-              <p className="mb-3 text-xs text-gray-400">PDF, imagem ou documento de texto</p>
-              <div className="divide-y divide-gray-100">
-                {FILE_CONFIG.map(({ type, label, accept }) => (
-                  <FileRow
-                    key={type}
-                    label={label}
-                    accept={accept}
-                    url={fileUrls[type]}
-                    onUpload={(file) => handleUpload(type, file)}
-                    onRemove={() => handleRemove(type)}
-                    onView={(url) => setViewer({ label, url })}
-                  />
-                ))}
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 rounded-full border border-outline-variant px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition hover:bg-surface-container-low"
+                >
+                  {song ? 'Fechar' : 'Cancelar'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-on-primary shadow-md shadow-primary/20 transition hover:bg-secondary disabled:opacity-60"
+                >
+                  {isSubmitting ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <span aria-hidden="true" className="material-symbols-outlined text-base">
+                      save
+                    </span>
+                  )}
+                  {isSubmitting ? 'Salvando…' : 'Salvar'}
+                </button>
               </div>
-            </div>
-          )}
+            </form>
+
+            {/* Arquivos — só no modo edição */}
+            {song && (
+              <div className="mt-5 border-t border-outline-variant/10 pt-4">
+                <p className="mb-1 text-sm font-bold text-on-surface">Arquivos</p>
+                <p className="mb-3 text-xs text-outline">PDF, imagem ou documento de texto</p>
+                <div className="divide-y divide-outline-variant/10">
+                  {FILE_CONFIG.map(({ type, label, accept }) => (
+                    <FileRow
+                      key={type}
+                      label={label}
+                      accept={accept}
+                      url={fileUrls[type]}
+                      onUpload={(file) => handleUpload(type, file)}
+                      onRemove={() => handleRemove(type)}
+                      onView={(url) => setViewer({ label, url })}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {viewer && (
-        <FileViewerModal
-          title={viewer.label}
-          url={viewer.url}
-          onClose={() => setViewer(null)}
-        />
+        <FileViewerModal title={viewer.label} url={viewer.url} onClose={() => setViewer(null)} />
       )}
     </>
   )
