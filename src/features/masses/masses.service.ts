@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 
 import type { Mass } from './types'
 import type { MassFormData } from './masses.schemas'
+import type { MassPart } from '@/types/database'
 
 export type MassFilter = 'upcoming' | 'past' | 'all'
 
@@ -160,6 +161,65 @@ export async function updateMass(id: string, form: MassFormData): Promise<Mass> 
 export async function deleteMass(id: string): Promise<void> {
   const { error } = await supabase.from('masses').delete().eq('id', id)
   if (error) throw error
+}
+
+// ── Gestão do repertório ──────────────────────────────────────
+
+export async function addSongToMass(
+  massId: string,
+  songId: string,
+  part: MassPart,
+  position: number,
+): Promise<MassSongWithSong> {
+  const { data, error } = await supabase
+    .from('mass_songs')
+    .insert({ mass_id: massId, song_id: songId, part, position } as never)
+    .select(
+      'id, mass_id, song_id, part, position, created_at, songs(id, title, artist, key, singer_file_url, instrumental_file_url, partitura_url, letra_url, cifra_url)',
+    )
+    .single()
+
+  if (error) throw error
+
+  type RawRow = Omit<MassSongWithSong, 'song'> & {
+    songs: MassSongWithSong['song'] | null
+  }
+
+  const row = data as unknown as RawRow
+  return { ...row, song: row.songs! }
+}
+
+export async function removeMassSong(massSongId: string): Promise<void> {
+  const { error } = await supabase.from('mass_songs').delete().eq('id', massSongId)
+  if (error) throw error
+}
+
+export async function swapMassSongPositions(
+  idA: string,
+  posA: number,
+  idB: string,
+  posB: number,
+): Promise<void> {
+  // Usa uma posição temporária para evitar conflito de unicidade
+  const tmp = -1
+
+  const { error: e1 } = await supabase
+    .from('mass_songs')
+    .update({ position: tmp } as never)
+    .eq('id', idA)
+  if (e1) throw e1
+
+  const { error: e2 } = await supabase
+    .from('mass_songs')
+    .update({ position: posA } as never)
+    .eq('id', idB)
+  if (e2) throw e2
+
+  const { error: e3 } = await supabase
+    .from('mass_songs')
+    .update({ position: posB } as never)
+    .eq('id', idA)
+  if (e3) throw e3
 }
 
 // ── Página pública ────────────────────────────────────────────

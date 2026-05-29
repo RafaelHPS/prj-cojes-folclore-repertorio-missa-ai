@@ -305,11 +305,11 @@ export default function MassesPage() {
                           </span>
                         </button>
                         <Link
-                          to={`/missas/${mass.id}`}
-                          aria-label={`Ver repertório de ${mass.title}`}
+                          to={`/missas/${mass.id}/gerenciar`}
+                          aria-label={`Gerenciar repertório de ${mass.title}`}
                           className="rounded-xl bg-primary-container px-4 py-2 text-sm font-bold text-on-primary-container transition hover:brightness-110"
                         >
-                          Ver Repertório
+                          Repertório
                         </Link>
                         <button
                           onClick={() => setToDelete(mass)}
