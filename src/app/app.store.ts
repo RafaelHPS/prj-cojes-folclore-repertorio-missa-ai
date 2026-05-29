@@ -13,8 +13,10 @@ interface ActiveTeam {
 
 interface AppState {
   session: Session | null
+  isSessionLoading: boolean
   activeTeam: ActiveTeam | null
   setSession: (session: Session | null) => void
+  setIsSessionLoading: (loading: boolean) => void
   setActiveTeam: (team: ActiveTeam | null) => void
   clearAll: () => void
 }
@@ -23,14 +25,16 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       session: null,
+      isSessionLoading: true, // true até getSession() resolver
       activeTeam: null,
       setSession: (session) => set({ session }),
+      setIsSessionLoading: (isSessionLoading) => set({ isSessionLoading }),
       setActiveTeam: (activeTeam) => set({ activeTeam }),
       clearAll: () => set({ session: null, activeTeam: null }),
     }),
     {
       name: 'repertorio-app',
       partialize: (state) => ({ activeTeam: state.activeTeam }),
-    }
-  )
+    },
+  ),
 )
