@@ -161,3 +161,52 @@ export async function deleteMass(id: string): Promise<void> {
   const { error } = await supabase.from('masses').delete().eq('id', id)
   if (error) throw error
 }
+
+// ── Página pública ────────────────────────────────────────────
+
+export interface MassSongWithSong {
+  id: string
+  mass_id: string
+  song_id: string
+  part: string
+  position: number
+  created_at: string
+  song: {
+    id: string
+    title: string
+    artist: string | null
+    key: string | null
+    singer_file_url: string | null
+    instrumental_file_url: string | null
+    partitura_url: string | null
+    letra_url: string | null
+    cifra_url: string | null
+  }
+}
+
+export async function fetchPublicMass(id: string): Promise<Mass | null> {
+  const { data, error } = await supabase.from('masses').select('*').eq('id', id).single()
+
+  if (error) return null
+  return data as unknown as Mass
+}
+
+export async function fetchMassSongs(massId: string): Promise<MassSongWithSong[]> {
+  const { data, error } = await supabase
+    .from('mass_songs')
+    .select(
+      'id, mass_id, song_id, part, position, created_at, songs(id, title, artist, key, singer_file_url, instrumental_file_url, partitura_url, letra_url, cifra_url)',
+    )
+    .eq('mass_id', massId)
+    .order('position', { ascending: true })
+
+  if (error) throw error
+
+  type RawRow = Omit<MassSongWithSong, 'song'> & {
+    songs: MassSongWithSong['song'] | null
+  }
+
+  return ((data ?? []) as unknown as RawRow[])
+    .filter((r) => r.songs !== null)
+    .map((r) => ({ ...r, song: r.songs! }))
+}
