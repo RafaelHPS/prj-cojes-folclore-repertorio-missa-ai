@@ -23,6 +23,33 @@ const EMPTY_FORM: SongFormData = {
 }
 
 type ViewMode = 'grid' | 'list'
+type SortKey = 'title' | 'artist' | 'key' | 'origin' | 'created_at' | 'updated_at'
+type SortDir = 'asc' | 'desc'
+
+interface SortableThProps {
+  label: string
+  sortKey: SortKey
+  current: SortKey
+  dir: SortDir
+  onSort: (k: SortKey) => void
+}
+
+function SortableTh({ label, sortKey, current, dir, onSort }: SortableThProps) {
+  const isActive = current === sortKey
+  return (
+    <th
+      onClick={() => onSort(sortKey)}
+      className="cursor-pointer select-none px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline transition hover:text-on-surface"
+    >
+      <span className="flex items-center gap-1">
+        {label}
+        <span aria-hidden="true" className="material-symbols-outlined text-sm">
+          {isActive ? (dir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more'}
+        </span>
+      </span>
+    </th>
+  )
+}
 
 interface ModalState {
   mode: 'create' | 'edit'
@@ -42,6 +69,8 @@ export default function SongsPage() {
   const [modal, setModal] = useState<ModalState | null>(null)
   const [toDelete, setToDelete] = useState<Song | null>(null)
   const [viewer, setViewer] = useState<ViewerState | null>(null)
+  const [sortKey, setSortKey] = useState<SortKey>('title')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
 
   useEffect(() => {
     if (!team) return
@@ -69,6 +98,27 @@ export default function SongsPage() {
         (s.book_number ?? '').toLowerCase().includes(q),
     )
   }, [songs, search])
+
+  function handleSort(key: SortKey) {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
+
+  const sortedSongs = useMemo(() => {
+    return [...filteredSongs].sort((a, b) => {
+      let cmp = 0
+      if (sortKey === 'title') cmp = a.title.localeCompare(b.title, 'pt-BR')
+      else if (sortKey === 'artist') cmp = (a.artist ?? '').localeCompare(b.artist ?? '', 'pt-BR')
+      else if (sortKey === 'key') cmp = (a.key ?? '').localeCompare(b.key ?? '', 'pt-BR')
+      else if (sortKey === 'origin') cmp = a.origin.localeCompare(b.origin, 'pt-BR')
+      else if (sortKey === 'created_at') cmp = a.created_at.localeCompare(b.created_at)
+      else if (sortKey === 'updated_at') cmp = a.updated_at.localeCompare(b.updated_at)
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [filteredSongs, sortKey, sortDir])
 
   async function handleSave(form: SongFormData) {
     if (!team) return
@@ -155,6 +205,39 @@ export default function SongsPage() {
             />
           </div>
 
+          {/* Ordenação (sempre visível) */}
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="song-sort"
+              className="text-xs font-semibold text-outline whitespace-nowrap"
+            >
+              Ordenar por
+            </label>
+            <select
+              id="song-sort"
+              value={`${sortKey}-${sortDir}`}
+              onChange={(e) => {
+                const [k, d] = e.target.value.split('-') as [SortKey, SortDir]
+                setSortKey(k)
+                setSortDir(d)
+              }}
+              className="rounded-xl border-none bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="title-asc">Nome A→Z</option>
+              <option value="title-desc">Nome Z→A</option>
+              <option value="artist-asc">Artista A→Z</option>
+              <option value="artist-desc">Artista Z→A</option>
+              <option value="key-asc">Tom A→Z</option>
+              <option value="key-desc">Tom Z→A</option>
+              <option value="origin-asc">Origem A→Z</option>
+              <option value="origin-desc">Origem Z→A</option>
+              <option value="updated_at-desc">Atualização recente</option>
+              <option value="updated_at-asc">Atualização antiga</option>
+              <option value="created_at-desc">Adição recente</option>
+              <option value="created_at-asc">Adição antiga</option>
+            </select>
+          </div>
+
           <div
             className="flex overflow-hidden rounded-xl bg-surface-container p-1"
             role="group"
@@ -208,14 +291,17 @@ export default function SongsPage() {
         </div>
       ) : view === 'grid' ? (
         <GridView
-          songs={filteredSongs}
+          songs={sortedSongs}
           onEdit={(song) => setModal({ mode: 'edit', song })}
           onDelete={setToDelete}
           onView={(label, url) => setViewer({ label, url })}
         />
       ) : (
         <ListView
-          songs={filteredSongs}
+          songs={sortedSongs}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          onSort={handleSort}
           onEdit={(song) => setModal({ mode: 'edit', song })}
           onDelete={setToDelete}
           onView={(label, url) => setViewer({ label, url })}
@@ -256,6 +342,9 @@ interface ViewProps {
   onEdit: (song: Song) => void
   onDelete: (song: Song) => void
   onView: (label: string, url: string) => void
+  sortKey?: SortKey
+  sortDir?: SortDir
+  onSort?: (k: SortKey) => void
 }
 
 function GridView({ songs, onEdit, onDelete, onView }: ViewProps) {
@@ -328,31 +417,66 @@ function GridView({ songs, onEdit, onDelete, onView }: ViewProps) {
   )
 }
 
-function ListView({ songs, onEdit, onDelete, onView }: ViewProps) {
+function ListView({
+  songs,
+  onEdit,
+  onDelete,
+  onView,
+  sortKey = 'title',
+  sortDir = 'asc',
+  onSort = () => {},
+}: ViewProps) {
   return (
     <div className="overflow-hidden rounded-3xl border border-outline-variant/10 bg-surface-container-lowest tonal-shadow">
       <div className="overflow-x-auto">
         <table className="min-w-[700px] w-full text-sm">
           <thead>
             <tr className="bg-surface-container-low/50">
-              <th className="px-8 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
-                Título
-              </th>
-              <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
-                Artista
-              </th>
-              <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
-                Tom
-              </th>
-              <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
-                Origem
-              </th>
+              <SortableTh
+                label="Título"
+                sortKey="title"
+                current={sortKey}
+                dir={sortDir}
+                onSort={onSort}
+              />
+              <SortableTh
+                label="Artista"
+                sortKey="artist"
+                current={sortKey}
+                dir={sortDir}
+                onSort={onSort}
+              />
+              <SortableTh
+                label="Tom"
+                sortKey="key"
+                current={sortKey}
+                dir={sortDir}
+                onSort={onSort}
+              />
+              <SortableTh
+                label="Origem"
+                sortKey="origin"
+                current={sortKey}
+                dir={sortDir}
+                onSort={onSort}
+              />
               <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
                 Arquivos
               </th>
-              <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
-                Adicionado em
-              </th>
+              <SortableTh
+                label="Adicionado em"
+                sortKey="created_at"
+                current={sortKey}
+                dir={sortDir}
+                onSort={onSort}
+              />
+              <SortableTh
+                label="Atualizado em"
+                sortKey="updated_at"
+                current={sortKey}
+                dir={sortDir}
+                onSort={onSort}
+              />
               <th className="px-8 py-5 text-right text-xs font-bold uppercase tracking-wider text-outline">
                 Ações
               </th>
@@ -429,8 +553,11 @@ function ListView({ songs, onEdit, onDelete, onView }: ViewProps) {
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-5 text-xs italic text-outline">
+                <td className="px-6 py-5 text-xs text-outline">
                   {formatDateTime(song.created_at)}
+                </td>
+                <td className="px-6 py-5 text-xs text-outline">
+                  {song.updated_at !== song.created_at ? formatDateTime(song.updated_at) : '—'}
                 </td>
                 <td className="px-8 py-5">
                   <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
