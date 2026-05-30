@@ -86,3 +86,39 @@ export async function removeMember(memberId: string): Promise<void> {
 
   if (error) throw error
 }
+
+// ── Convites ──────────────────────────────────────────────────
+
+export interface Invite {
+  id: string
+  team_id: string
+  email: string
+  role: UserRole
+  invited_by: string | null
+  created_at: string
+  accepted_at: string | null
+}
+
+export async function sendInvite(email: string, teamId: string, role: UserRole): Promise<void> {
+  const { error } = await supabase.functions.invoke('invite-member', {
+    body: { email, teamId, role, siteUrl: window.location.origin },
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function fetchPendingInvites(teamId: string): Promise<Invite[]> {
+  const { data, error } = await supabase
+    .from('invites')
+    .select('*')
+    .eq('team_id', teamId)
+    .is('accepted_at', null)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return (data ?? []) as unknown as Invite[]
+}
+
+export async function cancelInvite(inviteId: string): Promise<void> {
+  const { error } = await supabase.from('invites').delete().eq('id', inviteId)
+  if (error) throw error
+}

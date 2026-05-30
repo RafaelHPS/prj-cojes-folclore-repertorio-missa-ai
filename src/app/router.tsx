@@ -7,6 +7,7 @@ import { PublicLayout } from '@/layouts/PublicLayout'
 import { lazy, Suspense } from 'react'
 
 const LoginPage = lazy(() => import('@/features/auth/components/LoginPage'))
+const AcceptInvitePage = lazy(() => import('@/features/auth/components/AcceptInvitePage'))
 const SelectTeamPage = lazy(() => import('@/features/teams/components/SelectTeamPage'))
 const DashboardPage = lazy(() => import('@/features/teams/components/DashboardPage'))
 const SongsPage = lazy(() => import('@/features/songs/components/SongsPage'))
@@ -34,6 +35,7 @@ export const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { path: '/login', element: withSuspense(<LoginPage />) },
+      { path: '/aceitar-convite', element: withSuspense(<AcceptInvitePage />) },
       { path: '/missas/:id', element: withSuspense(<MassDetailPage />) },
     ],
   },

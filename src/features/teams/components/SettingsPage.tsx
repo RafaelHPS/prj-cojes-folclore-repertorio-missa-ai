@@ -15,8 +15,11 @@ import {
   fetchTeamMembers,
   updateMemberRole,
   removeMember,
+  sendInvite,
+  fetchPendingInvites,
+  cancelInvite,
 } from '../settings.service'
-import type { TeamDetails, TeamMember } from '../settings.service'
+import type { TeamDetails, TeamMember, Invite } from '../settings.service'
 
 // ── Constantes ────────────────────────────────────────────────
 
@@ -229,6 +232,11 @@ export default function SettingsPage() {
   const [teamSaveStatus, setTeamSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>(
     'idle',
   )
+  const [invites, setInvites] = useState<Invite[]>([])
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<UserRole>('viewer')
+  const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [inviteError, setInviteError] = useState<string | null>(null)
 
   const isAdmin = activeTeam?.role === 'admin'
 
@@ -256,8 +264,10 @@ export default function SettingsPage() {
           fetchTeamMembers(activeTeam!.id),
           supabase.auth.getUser(),
         ])
+        const pendingInvites = await fetchPendingInvites(activeTeam!.id).catch(() => [])
         setTeamDetails(details)
         setMembers(memberList)
+        setInvites(pendingInvites)
         setCurrentUserId(user?.id ?? null)
         if (details) reset({ name: details.name, slug: details.slug ?? '' })
       } finally {
@@ -288,6 +298,29 @@ export default function SettingsPage() {
   async function handleRoleChange(memberId: string, role: UserRole) {
     await updateMemberRole(memberId, role)
     setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, role } : m)))
+  }
+
+  async function handleSendInvite(e: React.FormEvent) {
+    e.preventDefault()
+    if (!activeTeam || !inviteEmail.trim()) return
+    setInviteStatus('sending')
+    setInviteError(null)
+    try {
+      await sendInvite(inviteEmail.trim(), activeTeam.id, inviteRole)
+      const updated = await fetchPendingInvites(activeTeam.id)
+      setInvites(updated)
+      setInviteEmail('')
+      setInviteStatus('sent')
+      setTimeout(() => setInviteStatus('idle'), 3000)
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Erro ao enviar convite.')
+      setInviteStatus('error')
+    }
+  }
+
+  async function handleCancelInvite(inviteId: string) {
+    await cancelInvite(inviteId)
+    setInvites((prev) => prev.filter((i) => i.id !== inviteId))
   }
 
   async function handleRemove() {
@@ -443,21 +476,119 @@ export default function SettingsPage() {
             ))}
           </div>
 
-          {/* Info sobre como adicionar membros */}
-          <div className="border-t border-outline-variant/10 bg-surface-container-low/50 px-6 py-4">
-            <div className="flex items-start gap-2 text-sm text-outline">
-              <span
-                aria-hidden="true"
-                className="material-symbols-outlined flex-shrink-0 text-base"
+          {/* Formulário de convite — só para admins */}
+          {isAdmin && (
+            <div className="border-t border-outline-variant/10 px-6 py-5">
+              <p className="mb-3 text-sm font-bold text-on-surface">Convidar novo membro</p>
+              <form
+                onSubmit={handleSendInvite}
+                noValidate
+                className="flex flex-col gap-3 sm:flex-row sm:items-end"
               >
-                info
-              </span>
-              <p>
-                Para adicionar novos membros, peça que criem uma conta e entrem em contato com um
-                administrador para que sejam adicionados manualmente.
-              </p>
+                <div className="flex-1">
+                  <label
+                    htmlFor="invite-email"
+                    className="mb-1 block text-xs font-semibold text-on-surface-variant"
+                  >
+                    E-mail
+                  </label>
+                  <input
+                    id="invite-email"
+                    type="email"
+                    required
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="email@exemplo.com"
+                    className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-2.5 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="invite-role"
+                    className="mb-1 block text-xs font-semibold text-on-surface-variant"
+                  >
+                    Role
+                  </label>
+                  <select
+                    id="invite-role"
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value as UserRole)}
+                    className="rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-2.5 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  >
+                    {(Object.entries(ROLE_LABEL) as [UserRole, string][]).map(([v, l]) => (
+                      <option key={v} value={v}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="submit"
+                  disabled={inviteStatus === 'sending' || !inviteEmail.trim()}
+                  className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-on-primary shadow-md shadow-primary/20 transition hover:bg-secondary disabled:opacity-60 whitespace-nowrap"
+                >
+                  {inviteStatus === 'sending' ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <span aria-hidden="true" className="material-symbols-outlined text-base">
+                      send
+                    </span>
+                  )}
+                  {inviteStatus === 'sending' ? 'Enviando…' : 'Enviar convite'}
+                </button>
+              </form>
+
+              {inviteStatus === 'sent' && (
+                <p className="mt-2 flex items-center gap-1 text-sm font-semibold text-primary">
+                  <span aria-hidden="true" className="material-symbols-outlined text-base">
+                    check_circle
+                  </span>
+                  Convite enviado!
+                </p>
+              )}
+              {inviteStatus === 'error' && inviteError && (
+                <p className="mt-2 text-sm text-error">{inviteError}</p>
+              )}
             </div>
-          </div>
+          )}
+
+          {/* Convites pendentes */}
+          {isAdmin && invites.length > 0 && (
+            <div className="border-t border-outline-variant/10 px-6 pb-5">
+              <p className="mb-3 mt-4 text-sm font-bold text-on-surface">
+                Convites pendentes
+                <span className="ml-2 rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-bold text-secondary">
+                  {invites.length}
+                </span>
+              </p>
+              <ul className="space-y-2">
+                {invites.map((invite) => (
+                  <li
+                    key={invite.id}
+                    className="flex items-center justify-between rounded-2xl bg-surface-container-low px-4 py-3"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-on-surface">{invite.email}</p>
+                      <p className="text-xs text-outline">
+                        {ROLE_LABEL[invite.role]} · enviado{' '}
+                        {new Date(invite.created_at).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => void handleCancelInvite(invite.id)}
+                      aria-label={`Cancelar convite para ${invite.email}`}
+                      className="rounded-xl p-2 text-outline transition hover:bg-error/5 hover:text-error"
+                      title="Cancelar convite"
+                    >
+                      <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                        cancel
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
       </div>
 
