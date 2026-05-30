@@ -679,21 +679,23 @@ export default function SettingsPage() {
           </span>
           Minha conta
         </button>
-        <button
-          role="tab"
-          aria-selected={activeTab === 'team'}
-          onClick={() => setActiveTab('team')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
-            activeTab === 'team'
-              ? 'bg-surface-container-lowest text-on-surface shadow-sm'
-              : 'text-on-surface-variant hover:text-on-surface'
-          }`}
-        >
-          <span aria-hidden="true" className="material-symbols-outlined text-base">
-            group
-          </span>
-          Equipe
-        </button>
+        {isAdmin && (
+          <button
+            role="tab"
+            aria-selected={activeTab === 'team'}
+            onClick={() => setActiveTab('team')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+              activeTab === 'team'
+                ? 'bg-surface-container-lowest text-on-surface shadow-sm'
+                : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <span aria-hidden="true" className="material-symbols-outlined text-base">
+              group
+            </span>
+            Equipe
+          </button>
+        )}
       </div>
 
       {activeTab === 'account' && <ProfileSection />}
