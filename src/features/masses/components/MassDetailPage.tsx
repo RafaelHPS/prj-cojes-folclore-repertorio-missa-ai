@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 
-import { formatDateShort, formatTime } from '@/utils/date.util'
+import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
 import { FileViewerModal } from '@/features/songs/components/FileViewerModal'
 
 import { fetchPublicMass, fetchMassSongs } from '../masses.service'
@@ -291,6 +291,15 @@ export default function MassDetailPage() {
           {mass.description && (
             <p className="mt-3 rounded-2xl bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
               {mass.description}
+            </p>
+          )}
+
+          {mass.updated_at !== mass.created_at && (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-outline">
+              <span aria-hidden="true" className="material-symbols-outlined text-sm">
+                update
+              </span>
+              Repertório atualizado em {formatDateTime(mass.updated_at)}
             </p>
           )}
         </header>
