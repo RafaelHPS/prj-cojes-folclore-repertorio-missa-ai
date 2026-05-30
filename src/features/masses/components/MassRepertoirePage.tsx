@@ -346,18 +346,34 @@ export default function MassRepertoirePage() {
           </div>
 
           <div className="flex gap-2">
-            {mass.is_public && (
-              <Link
-                to={`/missas/${mass.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-full border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition hover:border-primary/30 hover:text-primary"
-              >
+            {/* Visualização da celebração — sempre disponível para membros */}
+            <Link
+              to={`/missas/${mass.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-full border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition hover:border-primary/30 hover:text-primary"
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-base">
+                slideshow
+              </span>
+              Visualizar celebração
+            </Link>
+
+            {/* Indicador de visibilidade */}
+            {mass.is_public ? (
+              <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
                 <span aria-hidden="true" className="material-symbols-outlined text-base">
-                  open_in_new
+                  public
                 </span>
-                Ver página pública
-              </Link>
+                Pública
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 rounded-full bg-surface-container px-4 py-2 text-sm font-semibold text-outline">
+                <span aria-hidden="true" className="material-symbols-outlined text-base">
+                  lock
+                </span>
+                Privada
+              </span>
             )}
           </div>
         </div>
