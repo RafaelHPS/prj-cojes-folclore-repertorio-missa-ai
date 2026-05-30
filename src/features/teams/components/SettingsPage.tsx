@@ -509,7 +509,10 @@ function RemoveConfirmModal({
 
 // ── Página principal ──────────────────────────────────────────
 
+type SettingsTab = 'account' | 'team'
+
 export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState<SettingsTab>('account')
   const activeTeam = useActiveTeam()
   const setActiveTeam = useAppStore((s) => s.setActiveTeam)
   const clearAll = useAppStore((s) => s.clearAll)
@@ -652,246 +655,285 @@ export default function SettingsPage() {
         <h1 className="font-headline text-4xl font-extrabold tracking-tight text-on-surface lg:text-5xl">
           Configurações
         </h1>
-        <p className="mt-2 text-outline">Gerencie seu perfil, dados e membros da equipe.</p>
+        <p className="mt-2 text-outline">
+          {activeTab === 'account'
+            ? 'Gerencie seu perfil e senha.'
+            : 'Gerencie os dados e membros da equipe.'}
+        </p>
       </header>
 
-      <div className="space-y-6">
-        {/* Minha conta */}
-        <ProfileSection />
+      {/* Abas */}
+      <div className="mb-6 flex gap-1 rounded-2xl bg-surface-container-low p-1" role="tablist">
+        <button
+          role="tab"
+          aria-selected={activeTab === 'account'}
+          onClick={() => setActiveTab('account')}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+            activeTab === 'account'
+              ? 'bg-surface-container-lowest text-on-surface shadow-sm'
+              : 'text-on-surface-variant hover:text-on-surface'
+          }`}
+        >
+          <span aria-hidden="true" className="material-symbols-outlined text-base">
+            account_circle
+          </span>
+          Minha conta
+        </button>
+        <button
+          role="tab"
+          aria-selected={activeTab === 'team'}
+          onClick={() => setActiveTab('team')}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+            activeTab === 'team'
+              ? 'bg-surface-container-lowest text-on-surface shadow-sm'
+              : 'text-on-surface-variant hover:text-on-surface'
+          }`}
+        >
+          <span aria-hidden="true" className="material-symbols-outlined text-base">
+            group
+          </span>
+          Equipe
+        </button>
+      </div>
 
-        {/* Dados da equipe */}
-        <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-lowest tonal-shadow">
-          <div className="flex items-center gap-2 border-b border-outline-variant/10 px-6 py-4">
-            <span aria-hidden="true" className="material-symbols-outlined text-primary">
-              group
-            </span>
-            <h2 className="font-headline font-bold text-on-surface">Dados da equipe</h2>
-          </div>
+      {activeTab === 'account' && <ProfileSection />}
 
-          <form onSubmit={handleSubmit(handleSaveTeam)} noValidate className="p-6 space-y-4">
-            <div>
-              <label
-                htmlFor="team-name"
-                className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
-              >
-                Nome da equipe *
-              </label>
-              <input
-                id="team-name"
-                type="text"
-                disabled={!isAdmin}
-                placeholder="Ex: Ministério de Música São José"
-                aria-describedby={errors.name ? 'team-name-error' : undefined}
-                aria-invalid={!!errors.name}
-                className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
-                {...register('name')}
-              />
-              {errors.name && (
-                <p id="team-name-error" role="alert" className="mt-1 text-xs text-error">
-                  {errors.name.message}
-                </p>
-              )}
+      {activeTab === 'team' && (
+        <div className="space-y-6">
+          {/* Dados da equipe */}
+          <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-lowest tonal-shadow">
+            <div className="flex items-center gap-2 border-b border-outline-variant/10 px-6 py-4">
+              <span aria-hidden="true" className="material-symbols-outlined text-primary">
+                group
+              </span>
+              <h2 className="font-headline font-bold text-on-surface">Dados da equipe</h2>
             </div>
 
-            <div>
-              <label
-                htmlFor="team-slug"
-                className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
-              >
-                Identificador (slug)
-              </label>
-              <input
-                id="team-slug"
-                type="text"
-                disabled={!isAdmin}
-                placeholder="Ex: ministerio-sao-jose"
-                className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
-                {...register('slug')}
-              />
-            </div>
-
-            {isAdmin && (
-              <div className="flex items-center gap-3">
-                <button
-                  type="submit"
-                  disabled={isSubmitting || teamSaveStatus === 'saving'}
-                  className="flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-on-primary shadow-md shadow-primary/20 transition hover:bg-secondary disabled:opacity-60"
+            <form onSubmit={handleSubmit(handleSaveTeam)} noValidate className="p-6 space-y-4">
+              <div>
+                <label
+                  htmlFor="team-name"
+                  className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
                 >
-                  {teamSaveStatus === 'saving' ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  ) : (
-                    <span aria-hidden="true" className="material-symbols-outlined text-base">
-                      save
+                  Nome da equipe *
+                </label>
+                <input
+                  id="team-name"
+                  type="text"
+                  disabled={!isAdmin}
+                  placeholder="Ex: Ministério de Música São José"
+                  aria-describedby={errors.name ? 'team-name-error' : undefined}
+                  aria-invalid={!!errors.name}
+                  className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  {...register('name')}
+                />
+                {errors.name && (
+                  <p id="team-name-error" role="alert" className="mt-1 text-xs text-error">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="team-slug"
+                  className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+                >
+                  Identificador (slug)
+                </label>
+                <input
+                  id="team-slug"
+                  type="text"
+                  disabled={!isAdmin}
+                  placeholder="Ex: ministerio-sao-jose"
+                  className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  {...register('slug')}
+                />
+              </div>
+
+              {isAdmin && (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || teamSaveStatus === 'saving'}
+                    className="flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-on-primary shadow-md shadow-primary/20 transition hover:bg-secondary disabled:opacity-60"
+                  >
+                    {teamSaveStatus === 'saving' ? (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      <span aria-hidden="true" className="material-symbols-outlined text-base">
+                        save
+                      </span>
+                    )}
+                    {teamSaveStatus === 'saving' ? 'Salvando…' : 'Salvar alterações'}
+                  </button>
+                  {teamSaveStatus === 'saved' && (
+                    <span className="flex items-center gap-1 text-sm font-semibold text-primary">
+                      <span aria-hidden="true" className="material-symbols-outlined text-base">
+                        check_circle
+                      </span>
+                      Salvo!
                     </span>
                   )}
-                  {teamSaveStatus === 'saving' ? 'Salvando…' : 'Salvar alterações'}
-                </button>
-                {teamSaveStatus === 'saved' && (
-                  <span className="flex items-center gap-1 text-sm font-semibold text-primary">
-                    <span aria-hidden="true" className="material-symbols-outlined text-base">
-                      check_circle
-                    </span>
-                    Salvo!
+                  {teamSaveStatus === 'error' && (
+                    <span className="text-sm text-error">Erro ao salvar.</span>
+                  )}
+                </div>
+              )}
+            </form>
+          </section>
+
+          {/* Membros */}
+          <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-lowest tonal-shadow">
+            <div className="flex items-center justify-between border-b border-outline-variant/10 px-6 py-4">
+              <div className="flex items-center gap-2">
+                <span aria-hidden="true" className="material-symbols-outlined text-primary">
+                  people
+                </span>
+                <h2 className="font-headline font-bold text-on-surface">
+                  Membros
+                  <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-sm font-bold text-primary">
+                    {members.length}
                   </span>
+                </h2>
+              </div>
+            </div>
+
+            <div className="divide-y divide-outline-variant/10 px-6">
+              {members.map((member) => (
+                <MemberRow
+                  key={member.id}
+                  member={member}
+                  currentUserId={currentUserId ?? ''}
+                  isAdmin={isAdmin}
+                  onRoleChange={handleRoleChange}
+                  onRemove={setToRemove}
+                />
+              ))}
+            </div>
+
+            {/* Formulário de convite — só para admins */}
+            {isAdmin && (
+              <div className="border-t border-outline-variant/10 px-6 py-5">
+                <p className="mb-3 text-sm font-bold text-on-surface">Convidar novo membro</p>
+                <form
+                  onSubmit={handleSendInvite}
+                  noValidate
+                  className="flex flex-col gap-3 sm:flex-row sm:items-end"
+                >
+                  <div className="flex-1">
+                    <label
+                      htmlFor="invite-email"
+                      className="mb-1 block text-xs font-semibold text-on-surface-variant"
+                    >
+                      E-mail
+                    </label>
+                    <input
+                      id="invite-email"
+                      type="email"
+                      required
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="email@exemplo.com"
+                      className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-2.5 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="invite-role"
+                      className="mb-1 block text-xs font-semibold text-on-surface-variant"
+                    >
+                      Role
+                    </label>
+                    <select
+                      id="invite-role"
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value as UserRole)}
+                      className="rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-2.5 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    >
+                      {(Object.entries(ROLE_LABEL) as [UserRole, string][]).map(([v, l]) => (
+                        <option key={v} value={v}>
+                          {l}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={inviteStatus === 'sending' || !inviteEmail.trim()}
+                    className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-on-primary shadow-md shadow-primary/20 transition hover:bg-secondary disabled:opacity-60 whitespace-nowrap"
+                  >
+                    {inviteStatus === 'sending' ? (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      <span aria-hidden="true" className="material-symbols-outlined text-base">
+                        send
+                      </span>
+                    )}
+                    {inviteStatus === 'sending' ? 'Enviando…' : 'Enviar convite'}
+                  </button>
+                </form>
+
+                {inviteStatus === 'sent' && (
+                  <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                    <p className="flex items-center gap-1.5 text-sm font-bold text-primary">
+                      <span aria-hidden="true" className="material-symbols-outlined text-base">
+                        mark_email_read
+                      </span>
+                      Convite enviado!
+                    </p>
+                    <p className="mt-1.5 text-xs text-on-surface-variant">
+                      O membro receberá um e-mail com o link de acesso. Ao clicar, será adicionado à
+                      equipe automaticamente.
+                    </p>
+                  </div>
                 )}
-                {teamSaveStatus === 'error' && (
-                  <span className="text-sm text-error">Erro ao salvar.</span>
+                {inviteStatus === 'error' && inviteError && (
+                  <p className="mt-2 text-sm text-error">{inviteError}</p>
                 )}
               </div>
             )}
-          </form>
-        </section>
 
-        {/* Membros */}
-        <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-lowest tonal-shadow">
-          <div className="flex items-center justify-between border-b border-outline-variant/10 px-6 py-4">
-            <div className="flex items-center gap-2">
-              <span aria-hidden="true" className="material-symbols-outlined text-primary">
-                people
-              </span>
-              <h2 className="font-headline font-bold text-on-surface">
-                Membros
-                <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-sm font-bold text-primary">
-                  {members.length}
-                </span>
-              </h2>
-            </div>
-          </div>
-
-          <div className="divide-y divide-outline-variant/10 px-6">
-            {members.map((member) => (
-              <MemberRow
-                key={member.id}
-                member={member}
-                currentUserId={currentUserId ?? ''}
-                isAdmin={isAdmin}
-                onRoleChange={handleRoleChange}
-                onRemove={setToRemove}
-              />
-            ))}
-          </div>
-
-          {/* Formulário de convite — só para admins */}
-          {isAdmin && (
-            <div className="border-t border-outline-variant/10 px-6 py-5">
-              <p className="mb-3 text-sm font-bold text-on-surface">Convidar novo membro</p>
-              <form
-                onSubmit={handleSendInvite}
-                noValidate
-                className="flex flex-col gap-3 sm:flex-row sm:items-end"
-              >
-                <div className="flex-1">
-                  <label
-                    htmlFor="invite-email"
-                    className="mb-1 block text-xs font-semibold text-on-surface-variant"
-                  >
-                    E-mail
-                  </label>
-                  <input
-                    id="invite-email"
-                    type="email"
-                    required
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="email@exemplo.com"
-                    className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-2.5 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="invite-role"
-                    className="mb-1 block text-xs font-semibold text-on-surface-variant"
-                  >
-                    Role
-                  </label>
-                  <select
-                    id="invite-role"
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value as UserRole)}
-                    className="rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-2.5 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  >
-                    {(Object.entries(ROLE_LABEL) as [UserRole, string][]).map(([v, l]) => (
-                      <option key={v} value={v}>
-                        {l}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button
-                  type="submit"
-                  disabled={inviteStatus === 'sending' || !inviteEmail.trim()}
-                  className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-on-primary shadow-md shadow-primary/20 transition hover:bg-secondary disabled:opacity-60 whitespace-nowrap"
-                >
-                  {inviteStatus === 'sending' ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  ) : (
-                    <span aria-hidden="true" className="material-symbols-outlined text-base">
-                      send
-                    </span>
-                  )}
-                  {inviteStatus === 'sending' ? 'Enviando…' : 'Enviar convite'}
-                </button>
-              </form>
-
-              {inviteStatus === 'sent' && (
-                <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                  <p className="flex items-center gap-1.5 text-sm font-bold text-primary">
-                    <span aria-hidden="true" className="material-symbols-outlined text-base">
-                      mark_email_read
-                    </span>
-                    Convite enviado!
-                  </p>
-                  <p className="mt-1.5 text-xs text-on-surface-variant">
-                    O membro receberá um e-mail com o link de acesso. Ao clicar, será adicionado à
-                    equipe automaticamente.
-                  </p>
-                </div>
-              )}
-              {inviteStatus === 'error' && inviteError && (
-                <p className="mt-2 text-sm text-error">{inviteError}</p>
-              )}
-            </div>
-          )}
-
-          {/* Convites pendentes */}
-          {isAdmin && invites.length > 0 && (
-            <div className="border-t border-outline-variant/10 px-6 pb-5">
-              <p className="mb-3 mt-4 text-sm font-bold text-on-surface">
-                Convites pendentes
-                <span className="ml-2 rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-bold text-secondary">
-                  {invites.length}
-                </span>
-              </p>
-              <ul className="space-y-2">
-                {invites.map((invite) => (
-                  <li
-                    key={invite.id}
-                    className="flex items-center justify-between rounded-2xl bg-surface-container-low px-4 py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-on-surface">{invite.email}</p>
-                      <p className="text-xs text-outline">
-                        {ROLE_LABEL[invite.role]} · enviado{' '}
-                        {new Date(invite.created_at).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => void handleCancelInvite(invite.id)}
-                      aria-label={`Cancelar convite para ${invite.email}`}
-                      className="rounded-xl p-2 text-outline transition hover:bg-error/5 hover:text-error"
-                      title="Cancelar convite"
+            {/* Convites pendentes */}
+            {isAdmin && invites.length > 0 && (
+              <div className="border-t border-outline-variant/10 px-6 pb-5">
+                <p className="mb-3 mt-4 text-sm font-bold text-on-surface">
+                  Convites pendentes
+                  <span className="ml-2 rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-bold text-secondary">
+                    {invites.length}
+                  </span>
+                </p>
+                <ul className="space-y-2">
+                  {invites.map((invite) => (
+                    <li
+                      key={invite.id}
+                      className="flex items-center justify-between rounded-2xl bg-surface-container-low px-4 py-3"
                     >
-                      <span aria-hidden="true" className="material-symbols-outlined text-lg">
-                        cancel
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
-      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-on-surface">{invite.email}</p>
+                        <p className="text-xs text-outline">
+                          {ROLE_LABEL[invite.role]} · enviado{' '}
+                          {new Date(invite.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => void handleCancelInvite(invite.id)}
+                        aria-label={`Cancelar convite para ${invite.email}`}
+                        className="rounded-xl p-2 text-outline transition hover:bg-error/5 hover:text-error"
+                        title="Cancelar convite"
+                      >
+                        <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                          cancel
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
 
       {toRemove && currentUserId && (
         <RemoveConfirmModal
