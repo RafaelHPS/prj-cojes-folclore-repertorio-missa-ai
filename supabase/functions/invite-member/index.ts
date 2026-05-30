@@ -8,8 +8,6 @@ const CORS = {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
-  // Sempre retorna 200 — erros vêm no campo `error` do body
-  // Isso permite que o cliente leia a mensagem exata sem tratamento especial de status
   try {
     const { email, teamId, role, siteUrl } = await req.json() as {
       email: string
@@ -22,8 +20,6 @@ Deno.serve(async (req) => {
     const SERVICE_ROLE  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const ANON_KEY      = Deno.env.get('SUPABASE_ANON_KEY')!
 
-    console.log(`[invite-member] email=${email} teamId=${teamId} role=${role} siteUrl=${siteUrl}`)
-
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { autoRefreshToken: false, persistSession: false },
     })
@@ -34,51 +30,61 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     })
 
-    const { data: { user }, error: authErr } = await caller.auth.getUser()
-    if (authErr || !user) {
-      console.error('[invite-member] auth error:', authErr?.message)
+    const { data: { user: callerUser }, error: authErr } = await caller.auth.getUser()
+    if (authErr || !callerUser) {
       return json({ error: 'Não autenticado' })
     }
 
-    // Verifica se chamador é admin
+    // Verifica se chamador é admin da equipe
     const { data: membership } = await admin
       .from('team_members')
       .select('role')
       .eq('team_id', teamId)
-      .eq('user_id', user.id)
+      .eq('user_id', callerUser.id)
       .single()
 
     if ((membership as { role: string } | null)?.role !== 'admin') {
-      console.error('[invite-member] caller is not admin')
       return json({ error: 'Sem permissão: você precisa ser administrador da equipe.' })
     }
 
     // Registra convite pendente
-    const { error: upsertErr } = await admin.from('invites').upsert(
-      { team_id: teamId, email, role, invited_by: user.id, accepted_at: null },
+    await admin.from('invites').upsert(
+      { team_id: teamId, email, role, invited_by: callerUser.id, accepted_at: null },
       { onConflict: 'team_id,email' },
     )
-    if (upsertErr) {
-      console.error('[invite-member] upsert error:', upsertErr.message)
-      return json({ error: `Erro ao registrar convite: ${upsertErr.message}` })
-    }
 
-    // Envia e-mail
-    const redirectTo = `${siteUrl}/aceitar-convite`
-    console.log(`[invite-member] redirectTo=${redirectTo}`)
-
-    const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo,
-      data: { team_id: teamId, role, invited_by: user.id },
+    // Cria o usuário diretamente (sem envio de e-mail automático)
+    const { data: newUser, error: createErr } = await admin.auth.admin.createUser({
+      email,
+      email_confirm: true,  // confirma e-mail automaticamente
+      user_metadata: { team_id: teamId, role, invited_by: callerUser.id },
     })
 
-    if (inviteErr) {
-      console.error('[invite-member] inviteUserByEmail error:', inviteErr.message)
-      return json({ error: `Erro ao enviar e-mail: ${inviteErr.message}` })
+    if (createErr) {
+      console.error('[invite-member] createUser error:', createErr.message)
+      return json({ error: `Erro ao criar usuário: ${createErr.message}` })
     }
 
-    console.log(`[invite-member] success for ${email}`)
-    return json({ success: true })
+    // Gera link de definição de senha para o admin compartilhar
+    const redirectTo = `${siteUrl}/aceitar-convite`
+    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: { redirectTo },
+    })
+
+    if (linkErr) {
+      console.error('[invite-member] generateLink error:', linkErr.message)
+      // Usuário foi criado, mas sem link — ainda é um sucesso parcial
+      return json({ success: true, link: null })
+    }
+
+    const link =
+      (linkData as unknown as { properties?: { action_link?: string } })
+        ?.properties?.action_link ?? null
+
+    console.log(`[invite-member] success for ${email}, link generated: ${!!link}`)
+    return json({ success: true, link })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Erro interno desconhecido'
     console.error('[invite-member] unexpected error:', message)
@@ -88,7 +94,7 @@ Deno.serve(async (req) => {
 
 function json(body: unknown) {
   return new Response(JSON.stringify(body), {
-    status: 200, // sempre 200 para que o cliente possa ler o body
+    status: 200,
     headers: { ...CORS, 'Content-Type': 'application/json' },
   })
 }

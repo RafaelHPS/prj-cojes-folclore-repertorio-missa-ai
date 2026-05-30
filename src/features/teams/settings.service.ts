@@ -99,14 +99,18 @@ export interface Invite {
   accepted_at: string | null
 }
 
-export async function sendInvite(email: string, teamId: string, role: UserRole): Promise<void> {
+export async function sendInvite(
+  email: string,
+  teamId: string,
+  role: UserRole,
+): Promise<{ link: string | null }> {
   const { data, error } = await supabase.functions.invoke('invite-member', {
     body: { email, teamId, role, siteUrl: window.location.origin },
   })
 
-  // `error` cobre falhas de rede/CORS; `data.error` cobre erros da função
   if (error) throw new Error(error.message)
   if (data?.error) throw new Error(data.error as string)
+  return { link: (data?.link as string | null) ?? null }
 }
 
 export async function fetchPendingInvites(teamId: string): Promise<Invite[]> {
