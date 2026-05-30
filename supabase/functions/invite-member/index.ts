@@ -9,10 +9,11 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
   try {
-    const { email, teamId, role } = await req.json() as {
+    const { email, teamId, role, siteUrl } = await req.json() as {
       email: string
       teamId: string
       role: string
+      siteUrl: string
     }
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -46,7 +47,7 @@ Deno.serve(async (req) => {
       return json({ error: 'Sem permissão: você precisa ser administrador da equipe.' })
     }
 
-    // Registra convite pendente
+    // Registra convite pendente (usado pelo AcceptInvitePage para adicionar à equipe)
     const { error: upsertErr } = await admin.from('invites').upsert(
       { team_id: teamId, email, role, invited_by: callerUser.id, accepted_at: null },
       { onConflict: 'team_id,email' },
@@ -55,19 +56,20 @@ Deno.serve(async (req) => {
       return json({ error: `Erro ao registrar convite: ${upsertErr.message}` })
     }
 
-    // Cria o usuário (e-mail confirmado automaticamente, sem envio de e-mail)
-    const { error: createErr } = await admin.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      user_metadata: { team_id: teamId, role, invited_by: callerUser.id },
+    // Envia e-mail de convite oficial do Supabase com link
+    // Nota: o trigger on_auth_user_invited foi removido — não há mais conflito
+    const redirectTo = `${siteUrl}/aceitar-convite`
+    const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
+      redirectTo,
+      data: { team_id: teamId, role, invited_by: callerUser.id },
     })
 
-    if (createErr) {
-      console.error('[invite-member] createUser:', createErr.message)
-      return json({ error: `Erro ao criar usuário: ${createErr.message}` })
+    if (inviteErr) {
+      console.error('[invite-member] inviteUserByEmail:', inviteErr.message)
+      return json({ error: `Erro ao enviar convite: ${inviteErr.message}` })
     }
 
-    console.log(`[invite-member] user created: ${email}`)
+    console.log(`[invite-member] invite sent to ${email}`)
     return json({ success: true })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Erro interno'

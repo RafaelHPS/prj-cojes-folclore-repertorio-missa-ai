@@ -544,14 +544,13 @@ export default function SettingsPage() {
                 <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
                   <p className="flex items-center gap-1.5 text-sm font-bold text-primary">
                     <span aria-hidden="true" className="material-symbols-outlined text-base">
-                      check_circle
+                      mark_email_read
                     </span>
-                    Usuário criado com sucesso!
+                    Convite enviado!
                   </p>
                   <p className="mt-1.5 text-xs text-on-surface-variant">
-                    Peça ao novo membro para acessar o aplicativo, inserir o e-mail e clicar em{' '}
-                    <span className="font-semibold">"Esqueci minha senha"</span> para definir a
-                    senha. Após o primeiro login, a equipe aparecerá automaticamente.
+                    O membro receberá um e-mail com o link de acesso. Ao clicar, será adicionado à
+                    equipe automaticamente.
                   </p>
                 </div>
               )}

@@ -101,7 +101,7 @@ export interface Invite {
 
 export async function sendInvite(email: string, teamId: string, role: UserRole): Promise<void> {
   const { data, error } = await supabase.functions.invoke('invite-member', {
-    body: { email, teamId, role },
+    body: { email, teamId, role, siteUrl: window.location.origin },
   })
 
   if (error) throw new Error(error.message)
