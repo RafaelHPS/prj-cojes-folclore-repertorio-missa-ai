@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
-import { formatDateShort, formatTime } from '@/utils/date.util'
+import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
 import { fetchSongs } from '@/features/songs/songs.service'
 import type { Song } from '@/features/songs/types'
 import type { MassPart } from '@/types/database'
@@ -343,6 +343,11 @@ export default function MassRepertoirePage() {
               {' · '}
               {totalSongs} música{totalSongs !== 1 ? 's' : ''} no repertório
             </p>
+            {mass.updated_at !== mass.created_at && (
+              <p className="mt-0.5 text-xs text-outline">
+                Última atualização: {formatDateTime(mass.updated_at)}
+              </p>
+            )}
           </div>
 
           <div className="flex gap-2">
