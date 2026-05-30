@@ -47,28 +47,35 @@ export interface TeamMember {
 }
 
 export async function fetchTeamMembers(teamId: string): Promise<TeamMember[]> {
-  const { data, error } = await supabase
+  const { data: membersData, error: membersError } = await supabase
     .from('team_members')
-    .select('id, user_id, role, created_at, profiles(full_name)')
+    .select('id, user_id, role, created_at')
     .eq('team_id', teamId)
     .order('created_at', { ascending: true })
 
-  if (error) throw error
+  if (membersError) throw membersError
 
-  type Row = {
-    id: string
-    user_id: string
-    role: string
-    created_at: string
-    profiles: { full_name: string | null } | null
-  }
+  type MemberRow = { id: string; user_id: string; role: string; created_at: string }
+  const members = (membersData ?? []) as unknown as MemberRow[]
+  if (members.length === 0) return []
 
-  return ((data ?? []) as unknown as Row[]).map((row) => ({
+  const userIds = members.map((m) => m.user_id)
+  const { data: profilesData } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .in('id', userIds)
+
+  type ProfileRow = { id: string; full_name: string | null }
+  const profileMap = new Map(
+    ((profilesData ?? []) as unknown as ProfileRow[]).map((p) => [p.id, p.full_name]),
+  )
+
+  return members.map((row) => ({
     id: row.id,
     user_id: row.user_id,
     role: row.role as UserRole,
     created_at: row.created_at,
-    full_name: row.profiles?.full_name ?? null,
+    full_name: profileMap.get(row.user_id) ?? null,
   }))
 }
 
@@ -122,5 +129,44 @@ export async function fetchPendingInvites(teamId: string): Promise<Invite[]> {
 
 export async function cancelInvite(inviteId: string): Promise<void> {
   const { error } = await supabase.from('invites').delete().eq('id', inviteId)
+  if (error) throw error
+}
+
+// ── Perfil do usuário ─────────────────────────────────────────
+
+export interface UserProfile {
+  id: string
+  full_name: string | null
+  email: string
+}
+
+export async function fetchUserProfile(): Promise<UserProfile> {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+  if (authError || !user) throw new Error('Não autenticado')
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .eq('id', user.id)
+    .single()
+
+  if (error) throw error
+  const row = data as { id: string; full_name: string | null }
+  return { id: user.id, full_name: row?.full_name ?? null, email: user.email ?? '' }
+}
+
+export async function updateUserProfile(userId: string, fullName: string): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ full_name: fullName.trim() } as never)
+    .eq('id', userId)
+  if (error) throw error
+}
+
+export async function updateUserPassword(newPassword: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
   if (error) throw error
 }

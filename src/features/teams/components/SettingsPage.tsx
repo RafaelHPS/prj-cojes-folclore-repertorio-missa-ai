@@ -18,8 +18,29 @@ import {
   sendInvite,
   fetchPendingInvites,
   cancelInvite,
+  fetchUserProfile,
+  updateUserProfile,
+  updateUserPassword,
 } from '../settings.service'
-import type { TeamDetails, TeamMember, Invite } from '../settings.service'
+import type { TeamDetails, TeamMember, Invite, UserProfile } from '../settings.service'
+
+// ── Schemas de perfil e senha ─────────────────────────────────
+
+const profileSchema = z.object({
+  fullName: z.string().min(1, 'Nome é obrigatório').max(100, 'Nome muito longo'),
+})
+type ProfileFormData = z.infer<typeof profileSchema>
+
+const passwordSchema = z
+  .object({
+    newPassword: z.string().min(8, 'Mínimo 8 caracteres'),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: 'As senhas não coincidem',
+    path: ['confirmPassword'],
+  })
+type PasswordFormData = z.infer<typeof passwordSchema>
 
 // ── Constantes ────────────────────────────────────────────────
 
@@ -44,6 +65,275 @@ const teamSchema = z.object({
   slug: z.string().max(60, 'Slug muito longo').optional(),
 })
 type TeamFormData = z.infer<typeof teamSchema>
+
+// ── Seção: Minha conta ────────────────────────────────────────
+
+function ProfileSection() {
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [profileStatus, setProfileStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [passwordStatus, setPasswordStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>(
+    'idle',
+  )
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
+
+  const profileForm = useForm<ProfileFormData>({ resolver: zodResolver(profileSchema) })
+  const passwordForm = useForm<PasswordFormData>({ resolver: zodResolver(passwordSchema) })
+
+  useEffect(() => {
+    fetchUserProfile()
+      .then((p) => {
+        setProfile(p)
+        profileForm.reset({ fullName: p.full_name ?? '' })
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false))
+  }, [profileForm])
+
+  async function handleSaveProfile(data: ProfileFormData) {
+    if (!profile) return
+    setProfileStatus('saving')
+    try {
+      await updateUserProfile(profile.id, data.fullName)
+      setProfile((prev) => (prev ? { ...prev, full_name: data.fullName } : prev))
+      setProfileStatus('saved')
+      setTimeout(() => setProfileStatus('idle'), 2000)
+    } catch {
+      setProfileStatus('error')
+    }
+  }
+
+  async function handleSavePassword(data: PasswordFormData) {
+    setPasswordStatus('saving')
+    try {
+      await updateUserPassword(data.newPassword)
+      passwordForm.reset()
+      setShowPasswordForm(false)
+      setPasswordStatus('saved')
+      setTimeout(() => setPasswordStatus('idle'), 3000)
+    } catch {
+      setPasswordStatus('error')
+    }
+  }
+
+  const initial = (profile?.full_name ?? profile?.email ?? 'U').charAt(0).toUpperCase()
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-lowest tonal-shadow">
+      <div className="flex items-center gap-2 border-b border-outline-variant/10 px-6 py-4">
+        <span aria-hidden="true" className="material-symbols-outlined text-primary">
+          account_circle
+        </span>
+        <h2 className="font-headline font-bold text-on-surface">Minha conta</h2>
+      </div>
+
+      {isLoading ? (
+        <div className="flex h-32 items-center justify-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      ) : (
+        <div className="space-y-6 p-6">
+          {/* Avatar + info */}
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary-container text-2xl font-extrabold text-white">
+              {initial}
+            </div>
+            <div>
+              <p className="font-semibold text-on-surface">{profile?.full_name ?? 'Sem nome'}</p>
+              <p className="text-sm text-outline">{profile?.email}</p>
+            </div>
+          </div>
+
+          {/* Formulário de perfil */}
+          <form
+            onSubmit={profileForm.handleSubmit(handleSaveProfile)}
+            noValidate
+            className="space-y-4"
+          >
+            <div>
+              <label
+                htmlFor="profile-name"
+                className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+              >
+                Nome completo *
+              </label>
+              <input
+                id="profile-name"
+                type="text"
+                placeholder="Seu nome"
+                aria-invalid={!!profileForm.formState.errors.fullName}
+                aria-describedby={
+                  profileForm.formState.errors.fullName ? 'profile-name-error' : undefined
+                }
+                className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                {...profileForm.register('fullName')}
+              />
+              {profileForm.formState.errors.fullName && (
+                <p id="profile-name-error" role="alert" className="mt-1 text-xs text-error">
+                  {profileForm.formState.errors.fullName.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-on-surface-variant">
+                E-mail
+              </label>
+              <input
+                type="email"
+                value={profile?.email ?? ''}
+                readOnly
+                aria-label="E-mail (somente leitura)"
+                className="w-full cursor-not-allowed rounded-2xl border border-outline-variant bg-surface-container-low/50 px-4 py-3 text-sm text-on-surface-variant outline-none opacity-70"
+              />
+              <p className="mt-1 text-xs text-outline">O e-mail não pode ser alterado aqui.</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={profileForm.formState.isSubmitting || profileStatus === 'saving'}
+                className="flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-on-primary shadow-md shadow-primary/20 transition hover:bg-secondary disabled:opacity-60"
+              >
+                {profileStatus === 'saving' ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <span aria-hidden="true" className="material-symbols-outlined text-base">
+                    save
+                  </span>
+                )}
+                {profileStatus === 'saving' ? 'Salvando…' : 'Salvar perfil'}
+              </button>
+              {profileStatus === 'saved' && (
+                <span className="flex items-center gap-1 text-sm font-semibold text-primary">
+                  <span aria-hidden="true" className="material-symbols-outlined text-base">
+                    check_circle
+                  </span>
+                  Salvo!
+                </span>
+              )}
+              {profileStatus === 'error' && (
+                <span className="text-sm text-error">Erro ao salvar.</span>
+              )}
+            </div>
+          </form>
+
+          {/* Senha */}
+          <div className="border-t border-outline-variant/10 pt-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-on-surface">Senha</p>
+                <p className="text-xs text-outline">Altere sua senha de acesso ao portal.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPasswordForm((v) => !v)
+                  if (showPasswordForm) {
+                    passwordForm.reset()
+                    setPasswordStatus('idle')
+                  }
+                }}
+                className="rounded-full border border-outline-variant px-4 py-2 text-xs font-semibold text-on-surface-variant transition hover:bg-surface-container-low"
+              >
+                {showPasswordForm ? 'Cancelar' : 'Alterar senha'}
+              </button>
+            </div>
+
+            {passwordStatus === 'saved' && !showPasswordForm && (
+              <p className="mt-2 flex items-center gap-1 text-sm font-semibold text-primary">
+                <span aria-hidden="true" className="material-symbols-outlined text-base">
+                  check_circle
+                </span>
+                Senha alterada com sucesso!
+              </p>
+            )}
+
+            {showPasswordForm && (
+              <form
+                onSubmit={passwordForm.handleSubmit(handleSavePassword)}
+                noValidate
+                className="mt-4 space-y-3"
+              >
+                <div>
+                  <label
+                    htmlFor="new-password"
+                    className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+                  >
+                    Nova senha *
+                  </label>
+                  <input
+                    id="new-password"
+                    type="password"
+                    placeholder="Mínimo 8 caracteres"
+                    aria-invalid={!!passwordForm.formState.errors.newPassword}
+                    aria-describedby={
+                      passwordForm.formState.errors.newPassword ? 'new-password-error' : undefined
+                    }
+                    className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    {...passwordForm.register('newPassword')}
+                  />
+                  {passwordForm.formState.errors.newPassword && (
+                    <p id="new-password-error" role="alert" className="mt-1 text-xs text-error">
+                      {passwordForm.formState.errors.newPassword.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="confirm-password"
+                    className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+                  >
+                    Confirmar nova senha *
+                  </label>
+                  <input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="Repita a nova senha"
+                    aria-invalid={!!passwordForm.formState.errors.confirmPassword}
+                    aria-describedby={
+                      passwordForm.formState.errors.confirmPassword
+                        ? 'confirm-password-error'
+                        : undefined
+                    }
+                    className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    {...passwordForm.register('confirmPassword')}
+                  />
+                  {passwordForm.formState.errors.confirmPassword && (
+                    <p id="confirm-password-error" role="alert" className="mt-1 text-xs text-error">
+                      {passwordForm.formState.errors.confirmPassword.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="submit"
+                    disabled={passwordForm.formState.isSubmitting || passwordStatus === 'saving'}
+                    className="flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-on-primary shadow-md shadow-primary/20 transition hover:bg-secondary disabled:opacity-60"
+                  >
+                    {passwordStatus === 'saving' ? (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      <span aria-hidden="true" className="material-symbols-outlined text-base">
+                        lock
+                      </span>
+                    )}
+                    {passwordStatus === 'saving' ? 'Salvando…' : 'Confirmar nova senha'}
+                  </button>
+                  {passwordStatus === 'error' && (
+                    <span className="text-sm text-error">Erro ao alterar senha.</span>
+                  )}
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
 
 // ── Sub-componentes ───────────────────────────────────────────
 
@@ -362,10 +652,13 @@ export default function SettingsPage() {
         <h1 className="font-headline text-4xl font-extrabold tracking-tight text-on-surface lg:text-5xl">
           Configurações
         </h1>
-        <p className="mt-2 text-outline">Gerencie os dados e membros da equipe.</p>
+        <p className="mt-2 text-outline">Gerencie seu perfil, dados e membros da equipe.</p>
       </header>
 
       <div className="space-y-6">
+        {/* Minha conta */}
+        <ProfileSection />
+
         {/* Dados da equipe */}
         <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-lowest tonal-shadow">
           <div className="flex items-center gap-2 border-b border-outline-variant/10 px-6 py-4">
