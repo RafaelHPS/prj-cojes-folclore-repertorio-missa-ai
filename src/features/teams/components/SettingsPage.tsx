@@ -700,7 +700,7 @@ export default function SettingsPage() {
 
       {activeTab === 'account' && <ProfileSection />}
 
-      {activeTab === 'team' && (
+      {activeTab === 'team' && isAdmin && (
         <div className="space-y-6">
           {/* Dados da equipe */}
           <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-lowest tonal-shadow">
