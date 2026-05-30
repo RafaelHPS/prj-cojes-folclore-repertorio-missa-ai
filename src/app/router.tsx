@@ -29,41 +29,44 @@ function withSuspense(element: React.ReactNode) {
   return <Suspense fallback={<Loader />}>{element}</Suspense>
 }
 
-export const router = createBrowserRouter([
-  // Rotas públicas
-  {
-    element: <PublicLayout />,
-    children: [
-      { path: '/login', element: withSuspense(<LoginPage />) },
-      { path: '/aceitar-convite', element: withSuspense(<AcceptInvitePage />) },
-      { path: '/missas/:id', element: withSuspense(<MassDetailPage />) },
-    ],
-  },
+export const router = createBrowserRouter(
+  [
+    // Rotas públicas
+    {
+      element: <PublicLayout />,
+      children: [
+        { path: '/login', element: withSuspense(<LoginPage />) },
+        { path: '/aceitar-convite', element: withSuspense(<AcceptInvitePage />) },
+        { path: '/missas/:id', element: withSuspense(<MassDetailPage />) },
+      ],
+    },
 
-  // Seleção de equipe
-  {
-    element: <ProtectedRoute />,
-    children: [{ path: '/selecionar-equipe', element: withSuspense(<SelectTeamPage />) }],
-  },
+    // Seleção de equipe
+    {
+      element: <ProtectedRoute />,
+      children: [{ path: '/selecionar-equipe', element: withSuspense(<SelectTeamPage />) }],
+    },
 
-  // Rotas privadas
-  {
-    element: <ProtectedRoute requireTeam />,
-    children: [
-      {
-        element: <DashboardLayout />,
-        children: [
-          { path: '/dashboard', element: withSuspense(<DashboardPage />) },
-          { path: '/musicas', element: withSuspense(<SongsPage />) },
-          { path: '/missas', element: withSuspense(<MassesPage />) },
-          { path: '/missas/:id/gerenciar', element: withSuspense(<MassRepertoirePage />) },
-          { path: '/estatisticas', element: withSuspense(<StatisticsPage />) },
-          { path: '/configuracoes', element: withSuspense(<SettingsPage />) },
-        ],
-      },
-    ],
-  },
+    // Rotas privadas
+    {
+      element: <ProtectedRoute requireTeam />,
+      children: [
+        {
+          element: <DashboardLayout />,
+          children: [
+            { path: '/dashboard', element: withSuspense(<DashboardPage />) },
+            { path: '/musicas', element: withSuspense(<SongsPage />) },
+            { path: '/missas', element: withSuspense(<MassesPage />) },
+            { path: '/missas/:id/gerenciar', element: withSuspense(<MassRepertoirePage />) },
+            { path: '/estatisticas', element: withSuspense(<StatisticsPage />) },
+            { path: '/configuracoes', element: withSuspense(<SettingsPage />) },
+          ],
+        },
+      ],
+    },
 
-  { path: '/', element: <Navigate to="/dashboard" replace /> },
-  { path: '*', element: <Navigate to="/dashboard" replace /> },
-])
+    { path: '/', element: <Navigate to="/dashboard" replace /> },
+    { path: '*', element: <Navigate to="/dashboard" replace /> },
+  ],
+  { basename: import.meta.env.BASE_URL },
+)
