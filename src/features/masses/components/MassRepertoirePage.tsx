@@ -58,12 +58,24 @@ interface SongRowProps {
   total: number
   isFirst: boolean
   isLast: boolean
+  canEdit: boolean
+  canDelete: boolean
   onMoveUp: () => void
   onMoveDown: () => void
   onRemove: () => void
 }
 
-function SongRow({ item, index, isFirst, isLast, onMoveUp, onMoveDown, onRemove }: SongRowProps) {
+function SongRow({
+  item,
+  index,
+  isFirst,
+  isLast,
+  canEdit,
+  canDelete,
+  onMoveUp,
+  onMoveDown,
+  onRemove,
+}: SongRowProps) {
   const { song } = item
 
   return (
@@ -87,37 +99,45 @@ function SongRow({ item, index, isFirst, isLast, onMoveUp, onMoveDown, onRemove 
       </div>
 
       {/* Ações */}
-      <div className="flex flex-shrink-0 items-center gap-1">
-        <button
-          onClick={onMoveUp}
-          disabled={isFirst}
-          aria-label="Mover para cima"
-          className="rounded-lg p-1.5 text-outline transition hover:bg-surface-container-low hover:text-on-surface disabled:opacity-30 disabled:cursor-not-allowed"
-        >
-          <span aria-hidden="true" className="material-symbols-outlined text-base">
-            expand_less
-          </span>
-        </button>
-        <button
-          onClick={onMoveDown}
-          disabled={isLast}
-          aria-label="Mover para baixo"
-          className="rounded-lg p-1.5 text-outline transition hover:bg-surface-container-low hover:text-on-surface disabled:opacity-30 disabled:cursor-not-allowed"
-        >
-          <span aria-hidden="true" className="material-symbols-outlined text-base">
-            expand_more
-          </span>
-        </button>
-        <button
-          onClick={onRemove}
-          aria-label={`Remover ${song.title}`}
-          className="rounded-lg p-1.5 text-outline transition hover:bg-error/5 hover:text-error"
-        >
-          <span aria-hidden="true" className="material-symbols-outlined text-base">
-            delete
-          </span>
-        </button>
-      </div>
+      {(canEdit || canDelete) && (
+        <div className="flex flex-shrink-0 items-center gap-1">
+          {canEdit && (
+            <>
+              <button
+                onClick={onMoveUp}
+                disabled={isFirst}
+                aria-label="Mover para cima"
+                className="rounded-lg p-1.5 text-outline transition hover:bg-surface-container-low hover:text-on-surface disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <span aria-hidden="true" className="material-symbols-outlined text-base">
+                  expand_less
+                </span>
+              </button>
+              <button
+                onClick={onMoveDown}
+                disabled={isLast}
+                aria-label="Mover para baixo"
+                className="rounded-lg p-1.5 text-outline transition hover:bg-surface-container-low hover:text-on-surface disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <span aria-hidden="true" className="material-symbols-outlined text-base">
+                  expand_more
+                </span>
+              </button>
+            </>
+          )}
+          {canDelete && (
+            <button
+              onClick={onRemove}
+              aria-label={`Remover ${song.title}`}
+              className="rounded-lg p-1.5 text-outline transition hover:bg-error/5 hover:text-error"
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-base">
+                delete
+              </span>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -127,13 +147,24 @@ function SongRow({ item, index, isFirst, isLast, onMoveUp, onMoveDown, onRemove 
 interface PartSectionProps {
   part: MassPart
   songs: MassSongWithSong[]
+  canEdit: boolean
+  canDelete: boolean
   onAdd: () => void
   onMoveUp: (index: number) => void
   onMoveDown: (index: number) => void
   onRemove: (id: string) => void
 }
 
-function PartSection({ part, songs, onAdd, onMoveUp, onMoveDown, onRemove }: PartSectionProps) {
+function PartSection({
+  part,
+  songs,
+  canEdit,
+  canDelete,
+  onAdd,
+  onMoveUp,
+  onMoveDown,
+  onRemove,
+}: PartSectionProps) {
   return (
     <section
       aria-labelledby={`part-${part}`}
@@ -152,45 +183,49 @@ function PartSection({ part, songs, onAdd, onMoveUp, onMoveDown, onRemove }: Par
             </span>
           )}
         </h2>
-        <button
-          onClick={onAdd}
-          aria-label={`Adicionar música em ${PART_LABEL[part]}`}
-          className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary transition hover:bg-primary hover:text-on-primary"
-        >
-          <span aria-hidden="true" className="material-symbols-outlined text-sm">
-            add
-          </span>
-          Adicionar
-        </button>
+        {canEdit && (
+          <button
+            onClick={onAdd}
+            aria-label={`Adicionar música em ${PART_LABEL[part]}`}
+            className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary transition hover:bg-primary hover:text-on-primary"
+          >
+            <span aria-hidden="true" className="material-symbols-outlined text-sm">
+              add
+            </span>
+            Adicionar
+          </button>
+        )}
       </div>
 
       {/* Músicas */}
       <div className="p-3 space-y-2">
-        {songs.length === 0 ? (
-          <button
-            onClick={onAdd}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-outline-variant/40 py-4 text-sm text-outline transition hover:border-primary/30 hover:text-primary"
-          >
-            <span aria-hidden="true" className="material-symbols-outlined text-base">
-              add_circle
-            </span>
-            Adicionar música
-          </button>
-        ) : (
-          songs.map((item, i) => (
-            <SongRow
-              key={item.id}
-              item={item}
-              index={i}
-              total={songs.length}
-              isFirst={i === 0}
-              isLast={i === songs.length - 1}
-              onMoveUp={() => onMoveUp(i)}
-              onMoveDown={() => onMoveDown(i)}
-              onRemove={() => onRemove(item.id)}
-            />
-          ))
-        )}
+        {songs.length === 0
+          ? canEdit && (
+              <button
+                onClick={onAdd}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-outline-variant/40 py-4 text-sm text-outline transition hover:border-primary/30 hover:text-primary"
+              >
+                <span aria-hidden="true" className="material-symbols-outlined text-base">
+                  add_circle
+                </span>
+                Adicionar música
+              </button>
+            )
+          : songs.map((item, i) => (
+              <SongRow
+                key={item.id}
+                item={item}
+                index={i}
+                total={songs.length}
+                isFirst={i === 0}
+                isLast={i === songs.length - 1}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onMoveUp={() => onMoveUp(i)}
+                onMoveDown={() => onMoveDown(i)}
+                onRemove={() => onRemove(item.id)}
+              />
+            ))}
       </div>
     </section>
   )
@@ -201,6 +236,8 @@ function PartSection({ part, songs, onAdd, onMoveUp, onMoveDown, onRemove }: Par
 export default function MassRepertoirePage() {
   const { id } = useParams<{ id: string }>()
   const team = useActiveTeam()
+  const canEdit = team?.role !== 'viewer'
+  const canDelete = team?.role === 'admin' || team?.role === 'editor'
 
   const [mass, setMass] = useState<Mass | null>(null)
   const [songsByPart, setSongsByPart] = useState<Partial<Record<MassPart, MassSongWithSong[]>>>({})
@@ -400,6 +437,8 @@ export default function MassRepertoirePage() {
             key={part}
             part={part}
             songs={songsByPart[part] ?? []}
+            canEdit={canEdit}
+            canDelete={canDelete}
             onAdd={() => setPicker(part)}
             onMoveUp={(i) => void handleMoveUp(part, i)}
             onMoveDown={(i) => void handleMoveDown(part, i)}

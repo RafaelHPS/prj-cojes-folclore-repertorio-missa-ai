@@ -88,6 +88,8 @@ function SortableTh({ label, sortKey, current, dir, onSort, className = '' }: So
 
 export default function MassesPage() {
   const team = useActiveTeam()
+  const canEdit = team?.role !== 'viewer'
+  const canDelete = team?.role === 'admin' || team?.role === 'editor'
   const [masses, setMasses] = useState<MassWithCount[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<MassFilter>('upcoming')
@@ -183,15 +185,17 @@ export default function MassesPage() {
             Gerencie e visualize todos os repertórios da sua paróquia.
           </p>
         </div>
-        <button
-          onClick={() => setModal({ mode: 'create' })}
-          className="flex w-fit items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-bold text-on-primary shadow-lg shadow-primary/20 transition hover:bg-secondary"
-        >
-          <span aria-hidden="true" className="material-symbols-outlined text-base">
-            add
-          </span>
-          Nova Missa
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setModal({ mode: 'create' })}
+            className="flex w-fit items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-bold text-on-primary shadow-lg shadow-primary/20 transition hover:bg-secondary"
+          >
+            <span aria-hidden="true" className="material-symbols-outlined text-base">
+              add
+            </span>
+            Nova Missa
+          </button>
+        )}
       </header>
 
       {/* Filter bar */}
@@ -385,15 +389,17 @@ export default function MassesPage() {
                     {/* Ações */}
                     <td className="px-8 py-5">
                       <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                        <button
-                          onClick={() => setModal({ mode: 'edit', mass })}
-                          aria-label={`Editar ${mass.title}`}
-                          className="rounded-xl p-2 text-outline transition hover:bg-primary/5 hover:text-primary"
-                        >
-                          <span aria-hidden="true" className="material-symbols-outlined text-lg">
-                            edit
-                          </span>
-                        </button>
+                        {canEdit && (
+                          <button
+                            onClick={() => setModal({ mode: 'edit', mass })}
+                            aria-label={`Editar ${mass.title}`}
+                            className="rounded-xl p-2 text-outline transition hover:bg-primary/5 hover:text-primary"
+                          >
+                            <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                              edit
+                            </span>
+                          </button>
+                        )}
                         <Link
                           to={`/missas/${mass.id}/gerenciar`}
                           aria-label={`Gerenciar repertório de ${mass.title}`}
@@ -401,15 +407,17 @@ export default function MassesPage() {
                         >
                           Repertório
                         </Link>
-                        <button
-                          onClick={() => setToDelete(mass)}
-                          aria-label={`Remover ${mass.title}`}
-                          className="rounded-xl p-2 text-outline transition hover:bg-error/5 hover:text-error"
-                        >
-                          <span aria-hidden="true" className="material-symbols-outlined text-lg">
-                            delete
-                          </span>
-                        </button>
+                        {canDelete && (
+                          <button
+                            onClick={() => setToDelete(mass)}
+                            aria-label={`Remover ${mass.title}`}
+                            className="rounded-xl p-2 text-outline transition hover:bg-error/5 hover:text-error"
+                          >
+                            <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                              delete
+                            </span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

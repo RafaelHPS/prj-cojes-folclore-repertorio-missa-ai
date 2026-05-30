@@ -62,6 +62,8 @@ interface ViewerState {
 
 export default function SongsPage() {
   const team = useActiveTeam()
+  const canEdit = team?.role !== 'viewer'
+  const canDelete = team?.role === 'admin' || team?.role === 'editor'
   const [songs, setSongs] = useState<Song[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -174,15 +176,17 @@ export default function SongsPage() {
             {songs.length} música{songs.length !== 1 ? 's' : ''} no repertório
           </p>
         </div>
-        <button
-          onClick={() => setModal({ mode: 'create' })}
-          className="flex w-fit items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-bold text-on-primary shadow-lg shadow-primary/20 transition hover:bg-secondary"
-        >
-          <span aria-hidden="true" className="material-symbols-outlined text-base">
-            add
-          </span>
-          Nova música
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setModal({ mode: 'create' })}
+            className="flex w-fit items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-bold text-on-primary shadow-lg shadow-primary/20 transition hover:bg-secondary"
+          >
+            <span aria-hidden="true" className="material-symbols-outlined text-base">
+              add
+            </span>
+            Nova música
+          </button>
+        )}
       </header>
 
       {/* Filter bar */}
@@ -295,6 +299,8 @@ export default function SongsPage() {
           onEdit={(song) => setModal({ mode: 'edit', song })}
           onDelete={setToDelete}
           onView={(label, url) => setViewer({ label, url })}
+          canEdit={canEdit}
+          canDelete={canDelete}
         />
       ) : (
         <ListView
@@ -305,6 +311,8 @@ export default function SongsPage() {
           onEdit={(song) => setModal({ mode: 'edit', song })}
           onDelete={setToDelete}
           onView={(label, url) => setViewer({ label, url })}
+          canEdit={canEdit}
+          canDelete={canDelete}
         />
       )}
 
@@ -342,12 +350,14 @@ interface ViewProps {
   onEdit: (song: Song) => void
   onDelete: (song: Song) => void
   onView: (label: string, url: string) => void
+  canEdit: boolean
+  canDelete: boolean
   sortKey?: SortKey
   sortDir?: SortDir
   onSort?: (k: SortKey) => void
 }
 
-function GridView({ songs, onEdit, onDelete, onView }: ViewProps) {
+function GridView({ songs, onEdit, onDelete, onView, canEdit, canDelete }: ViewProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {songs.map((song) => (
@@ -391,26 +401,32 @@ function GridView({ songs, onEdit, onDelete, onView }: ViewProps) {
           </div>
 
           {/* Hover actions */}
-          <div className="absolute right-3 top-3 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-            <button
-              onClick={() => onEdit(song)}
-              aria-label={`Editar ${song.title}`}
-              className="rounded-xl p-2 text-outline transition hover:bg-primary/5 hover:text-primary"
-            >
-              <span aria-hidden="true" className="material-symbols-outlined text-lg">
-                edit
-              </span>
-            </button>
-            <button
-              onClick={() => onDelete(song)}
-              aria-label={`Remover ${song.title}`}
-              className="rounded-xl p-2 text-outline transition hover:bg-error/5 hover:text-error"
-            >
-              <span aria-hidden="true" className="material-symbols-outlined text-lg">
-                delete
-              </span>
-            </button>
-          </div>
+          {(canEdit || canDelete) && (
+            <div className="absolute right-3 top-3 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+              {canEdit && (
+                <button
+                  onClick={() => onEdit(song)}
+                  aria-label={`Editar ${song.title}`}
+                  className="rounded-xl p-2 text-outline transition hover:bg-primary/5 hover:text-primary"
+                >
+                  <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                    edit
+                  </span>
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  onClick={() => onDelete(song)}
+                  aria-label={`Remover ${song.title}`}
+                  className="rounded-xl p-2 text-outline transition hover:bg-error/5 hover:text-error"
+                >
+                  <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                    delete
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -422,6 +438,8 @@ function ListView({
   onEdit,
   onDelete,
   onView,
+  canEdit,
+  canDelete,
   sortKey = 'title',
   sortDir = 'asc',
   onSort = () => {},
@@ -561,24 +579,28 @@ function ListView({
                 </td>
                 <td className="px-8 py-5">
                   <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button
-                      onClick={() => onEdit(song)}
-                      aria-label={`Editar ${song.title}`}
-                      className="rounded-lg p-2 text-outline transition hover:bg-primary/5 hover:text-primary"
-                    >
-                      <span aria-hidden="true" className="material-symbols-outlined text-lg">
-                        edit
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => onDelete(song)}
-                      aria-label={`Remover ${song.title}`}
-                      className="rounded-lg p-2 text-outline transition hover:bg-error/5 hover:text-error"
-                    >
-                      <span aria-hidden="true" className="material-symbols-outlined text-lg">
-                        delete
-                      </span>
-                    </button>
+                    {canEdit && (
+                      <button
+                        onClick={() => onEdit(song)}
+                        aria-label={`Editar ${song.title}`}
+                        className="rounded-lg p-2 text-outline transition hover:bg-primary/5 hover:text-primary"
+                      >
+                        <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                          edit
+                        </span>
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => onDelete(song)}
+                        aria-label={`Remover ${song.title}`}
+                        className="rounded-lg p-2 text-outline transition hover:bg-error/5 hover:text-error"
+                      >
+                        <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                          delete
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
