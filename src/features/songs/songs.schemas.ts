@@ -1,9 +1,27 @@
 import { z } from 'zod'
+import type { SongOrigin } from './types'
 
-export const songSchema = z.object({
-  title: z.string().min(1, 'Título é obrigatório').max(200, 'Título muito longo'),
-  artist: z.string().max(200, 'Nome muito longo'),
-  key: z.string(),
-})
+export const BOOK_ORIGINS: SongOrigin[] = ['arquidiocese', 'cojes', 'salmos']
+
+export const ORIGIN_LABEL: Record<SongOrigin, string> = {
+  outros: 'Outros',
+  arquidiocese: 'Livro Arquidiocese',
+  cojes: 'Livrinho COJES',
+  salmos: 'Livro dos Salmos',
+}
+
+export const songSchema = z
+  .object({
+    title: z.string().min(1, 'Título é obrigatório').max(200, 'Título muito longo'),
+    artist: z.string().max(200, 'Nome muito longo'),
+    key: z.string(),
+    origin: z.enum(['outros', 'arquidiocese', 'cojes', 'salmos'] as const),
+    book_number: z.string().max(20, 'Número muito longo'),
+  })
+  .refine(
+    (data) =>
+      !BOOK_ORIGINS.includes(data.origin as SongOrigin) || data.book_number.trim().length > 0,
+    { message: 'Número no livro é obrigatório para esta origem', path: ['book_number'] },
+  )
 
 export type SongFormData = z.infer<typeof songSchema>

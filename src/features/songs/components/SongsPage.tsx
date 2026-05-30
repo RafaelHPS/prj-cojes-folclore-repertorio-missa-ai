@@ -7,13 +7,20 @@ import { fetchSongs, createSong, updateSong, deleteSong } from '../songs.service
 import type { SongFileType } from '../songs.service'
 import type { Song } from '../types'
 import type { SongFormData } from '../songs.schemas'
+import { ORIGIN_LABEL } from '../songs.schemas'
 
 import { SongModal } from './SongModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { FileBadges } from './FileBadges'
 import { FileViewerModal } from './FileViewerModal'
 
-const EMPTY_FORM: SongFormData = { title: '', artist: '', key: '' }
+const EMPTY_FORM: SongFormData = {
+  title: '',
+  artist: '',
+  key: '',
+  origin: 'outros',
+  book_number: '',
+}
 
 type ViewMode = 'grid' | 'list'
 
@@ -88,7 +95,13 @@ export default function SongsPage() {
 
   const editDefaultValues: SongFormData =
     modal?.mode === 'edit' && modal.song
-      ? { title: modal.song.title, artist: modal.song.artist ?? '', key: modal.song.key ?? '' }
+      ? {
+          title: modal.song.title,
+          artist: modal.song.artist ?? '',
+          key: modal.song.key ?? '',
+          origin: modal.song.origin ?? 'outros',
+          book_number: modal.song.book_number ?? '',
+        }
       : EMPTY_FORM
 
   return (
@@ -262,11 +275,19 @@ function GridView({ songs, onEdit, onDelete, onView }: ViewProps) {
           <p className="font-headline pr-14 font-bold text-on-surface truncate">{song.title}</p>
           {song.artist && <p className="mt-0.5 truncate text-sm text-outline">{song.artist}</p>}
 
-          {song.key && (
-            <span className="mt-2 inline-block rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
-              {song.key}
-            </span>
-          )}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {song.key && (
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+                {song.key}
+              </span>
+            )}
+            {song.origin !== 'outros' && (
+              <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-xs font-semibold text-secondary">
+                {ORIGIN_LABEL[song.origin]}
+                {song.book_number && ` nº ${song.book_number}`}
+              </span>
+            )}
+          </div>
 
           <FileBadges song={song} onView={onView} />
 
@@ -323,6 +344,9 @@ function ListView({ songs, onEdit, onDelete, onView }: ViewProps) {
                 Tom
               </th>
               <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
+                Origem
+              </th>
+              <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
                 Arquivos
               </th>
               <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
@@ -357,6 +381,20 @@ function ListView({ songs, onEdit, onDelete, onView }: ViewProps) {
                     </span>
                   ) : (
                     '—'
+                  )}
+                </td>
+                <td className="px-6 py-5">
+                  {song.origin !== 'outros' ? (
+                    <div>
+                      <span className="rounded-full bg-secondary/10 px-2.5 py-1 text-xs font-semibold text-secondary">
+                        {ORIGIN_LABEL[song.origin]}
+                      </span>
+                      {song.book_number && (
+                        <span className="ml-1.5 text-xs text-outline">nº {song.book_number}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-outline">Outros</span>
                   )}
                 </td>
                 <td className="px-6 py-5">

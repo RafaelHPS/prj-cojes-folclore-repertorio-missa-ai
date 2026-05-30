@@ -1,9 +1,13 @@
+export type SongOrigin = 'outros' | 'arquidiocese' | 'cojes' | 'salmos'
+
 export interface Song {
   id: string
   team_id: string
   title: string
   artist: string | null
   key: string | null
+  origin: SongOrigin
+  book_number: string | null
   singer_file_url: string | null
   instrumental_file_url: string | null
   partitura_url: string | null

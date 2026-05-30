@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 
 import { uploadSongFile, removeSongFile, updateSongFileUrl } from '../songs.service'
 import type { SongFileType } from '../songs.service'
-import { songSchema } from '../songs.schemas'
+import { songSchema, BOOK_ORIGINS, ORIGIN_LABEL } from '../songs.schemas'
 import type { SongFormData } from '../songs.schemas'
 import { MUSICAL_KEYS, FILE_CONFIG } from '../songs.constants'
 import type { Song } from '../types'
@@ -24,6 +24,7 @@ export function SongModal({ defaultValues, song, onClose, onSave, onFileUpdate }
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<SongFormData>({
     resolver: zodResolver(songSchema),
@@ -155,6 +156,53 @@ export function SongModal({ defaultValues, song, onClose, onSave, onFileUpdate }
                   ))}
                 </select>
               </div>
+
+              <div>
+                <label
+                  htmlFor="song-origin"
+                  className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+                >
+                  Origem
+                </label>
+                <select
+                  id="song-origin"
+                  className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  {...register('origin')}
+                >
+                  {(Object.entries(ORIGIN_LABEL) as [keyof typeof ORIGIN_LABEL, string][]).map(
+                    ([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+
+              {BOOK_ORIGINS.includes(watch('origin')) && (
+                <div>
+                  <label
+                    htmlFor="song-book-number"
+                    className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+                  >
+                    Número no livro *
+                  </label>
+                  <input
+                    id="song-book-number"
+                    type="text"
+                    placeholder="Ex: 42"
+                    aria-describedby={errors.book_number ? 'song-book-number-error' : undefined}
+                    aria-invalid={!!errors.book_number}
+                    className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    {...register('book_number')}
+                  />
+                  {errors.book_number && (
+                    <p id="song-book-number-error" role="alert" className="mt-1 text-xs text-error">
+                      {errors.book_number.message}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {saveError && (
                 <p role="alert" className="rounded-2xl bg-error/5 px-4 py-3 text-sm text-error">

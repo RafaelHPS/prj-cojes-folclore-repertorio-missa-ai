@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import type { Song } from './types'
 import type { SongFormData } from './songs.schemas'
+import { BOOK_ORIGINS } from './songs.schemas'
 
 const BUCKET = 'song-files'
 
@@ -16,7 +17,9 @@ export async function fetchSongs(teamId: string): Promise<Song[]> {
 }
 
 export async function createSong(teamId: string, form: SongFormData): Promise<Song> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   const { data, error } = await supabase
     .from('songs')
@@ -25,6 +28,8 @@ export async function createSong(teamId: string, form: SongFormData): Promise<So
       title: form.title.trim(),
       artist: form.artist.trim() || null,
       key: form.key.trim() || null,
+      origin: form.origin,
+      book_number: BOOK_ORIGINS.includes(form.origin) ? form.book_number.trim() || null : null,
       created_by: user?.id ?? null,
     } as never)
     .select()
@@ -41,6 +46,8 @@ export async function updateSong(id: string, form: SongFormData): Promise<Song> 
       title: form.title.trim(),
       artist: form.artist.trim() || null,
       key: form.key.trim() || null,
+      origin: form.origin,
+      book_number: BOOK_ORIGINS.includes(form.origin) ? form.book_number.trim() || null : null,
     } as never)
     .eq('id', id)
     .select()
