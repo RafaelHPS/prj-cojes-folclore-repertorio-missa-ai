@@ -65,7 +65,8 @@ export default function SongsPage() {
       (s) =>
         s.title.toLowerCase().includes(q) ||
         (s.artist ?? '').toLowerCase().includes(q) ||
-        (s.key ?? '').toLowerCase().includes(q),
+        (s.key ?? '').toLowerCase().includes(q) ||
+        (s.book_number ?? '').toLowerCase().includes(q),
     )
   }, [songs, search])
 
@@ -148,7 +149,7 @@ export default function SongsPage() {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por título, artista ou tom…"
+              placeholder="Buscar por título, artista, tom ou nº…"
               aria-label="Buscar músicas"
               className="w-full rounded-2xl border-none bg-surface-container-lowest py-3 pl-12 pr-4 text-sm text-on-surface outline-none placeholder:text-outline focus:ring-2 focus:ring-primary/20"
             />
