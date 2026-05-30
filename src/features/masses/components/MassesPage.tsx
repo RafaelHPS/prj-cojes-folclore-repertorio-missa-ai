@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
-import { formatDateShort, formatTime } from '@/utils/date.util'
+import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
 
 import { fetchMasses, createMass, updateMass, deleteMass } from '../masses.service'
 import type { MassFilter, MassWithCount } from '../masses.service'
@@ -52,9 +52,38 @@ function timeAgo(dateStr: string): string {
   return `há ${days} dia${days !== 1 ? 's' : ''}`
 }
 
+type SortKey = 'title' | 'date' | 'song_count' | 'updated_at' | 'created_at'
+type SortDir = 'asc' | 'desc'
+
 interface ModalState {
   mode: 'create' | 'edit'
   mass?: Mass
+}
+
+interface SortableThProps {
+  label: string
+  sortKey: SortKey
+  current: SortKey
+  dir: SortDir
+  onSort: (k: SortKey) => void
+  className?: string
+}
+
+function SortableTh({ label, sortKey, current, dir, onSort, className = '' }: SortableThProps) {
+  const isActive = current === sortKey
+  return (
+    <th
+      onClick={() => onSort(sortKey)}
+      className={`cursor-pointer select-none px-6 py-5 text-xs font-bold uppercase tracking-wider text-outline transition hover:text-on-surface ${className}`}
+    >
+      <span className="flex items-center gap-1">
+        {label}
+        <span aria-hidden="true" className="material-symbols-outlined text-sm">
+          {isActive ? (dir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more'}
+        </span>
+      </span>
+    </th>
+  )
 }
 
 export default function MassesPage() {
@@ -65,6 +94,8 @@ export default function MassesPage() {
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState<ModalState | null>(null)
   const [toDelete, setToDelete] = useState<Mass | null>(null)
+  const [sortKey, setSortKey] = useState<SortKey>('date')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
 
   useEffect(() => {
     if (!team) return
@@ -82,6 +113,15 @@ export default function MassesPage() {
     void load()
   }, [team?.id, filter])
 
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
+
   const filteredMasses = useMemo(() => {
     const q = search.toLowerCase()
     return masses.filter((m) => {
@@ -92,6 +132,18 @@ export default function MassesPage() {
       )
     })
   }, [masses, search])
+
+  const sortedMasses = useMemo(() => {
+    return [...filteredMasses].sort((a, b) => {
+      let cmp = 0
+      if (sortKey === 'title') cmp = a.title.localeCompare(b.title, 'pt-BR')
+      else if (sortKey === 'date') cmp = a.date.localeCompare(b.date)
+      else if (sortKey === 'song_count') cmp = a.song_count - b.song_count
+      else if (sortKey === 'updated_at') cmp = a.updated_at.localeCompare(b.updated_at)
+      else if (sortKey === 'created_at') cmp = a.created_at.localeCompare(b.created_at)
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [filteredMasses, sortKey, sortDir])
 
   async function handleSave(form: MassFormData) {
     if (!team) return
@@ -211,28 +263,53 @@ export default function MassesPage() {
             <table className="min-w-[700px] w-full text-left">
               <thead>
                 <tr className="bg-surface-container-low/50">
-                  <th className="px-8 py-5 text-xs font-bold uppercase tracking-wider text-outline">
-                    Nome da Missa
-                  </th>
-                  <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-outline">
-                    Data & Horário
-                  </th>
+                  <SortableTh
+                    label="Nome da Missa"
+                    sortKey="title"
+                    current={sortKey}
+                    dir={sortDir}
+                    onSort={handleSort}
+                    className="px-8"
+                  />
+                  <SortableTh
+                    label="Data & Horário"
+                    sortKey="date"
+                    current={sortKey}
+                    dir={sortDir}
+                    onSort={handleSort}
+                  />
                   <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-outline">
                     Ano Litúrgico
                   </th>
-                  <th className="px-6 py-5 text-center text-xs font-bold uppercase tracking-wider text-outline">
-                    Músicas
-                  </th>
-                  <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-outline">
-                    Criado
-                  </th>
+                  <SortableTh
+                    label="Músicas"
+                    sortKey="song_count"
+                    current={sortKey}
+                    dir={sortDir}
+                    onSort={handleSort}
+                    className="text-center"
+                  />
+                  <SortableTh
+                    label="Repertório atualizado"
+                    sortKey="updated_at"
+                    current={sortKey}
+                    dir={sortDir}
+                    onSort={handleSort}
+                  />
+                  <SortableTh
+                    label="Criado"
+                    sortKey="created_at"
+                    current={sortKey}
+                    dir={sortDir}
+                    onSort={handleSort}
+                  />
                   <th className="px-8 py-5 text-right text-xs font-bold uppercase tracking-wider text-outline">
                     Ações
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/10">
-                {filteredMasses.map((mass) => (
+                {sortedMasses.map((mass) => (
                   <tr
                     key={mass.id}
                     className="group transition-colors hover:bg-surface-container-low/30"
@@ -291,6 +368,13 @@ export default function MassesPage() {
                       </span>
                     </td>
 
+                    {/* Repertório atualizado */}
+                    <td className="px-6 py-5">
+                      <span className="text-sm text-outline">
+                        {formatDateTime(mass.updated_at)}
+                      </span>
+                    </td>
+
                     {/* Criado */}
                     <td className="px-6 py-5">
                       <span className="text-sm italic text-outline">
@@ -337,9 +421,9 @@ export default function MassesPage() {
           {/* Footer info */}
           <div className="border-t border-outline-variant/10 bg-surface-container-low/50 px-8 py-4">
             <p className="text-sm font-medium text-outline">
-              Exibindo <span className="font-bold text-on-surface">{filteredMasses.length}</span>{' '}
+              Exibindo <span className="font-bold text-on-surface">{sortedMasses.length}</span>{' '}
               {filter === 'upcoming' ? 'próxima' : filter === 'past' ? 'passada' : ''}
-              {filteredMasses.length !== 1 ? 's missas' : ' missa'}
+              {sortedMasses.length !== 1 ? 's missas' : ' missa'}
             </p>
           </div>
         </div>
