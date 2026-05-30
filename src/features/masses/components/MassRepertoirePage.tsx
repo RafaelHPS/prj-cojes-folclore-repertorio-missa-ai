@@ -234,6 +234,10 @@ export default function MassRepertoirePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, team?.id])
 
+  function touchMassTimestamp() {
+    setMass((prev) => (prev ? { ...prev, updated_at: new Date().toISOString() } : prev))
+  }
+
   function groupByPart(items: MassSongWithSong[]): Partial<Record<MassPart, MassSongWithSong[]>> {
     return PART_ORDER.reduce<Partial<Record<MassPart, MassSongWithSong[]>>>((acc, part) => {
       const partSongs = items.filter((s) => s.part === part).sort((a, b) => a.position - b.position)
@@ -254,6 +258,7 @@ export default function MassRepertoirePage() {
         ...prev,
         [picker]: [...(prev[picker] ?? []), added],
       }))
+      touchMassTimestamp()
       setPicker(null)
     } finally {
       setIsAdding(false)
@@ -266,6 +271,7 @@ export default function MassRepertoirePage() {
       ...prev,
       [part]: (prev[part] ?? []).filter((s) => s.id !== massSongId),
     }))
+    touchMassTimestamp()
   }
 
   async function handleMoveUp(part: MassPart, index: number) {
@@ -279,6 +285,7 @@ export default function MassRepertoirePage() {
       { ...b, position: a.position },
     ]
     setSongsByPart((prev) => ({ ...prev, [part]: list }))
+    touchMassTimestamp()
   }
 
   async function handleMoveDown(part: MassPart, index: number) {
@@ -292,6 +299,7 @@ export default function MassRepertoirePage() {
       { ...a, position: b.position },
     ]
     setSongsByPart((prev) => ({ ...prev, [part]: list }))
+    touchMassTimestamp()
   }
 
   const totalSongs = PART_ORDER.reduce((sum, p) => sum + (songsByPart[p]?.length ?? 0), 0)
@@ -343,11 +351,12 @@ export default function MassRepertoirePage() {
               {' · '}
               {totalSongs} música{totalSongs !== 1 ? 's' : ''} no repertório
             </p>
-            {mass.updated_at !== mass.created_at && (
-              <p className="mt-0.5 text-xs text-outline">
-                Última atualização: {formatDateTime(mass.updated_at)}
-              </p>
-            )}
+            <p className="mt-0.5 flex items-center gap-1 text-xs text-outline">
+              <span aria-hidden="true" className="material-symbols-outlined text-sm">
+                update
+              </span>
+              Repertório atualizado em {formatDateTime(mass.updated_at)}
+            </p>
           </div>
 
           <div className="flex gap-2">
