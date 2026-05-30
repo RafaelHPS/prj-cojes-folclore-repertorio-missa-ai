@@ -35,9 +35,19 @@ export default function SelectTeamPage() {
 
   useEffect(() => {
     async function loadTeams() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        setIsLoading(false)
+        return
+      }
+
       const { data, error: fetchError } = await supabase
         .from('team_members')
         .select('role, teams(id, name, slug)')
+        .eq('user_id', user.id)
 
       if (fetchError) {
         setError(fetchError.message)
