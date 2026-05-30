@@ -237,8 +237,6 @@ export default function SettingsPage() {
   const [inviteRole, setInviteRole] = useState<UserRole>('viewer')
   const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [inviteError, setInviteError] = useState<string | null>(null)
-  const [inviteLink, setInviteLink] = useState<string | null>(null)
-  const [linkCopied, setLinkCopied] = useState(false)
 
   const isAdmin = activeTeam?.role === 'admin'
 
@@ -307,25 +305,19 @@ export default function SettingsPage() {
     if (!activeTeam || !inviteEmail.trim()) return
     setInviteStatus('sending')
     setInviteError(null)
-    setInviteLink(null)
     try {
-      const { link } = await sendInvite(inviteEmail.trim(), activeTeam.id, inviteRole)
-      const updated = await fetchPendingInvites(activeTeam.id)
-      setInvites(updated)
+      await sendInvite(inviteEmail.trim(), activeTeam.id, inviteRole)
       setInviteEmail('')
-      setInviteLink(link)
       setInviteStatus('sent')
+      // Atualiza lista de convites pendentes (não crítico)
+      fetchPendingInvites(activeTeam.id)
+        .then(setInvites)
+        .catch(() => {})
+      setTimeout(() => setInviteStatus('idle'), 6000)
     } catch (err) {
-      setInviteError(err instanceof Error ? err.message : 'Erro ao enviar convite.')
+      setInviteError(err instanceof Error ? err.message : 'Erro ao criar usuário.')
       setInviteStatus('error')
     }
-  }
-
-  async function handleCopyLink() {
-    if (!inviteLink) return
-    await navigator.clipboard.writeText(inviteLink)
-    setLinkCopied(true)
-    setTimeout(() => setLinkCopied(false), 2000)
   }
 
   async function handleCancelInvite(inviteId: string) {
@@ -548,43 +540,20 @@ export default function SettingsPage() {
                 </button>
               </form>
 
-              {inviteStatus === 'sent' && inviteLink && (
+              {inviteStatus === 'sent' && (
                 <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                  <p className="mb-2 flex items-center gap-1.5 text-sm font-bold text-primary">
+                  <p className="flex items-center gap-1.5 text-sm font-bold text-primary">
                     <span aria-hidden="true" className="material-symbols-outlined text-base">
                       check_circle
                     </span>
-                    Usuário criado! Compartilhe o link de acesso:
+                    Usuário criado com sucesso!
                   </p>
-                  <div className="flex items-center gap-2">
-                    <input
-                      readOnly
-                      value={inviteLink}
-                      className="flex-1 rounded-xl bg-surface-container-lowest px-3 py-2 text-xs text-on-surface-variant outline-none"
-                    />
-                    <button
-                      onClick={handleCopyLink}
-                      className="flex items-center gap-1 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-on-primary transition hover:bg-secondary"
-                    >
-                      <span aria-hidden="true" className="material-symbols-outlined text-sm">
-                        {linkCopied ? 'check' : 'content_copy'}
-                      </span>
-                      {linkCopied ? 'Copiado!' : 'Copiar'}
-                    </button>
-                  </div>
-                  <p className="mt-2 text-xs text-outline">
-                    O membro usa este link para definir a senha e acessar a equipe.
+                  <p className="mt-1.5 text-xs text-on-surface-variant">
+                    Peça ao novo membro para acessar o aplicativo, inserir o e-mail e clicar em{' '}
+                    <span className="font-semibold">"Esqueci minha senha"</span> para definir a
+                    senha. Após o primeiro login, a equipe aparecerá automaticamente.
                   </p>
                 </div>
-              )}
-
-              {inviteStatus === 'sent' && !inviteLink && (
-                <p className="mt-2 flex items-center gap-1 text-sm font-semibold text-primary">
-                  <span aria-hidden="true" className="material-symbols-outlined text-base">
-                    check_circle
-                  </span>
-                  Usuário criado com sucesso!
-                </p>
               )}
               {inviteStatus === 'error' && inviteError && (
                 <p className="mt-2 text-sm text-error">{inviteError}</p>
