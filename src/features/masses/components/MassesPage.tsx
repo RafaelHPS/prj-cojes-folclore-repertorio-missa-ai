@@ -84,7 +84,13 @@ export default function MassesPage() {
 
   const filteredMasses = useMemo(() => {
     const q = search.toLowerCase()
-    return masses.filter((m) => m.title.toLowerCase().includes(q))
+    return masses.filter((m) => {
+      const [year, month, day] = m.date.split('-')
+      const formattedDate = `${day}/${month}/${year}` // dd/mm/yyyy
+      return (
+        m.title.toLowerCase().includes(q) || formattedDate.includes(q) || m.date.includes(q) // yyyy-mm-dd
+      )
+    })
   }, [masses, search])
 
   async function handleSave(form: MassFormData) {
@@ -169,7 +175,7 @@ export default function MassesPage() {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar missa…"
+              placeholder="Buscar por nome ou data (dd/mm/aaaa)…"
               aria-label="Buscar missas"
               className="w-full rounded-2xl border-none bg-surface-container-lowest py-3 pl-12 pr-4 text-sm text-on-surface outline-none placeholder:text-outline focus:ring-2 focus:ring-primary/20"
             />
