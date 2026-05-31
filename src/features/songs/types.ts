@@ -1,5 +1,7 @@
 export type SongOrigin = 'outros' | 'arquidiocese' | 'cojes' | 'salmos'
 
+import type { MassPart } from '@/types/database'
+
 export interface Song {
   id: string
   team_id: string
@@ -8,6 +10,7 @@ export interface Song {
   key: string | null
   origin: SongOrigin
   book_number: string | null
+  suggested_parts: MassPart[]
   singer_file_url: string | null
   instrumental_file_url: string | null
   partitura_url: string | null

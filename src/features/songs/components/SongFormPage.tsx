@@ -13,7 +13,13 @@ import {
   updateSongFileUrl,
 } from '../songs.service'
 import type { SongFileType } from '../songs.service'
-import { songSchema, BOOK_ORIGINS, ORIGIN_LABEL } from '../songs.schemas'
+import {
+  songSchema,
+  BOOK_ORIGINS,
+  ORIGIN_LABEL,
+  MASS_PARTS,
+  MASS_PART_LABEL,
+} from '../songs.schemas'
 import type { SongFormData } from '../songs.schemas'
 import { MUSICAL_KEYS, FILE_CONFIG } from '../songs.constants'
 import type { Song } from '../types'
@@ -27,6 +33,7 @@ const EMPTY_FORM: SongFormData = {
   key: '',
   origin: 'outros',
   book_number: '',
+  suggested_parts: [],
 }
 
 export default function SongFormPage() {
@@ -51,12 +58,22 @@ export default function SongFormPage() {
     register,
     handleSubmit,
     watch,
+    setValue,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<SongFormData>({
     resolver: zodResolver(songSchema),
     defaultValues: EMPTY_FORM,
   })
+
+  const suggestedParts = watch('suggested_parts') ?? []
+
+  function togglePart(part: (typeof MASS_PARTS)[number]) {
+    const next = suggestedParts.includes(part)
+      ? suggestedParts.filter((p) => p !== part)
+      : [...suggestedParts, part]
+    setValue('suggested_parts', next, { shouldDirty: true })
+  }
 
   useEffect(() => {
     if (!isEdit || state?.song) return
@@ -81,6 +98,7 @@ export default function SongFormPage() {
           key: fetched.key ?? '',
           origin: fetched.origin ?? 'outros',
           book_number: fetched.book_number ?? '',
+          suggested_parts: fetched.suggested_parts ?? [],
         })
       } catch {
         setLoadError('Erro ao carregar a música.')
@@ -100,6 +118,7 @@ export default function SongFormPage() {
         key: state.song.key ?? '',
         origin: state.song.origin ?? 'outros',
         book_number: state.song.book_number ?? '',
+        suggested_parts: state.song.suggested_parts ?? [],
       })
     }
   }, [state?.song, reset])
@@ -285,6 +304,36 @@ export default function SongFormPage() {
               )}
             </div>
           )}
+
+          {/* Momentos sugeridos */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-on-surface-variant">
+              Momentos sugeridos
+            </label>
+            <p className="mb-3 text-xs text-outline">
+              Indique em quais partes da missa esta música costuma ser usada.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {MASS_PARTS.map((part) => {
+                const selected = suggestedParts.includes(part)
+                return (
+                  <button
+                    key={part}
+                    type="button"
+                    onClick={() => togglePart(part)}
+                    aria-pressed={selected}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      selected
+                        ? 'border-primary bg-primary text-on-primary'
+                        : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:border-primary/40 hover:text-primary'
+                    }`}
+                  >
+                    {MASS_PART_LABEL[part]}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
           {saveError && (
             <p role="alert" className="rounded-2xl bg-error/5 px-4 py-3 text-sm text-error">

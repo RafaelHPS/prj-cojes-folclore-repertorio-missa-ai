@@ -1,6 +1,36 @@
 import { z } from 'zod'
 import type { SongOrigin } from './types'
 
+export const MASS_PARTS = [
+  'entrada',
+  'ato_penitencial',
+  'hino_de_louvor',
+  'salmo',
+  'sequencia',
+  'aclamacao',
+  'ofertorio',
+  'santo',
+  'cordeiro',
+  'comunhao',
+  'pos_comunhao',
+  'final',
+] as const
+
+export const MASS_PART_LABEL: Record<(typeof MASS_PARTS)[number], string> = {
+  entrada: 'Entrada',
+  ato_penitencial: 'Ato Penitencial',
+  hino_de_louvor: 'Glória',
+  salmo: 'Salmo',
+  sequencia: 'Sequência',
+  aclamacao: 'Aclamação',
+  ofertorio: 'Ofertório',
+  santo: 'Santo',
+  cordeiro: 'Cordeiro',
+  comunhao: 'Comunhão',
+  pos_comunhao: 'Pós-Comunhão',
+  final: 'Final',
+}
+
 export const BOOK_ORIGINS: SongOrigin[] = ['arquidiocese', 'cojes', 'salmos']
 
 export const ORIGIN_LABEL: Record<SongOrigin, string> = {
@@ -17,6 +47,7 @@ export const songSchema = z
     key: z.string(),
     origin: z.enum(['outros', 'arquidiocese', 'cojes', 'salmos'] as const),
     book_number: z.string().max(20, 'Número muito longo'),
+    suggested_parts: z.array(z.enum(MASS_PARTS)).default([]),
   })
   .refine(
     (data) =>

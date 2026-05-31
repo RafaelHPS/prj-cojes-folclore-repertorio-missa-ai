@@ -74,14 +74,19 @@ export default function SongPickerPage() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
-    return available.filter(
+    const matches = available.filter(
       (s) =>
         s.title.toLowerCase().includes(q) ||
         (s.artist ?? '').toLowerCase().includes(q) ||
         (s.key ?? '').toLowerCase().includes(q) ||
         (s.book_number ?? '').toLowerCase().includes(q),
     )
-  }, [available, search])
+    // Sugeridas para esta parte aparecem primeiro
+    return [
+      ...matches.filter((s) => s.suggested_parts?.includes(massPart)),
+      ...matches.filter((s) => !s.suggested_parts?.includes(massPart)),
+    ]
+  }, [available, search, massPart])
 
   const hiddenCount = songs.length - available.length
 
@@ -196,7 +201,14 @@ export default function SongPickerPage() {
                   className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-surface-container-low disabled:opacity-60"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-on-surface">{song.title}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="truncate font-semibold text-on-surface">{song.title}</p>
+                      {song.suggested_parts?.includes(massPart) && (
+                        <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                          Sugerida
+                        </span>
+                      )}
+                    </div>
                     {song.artist && (
                       <p className="mt-0.5 truncate text-xs text-outline">{song.artist}</p>
                     )}
