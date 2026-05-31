@@ -263,7 +263,75 @@ export default function MassesPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-3xl border border-outline-variant/10 bg-surface-container-lowest tonal-shadow">
-          <div className="overflow-x-auto">
+          {/* Mobile: cards */}
+          <div className="md:hidden divide-y divide-outline-variant/10">
+            {sortedMasses.map((mass) => (
+              <div key={mass.id} className="flex items-start gap-3 px-4 py-4">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-primary/5 text-primary">
+                  <span aria-hidden="true" className="material-symbols-outlined">
+                    church
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="truncate font-bold text-on-surface">{mass.title}</p>
+                    {mass.is_public && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                        Público
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs font-semibold text-outline">
+                    {formatDateShort(mass.date)}
+                    {mass.time && ` · ${formatTime(mass.time)}`}
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    {mass.liturgical_year && (
+                      <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-semibold text-secondary">
+                        {LITURGICAL_YEAR_LABEL[mass.liturgical_year]}
+                      </span>
+                    )}
+                    <span className="text-xs text-outline">
+                      {mass.song_count} música{mass.song_count !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Link
+                      to={`/missas/${mass.id}/gerenciar`}
+                      className="rounded-full bg-primary-container px-3 py-1.5 text-xs font-bold text-on-primary-container transition hover:brightness-110"
+                    >
+                      Repertório
+                    </Link>
+                    {canEdit && (
+                      <button
+                        onClick={() => setModal({ mode: 'edit', mass })}
+                        aria-label={`Editar ${mass.title}`}
+                        className="rounded-lg p-1.5 text-outline transition hover:bg-primary/5 hover:text-primary"
+                      >
+                        <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                          edit
+                        </span>
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => setToDelete(mass)}
+                        aria-label={`Remover ${mass.title}`}
+                        className="rounded-lg p-1.5 text-outline transition hover:bg-error/5 hover:text-error"
+                      >
+                        <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                          delete
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: tabela completa */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="min-w-[700px] w-full text-left">
               <thead>
                 <tr className="bg-surface-container-low/50">
@@ -425,6 +493,7 @@ export default function MassesPage() {
               </tbody>
             </table>
           </div>
+          {/* end desktop */}
 
           {/* Footer info */}
           <div className="border-t border-outline-variant/10 bg-surface-container-low/50 px-8 py-4">

@@ -402,7 +402,7 @@ function GridView({ songs, onEdit, onDelete, onView, canEdit, canDelete }: ViewP
 
           {/* Hover actions */}
           {(canEdit || canDelete) && (
-            <div className="absolute right-3 top-3 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="absolute right-3 top-3 flex gap-1 opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100">
               {canEdit && (
                 <button
                   onClick={() => onEdit(song)}
@@ -446,7 +446,67 @@ function ListView({
 }: ViewProps) {
   return (
     <div className="overflow-hidden rounded-3xl border border-outline-variant/10 bg-surface-container-lowest tonal-shadow">
-      <div className="overflow-x-auto">
+      {/* Mobile: cards */}
+      <div className="md:hidden divide-y divide-outline-variant/10">
+        {songs.map((song) => (
+          <div key={song.id} className="flex items-center gap-3 px-4 py-4">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-primary/5 text-primary">
+              <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                music_note
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-bold text-on-surface">{song.title}</p>
+              <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                {song.artist && (
+                  <span className="truncate text-xs text-outline">{song.artist}</span>
+                )}
+                {song.key && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                    {song.key}
+                  </span>
+                )}
+                {song.origin !== 'outros' && (
+                  <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-semibold text-secondary">
+                    {ORIGIN_LABEL[song.origin]}
+                    {song.book_number && ` nº ${song.book_number}`}
+                  </span>
+                )}
+              </div>
+              <FileBadges song={song} onView={onView} />
+            </div>
+            {(canEdit || canDelete) && (
+              <div className="flex flex-shrink-0 gap-1">
+                {canEdit && (
+                  <button
+                    onClick={() => onEdit(song)}
+                    aria-label={`Editar ${song.title}`}
+                    className="rounded-lg p-2 text-outline transition hover:bg-primary/5 hover:text-primary"
+                  >
+                    <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                      edit
+                    </span>
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={() => onDelete(song)}
+                    aria-label={`Remover ${song.title}`}
+                    className="rounded-lg p-2 text-outline transition hover:bg-error/5 hover:text-error"
+                  >
+                    <span aria-hidden="true" className="material-symbols-outlined text-lg">
+                      delete
+                    </span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop: tabela completa */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="min-w-[700px] w-full text-sm">
           <thead>
             <tr className="bg-surface-container-low/50">
@@ -608,6 +668,7 @@ function ListView({
           </tbody>
         </table>
       </div>
+      {/* end desktop */}
     </div>
   )
 }
