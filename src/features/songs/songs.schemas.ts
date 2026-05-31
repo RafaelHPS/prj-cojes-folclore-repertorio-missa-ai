@@ -47,7 +47,7 @@ export const songSchema = z
     key: z.string(),
     origin: z.enum(['outros', 'arquidiocese', 'cojes', 'salmos'] as const),
     book_number: z.string().max(20, 'Número muito longo'),
-    suggested_parts: z.array(z.enum(MASS_PARTS)).default([]),
+    suggested_parts: z.array(z.enum(MASS_PARTS)),
   })
   .refine(
     (data) =>
