@@ -1,15 +1,13 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
 
-import { fetchMasses, createMass, updateMass, deleteMass } from '../masses.service'
+import { fetchMasses, deleteMass } from '../masses.service'
 import type { MassFilter, MassWithCount } from '../masses.service'
 import type { Mass } from '../types'
-import type { MassFormData } from '../masses.schemas'
 
-import { MassModal } from './MassModal'
 import { DeleteMassModal } from './DeleteMassModal'
 
 const LITURGICAL_YEAR_LABEL = { A: 'Ano A', B: 'Ano B', C: 'Ano C' } as const
@@ -19,28 +17,6 @@ const FILTERS: { value: MassFilter; label: string }[] = [
   { value: 'past', label: 'Passadas' },
   { value: 'all', label: 'Todas' },
 ]
-
-function defaultForm(): MassFormData {
-  return {
-    title: '',
-    date: '',
-    time: '',
-    liturgical_year: undefined,
-    description: '',
-    is_public: false,
-  }
-}
-
-function massToForm(mass: Mass): MassFormData {
-  return {
-    title: mass.title,
-    date: mass.date,
-    time: mass.time ?? '',
-    liturgical_year: mass.liturgical_year ?? undefined,
-    description: mass.description ?? '',
-    is_public: mass.is_public,
-  }
-}
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -54,11 +30,6 @@ function timeAgo(dateStr: string): string {
 
 type SortKey = 'title' | 'date' | 'song_count' | 'updated_at' | 'created_at'
 type SortDir = 'asc' | 'desc'
-
-interface ModalState {
-  mode: 'create' | 'edit'
-  mass?: Mass
-}
 
 interface SortableThProps {
   label: string
@@ -88,13 +59,13 @@ function SortableTh({ label, sortKey, current, dir, onSort, className = '' }: So
 
 export default function MassesPage() {
   const team = useActiveTeam()
+  const navigate = useNavigate()
   const canEdit = team?.role !== 'viewer'
   const canDelete = team?.role === 'admin' || team?.role === 'editor'
   const [masses, setMasses] = useState<MassWithCount[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<MassFilter>('upcoming')
   const [search, setSearch] = useState('')
-  const [modal, setModal] = useState<ModalState | null>(null)
   const [toDelete, setToDelete] = useState<Mass | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
@@ -147,24 +118,11 @@ export default function MassesPage() {
     })
   }, [filteredMasses, sortKey, sortDir])
 
-  async function handleSave(form: MassFormData) {
-    if (!team) return
-    if (modal?.mode === 'edit' && modal.mass) {
-      const updated = await updateMass(modal.mass.id, form)
-      setMasses((prev) => prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m)))
-    } else {
-      const created = await createMass(team.id, form)
-      setMasses((prev) => [{ ...created, song_count: 0 }, ...prev])
-    }
-  }
-
   async function handleDelete() {
     if (!toDelete) return
     await deleteMass(toDelete.id)
     setMasses((prev) => prev.filter((m) => m.id !== toDelete.id))
   }
-
-  const editDefault = modal?.mode === 'edit' && modal.mass ? massToForm(modal.mass) : defaultForm()
 
   return (
     <div>
@@ -187,7 +145,7 @@ export default function MassesPage() {
         </div>
         {canEdit && (
           <button
-            onClick={() => setModal({ mode: 'create' })}
+            onClick={() => navigate('/missas/nova')}
             className="flex w-fit items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-bold text-on-primary shadow-lg shadow-primary/20 transition hover:bg-secondary"
           >
             <span aria-hidden="true" className="material-symbols-outlined text-base">
@@ -304,7 +262,7 @@ export default function MassesPage() {
                     </Link>
                     {canEdit && (
                       <button
-                        onClick={() => setModal({ mode: 'edit', mass })}
+                        onClick={() => navigate(`/missas/${mass.id}/editar`, { state: { mass } })}
                         aria-label={`Editar ${mass.title}`}
                         className="rounded-lg p-1.5 text-outline transition hover:bg-primary/5 hover:text-primary"
                       >
@@ -459,7 +417,9 @@ export default function MassesPage() {
                       <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
                         {canEdit && (
                           <button
-                            onClick={() => setModal({ mode: 'edit', mass })}
+                            onClick={() =>
+                              navigate(`/missas/${mass.id}/editar`, { state: { mass } })
+                            }
                             aria-label={`Editar ${mass.title}`}
                             className="rounded-xl p-2 text-outline transition hover:bg-primary/5 hover:text-primary"
                           >
@@ -504,15 +464,6 @@ export default function MassesPage() {
             </p>
           </div>
         </div>
-      )}
-
-      {modal && (
-        <MassModal
-          defaultValues={editDefault}
-          mass={modal.mode === 'edit' ? modal.mass : undefined}
-          onClose={() => setModal(null)}
-          onSave={handleSave}
-        />
       )}
 
       {toDelete && (

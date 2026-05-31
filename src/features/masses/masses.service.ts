@@ -115,6 +115,12 @@ export async function fetchTopSongs(teamId: string, limit = 5): Promise<TopSong[
 
 // ── Escrita ───────────────────────────────────────────────────
 
+export async function fetchMassById(id: string): Promise<Mass | null> {
+  const { data, error } = await supabase.from('masses').select('*').eq('id', id).maybeSingle()
+  if (error) throw error
+  return data as unknown as Mass | null
+}
+
 export async function createMass(teamId: string, form: MassFormData): Promise<Mass> {
   const {
     data: { user },
