@@ -4,6 +4,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
 import { fetchSongs } from '@/features/songs/songs.service'
+import { ORIGIN_LABEL } from '@/features/songs/songs.schemas'
 import type { Song } from '@/features/songs/types'
 import type { MassPart } from '@/types/database'
 
@@ -86,11 +87,17 @@ function SongRow({
       {/* Info da música */}
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-on-surface truncate">{song.title}</p>
-        <div className="mt-0.5 flex items-center gap-2">
+        <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
           {song.artist && <span className="text-xs text-outline truncate">{song.artist}</span>}
           {song.key && (
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
               {song.key}
+            </span>
+          )}
+          {song.origin && song.origin !== 'outros' && (
+            <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-semibold text-secondary">
+              {ORIGIN_LABEL[song.origin as keyof typeof ORIGIN_LABEL]}
+              {song.book_number && ` · nº ${song.book_number}`}
             </span>
           )}
         </div>
