@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react'
+
 interface Props {
   title: string
   url: string
@@ -5,6 +7,32 @@ interface Props {
 }
 
 export function FileViewerModal({ title, url, onClose }: Props) {
+  const onCloseRef = useRef(onClose)
+  const closedByBack = useRef(false)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
+
+  useEffect(() => {
+    window.history.pushState({ modal: 'viewer' }, '')
+
+    function handlePopState() {
+      closedByBack.current = true
+      onCloseRef.current()
+    }
+
+    window.addEventListener('popstate', handlePopState)
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+      // Fechou pelo X — remove a entrada que empurramos
+      if (!closedByBack.current) {
+        window.history.back()
+      }
+    }
+  }, [])
+
   const cleanUrl = url.split('?').at(0) ?? url
   const ext = cleanUrl.split('.').pop()?.toLowerCase() ?? ''
   const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)
@@ -36,7 +64,9 @@ export function FileViewerModal({ title, url, onClose }: Props) {
         ) : (
           <div className="flex h-full items-center justify-center px-4 text-center">
             <div>
-              <p className="mb-6 text-gray-300">Este tipo de arquivo não pode ser visualizado aqui.</p>
+              <p className="mb-6 text-gray-300">
+                Este tipo de arquivo não pode ser visualizado aqui.
+              </p>
               <a
                 href={url}
                 download
