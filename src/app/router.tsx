@@ -16,6 +16,7 @@ const MassesPage = lazy(() => import('@/features/masses/components/MassesPage'))
 const MassFormPage = lazy(() => import('@/features/masses/components/MassFormPage'))
 const MassDetailPage = lazy(() => import('@/features/masses/components/MassDetailPage'))
 const MassRepertoirePage = lazy(() => import('@/features/masses/components/MassRepertoirePage'))
+const SongPickerPage = lazy(() => import('@/features/masses/components/SongPickerPage'))
 const StatisticsPage = lazy(() => import('@/features/teams/components/StatisticsPage'))
 const SettingsPage = lazy(() => import('@/features/teams/components/SettingsPage'))
 
@@ -64,6 +65,10 @@ export const router = createBrowserRouter(
             { path: '/missas/nova', element: withSuspense(<MassFormPage />) },
             { path: '/missas/:id/editar', element: withSuspense(<MassFormPage />) },
             { path: '/missas/:id/gerenciar', element: withSuspense(<MassRepertoirePage />) },
+            {
+              path: '/missas/:id/gerenciar/adicionar/:part',
+              element: withSuspense(<SongPickerPage />),
+            },
             { path: '/estatisticas', element: withSuspense(<StatisticsPage />) },
             { path: '/configuracoes', element: withSuspense(<SettingsPage />) },
           ],

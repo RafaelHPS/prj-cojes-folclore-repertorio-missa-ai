@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
@@ -10,13 +10,11 @@ import type { MassPart } from '@/types/database'
 import {
   fetchPublicMass,
   fetchMassSongs,
-  addSongToMass,
   removeMassSong,
   swapMassSongPositions,
 } from '../masses.service'
 import type { MassSongWithSong } from '../masses.service'
 import type { Mass } from '../types'
-import { SongPickerModal } from './SongPickerModal'
 
 // ── Constantes litúrgicas ─────────────────────────────────────
 
@@ -236,6 +234,7 @@ function PartSection({
 export default function MassRepertoirePage() {
   const { id } = useParams<{ id: string }>()
   const team = useActiveTeam()
+  const navigate = useNavigate()
   const canEdit = team?.role !== 'viewer'
   const canDelete = team?.role === 'admin' || team?.role === 'editor'
 
@@ -243,8 +242,6 @@ export default function MassRepertoirePage() {
   const [songsByPart, setSongsByPart] = useState<Partial<Record<MassPart, MassSongWithSong[]>>>({})
   const [teamSongs, setTeamSongs] = useState<Song[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [picker, setPicker] = useState<MassPart | null>(null)
-  const [isAdding, setIsAdding] = useState(false)
 
   // Carrega dados
   useEffect(() => {
@@ -283,23 +280,13 @@ export default function MassRepertoirePage() {
     }, {})
   }
 
-  async function handleAddSong(song: Song) {
-    if (!id || !picker) return
-    const currentSongs = songsByPart[picker] ?? []
-    const position = currentSongs.length
-
-    setIsAdding(true)
-    try {
-      const added = await addSongToMass(id, song.id, picker, position)
-      setSongsByPart((prev) => ({
-        ...prev,
-        [picker]: [...(prev[picker] ?? []), added],
-      }))
-      touchMassTimestamp()
-      setPicker(null)
-    } finally {
-      setIsAdding(false)
-    }
+  function handleOpenPicker(part: MassPart) {
+    navigate(`/missas/${id}/gerenciar/adicionar/${part}`, {
+      state: {
+        songs: teamSongs,
+        currentCount: songsByPart[part]?.length ?? 0,
+      },
+    })
   }
 
   async function handleRemove(part: MassPart, massSongId: string) {
@@ -439,24 +426,13 @@ export default function MassRepertoirePage() {
             songs={songsByPart[part] ?? []}
             canEdit={canEdit}
             canDelete={canDelete}
-            onAdd={() => setPicker(part)}
+            onAdd={() => handleOpenPicker(part)}
             onMoveUp={(i) => void handleMoveUp(part, i)}
             onMoveDown={(i) => void handleMoveDown(part, i)}
             onRemove={(songId) => void handleRemove(part, songId)}
           />
         ))}
       </div>
-
-      {/* Modal de seleção de música */}
-      {picker && (
-        <SongPickerModal
-          part={picker}
-          songs={teamSongs}
-          isAdding={isAdding}
-          onSelect={(song) => void handleAddSong(song)}
-          onClose={() => setPicker(null)}
-        />
-      )}
     </div>
   )
 }
