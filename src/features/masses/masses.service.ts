@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 
-import type { Mass } from './types'
+import type { Mass, MassParticipant } from './types'
 import type { MassFormData } from './masses.schemas'
 import type { MassPart } from '@/types/database'
 
@@ -276,4 +276,41 @@ export async function fetchMassSongs(massId: string): Promise<MassSongWithSong[]
   return ((data ?? []) as unknown as RawRow[])
     .filter((r) => r.songs !== null)
     .map((r) => ({ ...r, song: r.songs! }))
+}
+
+// ── Participantes ─────────────────────────────────────────────
+
+export async function fetchMassParticipants(massId: string): Promise<MassParticipant[]> {
+  const { data, error } = await supabase
+    .from('mass_participants')
+    .select('id, mass_id, user_id, name, type, created_at')
+    .eq('mass_id', massId)
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return (data ?? []) as unknown as MassParticipant[]
+}
+
+export async function addMassParticipant(
+  massId: string,
+  participant: { user_id: string | null; name: string; type: 'member' | 'guest' },
+): Promise<MassParticipant> {
+  const { data, error } = await supabase
+    .from('mass_participants')
+    .insert({
+      mass_id: massId,
+      user_id: participant.user_id,
+      name: participant.name,
+      type: participant.type,
+    } as never)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as unknown as MassParticipant
+}
+
+export async function removeMassParticipant(participantId: string): Promise<void> {
+  const { error } = await supabase.from('mass_participants').delete().eq('id', participantId)
+  if (error) throw error
 }

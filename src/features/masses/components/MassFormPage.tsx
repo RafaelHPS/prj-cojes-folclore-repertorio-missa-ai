@@ -4,10 +4,19 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
-import { fetchMassById, createMass, updateMass } from '../masses.service'
+import {
+  fetchMassById,
+  createMass,
+  updateMass,
+  fetchMassParticipants,
+  addMassParticipant,
+  removeMassParticipant,
+} from '../masses.service'
 import { massSchema } from '../masses.schemas'
 import type { MassFormData } from '../masses.schemas'
-import type { Mass } from '../types'
+import type { Mass, MassParticipant } from '../types'
+import { fetchTeamMembers } from '@/features/teams/settings.service'
+import type { TeamMember } from '@/features/teams/settings.service'
 
 const LITURGICAL_YEARS = [
   { value: 'A', label: 'Ano A' },
@@ -49,6 +58,15 @@ export default function MassFormPage() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [massTitle, setMassTitle] = useState(state?.mass?.title ?? '')
 
+  // ── Participantes ──────────────────────────────────────────
+  const [participants, setParticipants] = useState<MassParticipant[]>([])
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [addingType, setAddingType] = useState<'member' | 'guest' | null>(null)
+  const [selectedMemberId, setSelectedMemberId] = useState('')
+  const [guestName, setGuestName] = useState('')
+  const [isSavingParticipant, setIsSavingParticipant] = useState(false)
+  const [participantError, setParticipantError] = useState<string | null>(null)
+
   const {
     register,
     handleSubmit,
@@ -85,6 +103,66 @@ export default function MassFormPage() {
 
     void load()
   }, [id, isEdit, state?.mass, reset])
+
+  useEffect(() => {
+    if (!isEdit || !id || !team) return
+    void fetchMassParticipants(id)
+      .then(setParticipants)
+      .catch(() => {})
+    void fetchTeamMembers(team.id)
+      .then(setTeamMembers)
+      .catch(() => {})
+  }, [id, isEdit, team?.id])
+
+  const addedMemberIds = new Set(participants.filter((p) => p.user_id).map((p) => p.user_id!))
+  const availableMembers = teamMembers.filter((m) => !addedMemberIds.has(m.user_id))
+
+  async function handleAddMember() {
+    if (!id || !selectedMemberId) return
+    const member = teamMembers.find((m) => m.user_id === selectedMemberId)
+    if (!member) return
+    setParticipantError(null)
+    setIsSavingParticipant(true)
+    try {
+      const added = await addMassParticipant(id, {
+        user_id: member.user_id,
+        name: member.full_name ?? member.user_id,
+        type: 'member',
+      })
+      setParticipants((prev) => [...prev, added])
+      setSelectedMemberId('')
+      setAddingType(null)
+    } catch {
+      setParticipantError('Erro ao adicionar membro.')
+    } finally {
+      setIsSavingParticipant(false)
+    }
+  }
+
+  async function handleAddGuest() {
+    if (!id || !guestName.trim()) return
+    setParticipantError(null)
+    setIsSavingParticipant(true)
+    try {
+      const added = await addMassParticipant(id, {
+        user_id: null,
+        name: guestName.trim(),
+        type: 'guest',
+      })
+      setParticipants((prev) => [...prev, added])
+      setGuestName('')
+      setAddingType(null)
+    } catch {
+      setParticipantError('Erro ao adicionar visitante.')
+    } finally {
+      setIsSavingParticipant(false)
+    }
+  }
+
+  async function handleRemoveParticipant(participantId: string) {
+    await removeMassParticipant(participantId)
+    setParticipants((prev) => prev.filter((p) => p.id !== participantId))
+  }
 
   async function onSubmit(form: MassFormData) {
     if (!team) return
@@ -317,6 +395,147 @@ export default function MassFormPage() {
           </div>
         </form>
       </div>
+
+      {/* Participantes — só no modo edição */}
+      {isEdit && (
+        <div className="mt-6 rounded-3xl bg-surface-container-lowest p-6 tonal-shadow">
+          <p className="mb-1 text-sm font-bold text-on-surface">Participantes</p>
+          <p className="mb-4 text-xs text-outline">
+            Membros da equipe e visitantes presentes nesta celebração.
+          </p>
+
+          {/* Lista */}
+          {participants.length > 0 && (
+            <ul className="mb-4 divide-y divide-outline-variant/10">
+              {participants.map((p) => (
+                <li key={p.id} className="flex items-center gap-3 py-2.5">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                    {p.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-on-surface">
+                    {p.name}
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      p.type === 'member'
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-secondary/10 text-secondary'
+                    }`}
+                  >
+                    {p.type === 'member' ? 'Membro' : 'Visitante'}
+                  </span>
+                  <button
+                    onClick={() => void handleRemoveParticipant(p.id)}
+                    aria-label={`Remover ${p.name}`}
+                    className="shrink-0 rounded-lg p-1 text-outline transition hover:bg-error/5 hover:text-error"
+                  >
+                    <span aria-hidden="true" className="material-symbols-outlined text-base">
+                      close
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Formulário inline de adição */}
+          {addingType === 'member' && (
+            <div className="mb-3 flex gap-2">
+              <select
+                autoFocus
+                value={selectedMemberId}
+                onChange={(e) => setSelectedMemberId(e.target.value)}
+                className="flex-1 rounded-2xl border border-outline-variant bg-surface-container-low px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">Selecionar membro…</option>
+                {availableMembers.map((m) => (
+                  <option key={m.user_id} value={m.user_id}>
+                    {m.full_name ?? m.user_id}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => void handleAddMember()}
+                disabled={!selectedMemberId || isSavingParticipant}
+                className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-on-primary disabled:opacity-50"
+              >
+                {isSavingParticipant ? '…' : 'Adicionar'}
+              </button>
+              <button
+                onClick={() => {
+                  setAddingType(null)
+                  setSelectedMemberId('')
+                }}
+                className="rounded-full border border-outline-variant px-3 py-2 text-xs text-on-surface-variant"
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
+
+          {addingType === 'guest' && (
+            <div className="mb-3 flex gap-2">
+              <input
+                autoFocus
+                type="text"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && void handleAddGuest()}
+                placeholder="Nome do visitante…"
+                className="flex-1 rounded-2xl border border-outline-variant bg-surface-container-low px-3 py-2 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+              <button
+                onClick={() => void handleAddGuest()}
+                disabled={!guestName.trim() || isSavingParticipant}
+                className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-on-primary disabled:opacity-50"
+              >
+                {isSavingParticipant ? '…' : 'Adicionar'}
+              </button>
+              <button
+                onClick={() => {
+                  setAddingType(null)
+                  setGuestName('')
+                }}
+                className="rounded-full border border-outline-variant px-3 py-2 text-xs text-on-surface-variant"
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
+
+          {participantError && (
+            <p role="alert" className="mb-3 text-xs text-error">
+              {participantError}
+            </p>
+          )}
+
+          {/* Botões de adição */}
+          {addingType === null && (
+            <div className="flex flex-wrap gap-2">
+              {availableMembers.length > 0 && (
+                <button
+                  onClick={() => setAddingType('member')}
+                  className="flex items-center gap-1.5 rounded-full border border-outline-variant px-4 py-2 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:text-primary"
+                >
+                  <span aria-hidden="true" className="material-symbols-outlined text-sm">
+                    person_add
+                  </span>
+                  Membro da equipe
+                </button>
+              )}
+              <button
+                onClick={() => setAddingType('guest')}
+                className="flex items-center gap-1.5 rounded-full border border-outline-variant px-4 py-2 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:text-primary"
+              >
+                <span aria-hidden="true" className="material-symbols-outlined text-sm">
+                  person_add
+                </span>
+                Visitante
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

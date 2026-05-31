@@ -14,6 +14,15 @@ export interface Mass {
   updated_at: string
 }
 
+export interface MassParticipant {
+  id: string
+  mass_id: string
+  user_id: string | null
+  name: string
+  type: 'member' | 'guest'
+  created_at: string
+}
+
 export interface MassSong {
   id: string
   mass_id: string
