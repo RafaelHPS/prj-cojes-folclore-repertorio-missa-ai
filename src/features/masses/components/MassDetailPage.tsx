@@ -4,6 +4,8 @@ import { useParams, Link } from 'react-router-dom'
 import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
 import { FileViewerModal } from '@/features/songs/components/FileViewerModal'
 
+import { ORIGIN_LABEL } from '@/features/songs/songs.schemas'
+
 import { fetchPublicMass, fetchMassSongs } from '../masses.service'
 import type { Mass } from '../types'
 import type { MassSongWithSong } from '../masses.service'
@@ -92,9 +94,10 @@ function SongCard({ item, index, onView }: SongCardProps) {
               {song.key}
             </span>
           )}
-          {song.book_number && (
+          {song.origin && song.origin !== 'outros' && (
             <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-xs font-semibold text-secondary">
-              nº {song.book_number}
+              {ORIGIN_LABEL[song.origin as keyof typeof ORIGIN_LABEL]}
+              {song.book_number && ` · nº ${song.book_number}`}
             </span>
           )}
         </div>
