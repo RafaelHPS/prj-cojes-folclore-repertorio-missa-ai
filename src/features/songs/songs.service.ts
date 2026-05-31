@@ -16,6 +16,12 @@ export async function fetchSongs(teamId: string): Promise<Song[]> {
   return (data ?? []) as unknown as Song[]
 }
 
+export async function fetchSongById(id: string): Promise<Song | null> {
+  const { data, error } = await supabase.from('songs').select('*').eq('id', id).maybeSingle()
+  if (error) throw error
+  return data as unknown as Song | null
+}
+
 export async function createSong(teamId: string, form: SongFormData): Promise<Song> {
   const {
     data: { user },

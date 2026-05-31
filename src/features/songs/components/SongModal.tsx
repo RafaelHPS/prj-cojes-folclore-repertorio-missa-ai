@@ -68,18 +68,23 @@ export function SongModal({ defaultValues, song, onClose, onSave, onFileUpdate }
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 px-4"
+        className="fixed inset-0 z-50 flex items-end justify-center bg-on-surface/40 sm:items-center sm:px-4"
         onClick={onClose}
       >
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby="song-dialog-title"
-          className="w-full max-w-md overflow-hidden rounded-3xl bg-surface-container-lowest shadow-2xl"
+          className="flex w-full max-h-[90svh] flex-col rounded-t-3xl bg-surface-container-lowest shadow-2xl sm:max-w-md sm:max-h-[92dvh] sm:rounded-3xl"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Drag handle — visível apenas no mobile */}
+          <div className="flex justify-center pt-3 sm:hidden" aria-hidden="true">
+            <div className="h-1 w-10 rounded-full bg-outline-variant" />
+          </div>
+
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-outline-variant/10 px-6 py-4">
+          <div className="flex shrink-0 items-center justify-between border-b border-outline-variant/10 px-6 py-4">
             <h2 id="song-dialog-title" className="font-headline text-lg font-bold text-on-surface">
               {song ? 'Editar música' : 'Nova música'}
             </h2>
@@ -94,8 +99,8 @@ export function SongModal({ defaultValues, song, onClose, onSave, onFileUpdate }
             </button>
           </div>
 
-          <div className="px-6 py-5">
-            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <form id="song-form" onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
               <div>
                 <label
                   htmlFor="song-title"
@@ -209,30 +214,6 @@ export function SongModal({ defaultValues, song, onClose, onSave, onFileUpdate }
                   {saveError}
                 </p>
               )}
-
-              <div className="flex gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex-1 rounded-full border border-outline-variant px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition hover:bg-surface-container-low"
-                >
-                  {song ? 'Fechar' : 'Cancelar'}
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-on-primary shadow-md shadow-primary/20 transition hover:bg-secondary disabled:opacity-60"
-                >
-                  {isSubmitting ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  ) : (
-                    <span aria-hidden="true" className="material-symbols-outlined text-base">
-                      save
-                    </span>
-                  )}
-                  {isSubmitting ? 'Salvando…' : 'Salvar'}
-                </button>
-              </div>
             </form>
 
             {/* Arquivos — só no modo edição */}
@@ -255,6 +236,34 @@ export function SongModal({ defaultValues, song, onClose, onSave, onFileUpdate }
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Rodapé com botões — fixo, fora do scroll */}
+          <div className="shrink-0 border-t border-outline-variant/10 px-6 py-4">
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 rounded-full border border-outline-variant px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition hover:bg-surface-container-low"
+              >
+                {song ? 'Fechar' : 'Cancelar'}
+              </button>
+              <button
+                type="submit"
+                form="song-form"
+                disabled={isSubmitting}
+                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-on-primary shadow-md shadow-primary/20 transition hover:bg-secondary disabled:opacity-60"
+              >
+                {isSubmitting ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <span aria-hidden="true" className="material-symbols-outlined text-base">
+                    save
+                  </span>
+                )}
+                {isSubmitting ? 'Salvando…' : 'Salvar'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

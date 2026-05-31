@@ -1,26 +1,16 @@
 import { useEffect, useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { formatDateTime } from '@/utils/date.util'
 
-import { fetchSongs, createSong, updateSong, deleteSong } from '../songs.service'
-import type { SongFileType } from '../songs.service'
+import { fetchSongs, deleteSong } from '../songs.service'
 import type { Song } from '../types'
-import type { SongFormData } from '../songs.schemas'
 import { ORIGIN_LABEL } from '../songs.schemas'
 
-import { SongModal } from './SongModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { FileBadges } from './FileBadges'
 import { FileViewerModal } from './FileViewerModal'
-
-const EMPTY_FORM: SongFormData = {
-  title: '',
-  artist: '',
-  key: '',
-  origin: 'outros',
-  book_number: '',
-}
 
 type ViewMode = 'grid' | 'list'
 type SortKey = 'title' | 'artist' | 'key' | 'origin' | 'created_at' | 'updated_at'
@@ -51,10 +41,6 @@ function SortableTh({ label, sortKey, current, dir, onSort }: SortableThProps) {
   )
 }
 
-interface ModalState {
-  mode: 'create' | 'edit'
-  song?: Song
-}
 interface ViewerState {
   label: string
   url: string
@@ -62,13 +48,13 @@ interface ViewerState {
 
 export default function SongsPage() {
   const team = useActiveTeam()
+  const navigate = useNavigate()
   const canEdit = team?.role !== 'viewer'
   const canDelete = team?.role === 'admin' || team?.role === 'editor'
   const [songs, setSongs] = useState<Song[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [view, setView] = useState<ViewMode>('grid')
-  const [modal, setModal] = useState<ModalState | null>(null)
   const [toDelete, setToDelete] = useState<Song | null>(null)
   const [viewer, setViewer] = useState<ViewerState | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>('title')
@@ -122,40 +108,11 @@ export default function SongsPage() {
     })
   }, [filteredSongs, sortKey, sortDir])
 
-  async function handleSave(form: SongFormData) {
-    if (!team) return
-    if (modal?.mode === 'edit' && modal.song) {
-      const updated = await updateSong(modal.song.id, form)
-      setSongs((prev) => prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s)))
-    } else {
-      const created = await createSong(team.id, form)
-      setSongs((prev) => [...prev, created])
-    }
-  }
-
-  function handleFileUpdate(songId: string, field: `${SongFileType}_url`, url: string | null) {
-    setSongs((prev) => prev.map((s) => (s.id === songId ? { ...s, [field]: url } : s)))
-    setModal((prev) =>
-      prev?.song?.id === songId ? { ...prev, song: { ...prev.song, [field]: url } } : prev,
-    )
-  }
-
   async function handleDelete() {
     if (!toDelete) return
     await deleteSong(toDelete.id)
     setSongs((prev) => prev.filter((s) => s.id !== toDelete.id))
   }
-
-  const editDefaultValues: SongFormData =
-    modal?.mode === 'edit' && modal.song
-      ? {
-          title: modal.song.title,
-          artist: modal.song.artist ?? '',
-          key: modal.song.key ?? '',
-          origin: modal.song.origin ?? 'outros',
-          book_number: modal.song.book_number ?? '',
-        }
-      : EMPTY_FORM
 
   return (
     <div>
@@ -178,7 +135,7 @@ export default function SongsPage() {
         </div>
         {canEdit && (
           <button
-            onClick={() => setModal({ mode: 'create' })}
+            onClick={() => navigate('/musicas/nova')}
             className="flex w-fit items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-bold text-on-primary shadow-lg shadow-primary/20 transition hover:bg-secondary"
           >
             <span aria-hidden="true" className="material-symbols-outlined text-base">
@@ -296,7 +253,7 @@ export default function SongsPage() {
       ) : view === 'grid' ? (
         <GridView
           songs={sortedSongs}
-          onEdit={(song) => setModal({ mode: 'edit', song })}
+          onEdit={(song) => navigate(`/musicas/${song.id}/editar`, { state: { song } })}
           onDelete={setToDelete}
           onView={(label, url) => setViewer({ label, url })}
           canEdit={canEdit}
@@ -308,7 +265,7 @@ export default function SongsPage() {
           sortKey={sortKey}
           sortDir={sortDir}
           onSort={handleSort}
-          onEdit={(song) => setModal({ mode: 'edit', song })}
+          onEdit={(song) => navigate(`/musicas/${song.id}/editar`, { state: { song } })}
           onDelete={setToDelete}
           onView={(label, url) => setViewer({ label, url })}
           canEdit={canEdit}
@@ -318,18 +275,6 @@ export default function SongsPage() {
 
       {viewer && (
         <FileViewerModal title={viewer.label} url={viewer.url} onClose={() => setViewer(null)} />
-      )}
-
-      {modal && (
-        <SongModal
-          defaultValues={editDefaultValues}
-          song={modal.mode === 'edit' ? modal.song : undefined}
-          onClose={() => setModal(null)}
-          onSave={handleSave}
-          onFileUpdate={(field, url) => {
-            if (modal.song) handleFileUpdate(modal.song.id, field, url)
-          }}
-        />
       )}
 
       {toDelete && (
