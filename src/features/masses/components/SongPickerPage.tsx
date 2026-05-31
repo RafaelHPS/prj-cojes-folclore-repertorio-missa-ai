@@ -27,6 +27,7 @@ const PART_LABEL: Record<MassPart, string> = {
 interface LocationState {
   songs?: Song[]
   currentCount?: number
+  existingIds?: string[]
 }
 
 export default function SongPickerPage() {
@@ -38,6 +39,7 @@ export default function SongPickerPage() {
   const [songs, setSongs] = useState<Song[]>(state?.songs ?? [])
   const [isLoading, setIsLoading] = useState(!state?.songs)
   const [currentCount, setCurrentCount] = useState(state?.currentCount ?? 0)
+  const [existingIds] = useState<Set<string>>(new Set(state?.existingIds ?? []))
   const [search, setSearch] = useState('')
   const [isAdding, setIsAdding] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
@@ -57,7 +59,9 @@ export default function SongPickerPage() {
           massId ? fetchMassSongs(massId) : Promise.resolve([]),
         ])
         setSongs(fetchedSongs)
-        setCurrentCount(massSongs.filter((s) => s.part === massPart).length)
+        const partSongs = massSongs.filter((s) => s.part === massPart)
+        setCurrentCount(partSongs.length)
+        partSongs.forEach((s) => existingIds.add(s.song_id))
       } finally {
         setIsLoading(false)
       }
@@ -66,16 +70,20 @@ export default function SongPickerPage() {
     void load()
   }, [team?.id, massId, massPart, state?.songs])
 
+  const available = useMemo(() => songs.filter((s) => !existingIds.has(s.id)), [songs, existingIds])
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
-    return songs.filter(
+    return available.filter(
       (s) =>
         s.title.toLowerCase().includes(q) ||
         (s.artist ?? '').toLowerCase().includes(q) ||
         (s.key ?? '').toLowerCase().includes(q) ||
         (s.book_number ?? '').toLowerCase().includes(q),
     )
-  }, [songs, search])
+  }, [available, search])
+
+  const hiddenCount = songs.length - available.length
 
   async function handleSelect(song: Song) {
     if (!massId || isAdding) return
@@ -138,6 +146,13 @@ export default function SongPickerPage() {
           />
         </div>
       </div>
+
+      {hiddenCount > 0 && (
+        <p className="mb-4 rounded-2xl bg-surface-container-low px-4 py-2.5 text-xs text-outline">
+          {hiddenCount} música{hiddenCount !== 1 ? 's' : ''} já adicionada
+          {hiddenCount !== 1 ? 's' : ''} nesta parte e ocultada{hiddenCount !== 1 ? 's' : ''}.
+        </p>
+      )}
 
       {addError && (
         <p role="alert" className="mb-4 rounded-2xl bg-error/5 px-4 py-3 text-sm text-error">

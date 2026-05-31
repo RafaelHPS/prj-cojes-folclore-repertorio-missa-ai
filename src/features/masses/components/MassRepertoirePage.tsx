@@ -285,6 +285,7 @@ export default function MassRepertoirePage() {
       state: {
         songs: teamSongs,
         currentCount: songsByPart[part]?.length ?? 0,
+        existingIds: (songsByPart[part] ?? []).map((s) => s.song_id),
       },
     })
   }
