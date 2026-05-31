@@ -11,11 +11,12 @@ import type { MassPart } from '@/types/database'
 import {
   fetchPublicMass,
   fetchMassSongs,
+  fetchMassParticipants,
   removeMassSong,
   swapMassSongPositions,
 } from '../masses.service'
 import type { MassSongWithSong } from '../masses.service'
-import type { Mass } from '../types'
+import type { Mass, MassParticipant } from '../types'
 
 // ── Constantes litúrgicas ─────────────────────────────────────
 
@@ -248,6 +249,7 @@ export default function MassRepertoirePage() {
   const [mass, setMass] = useState<Mass | null>(null)
   const [songsByPart, setSongsByPart] = useState<Partial<Record<MassPart, MassSongWithSong[]>>>({})
   const [teamSongs, setTeamSongs] = useState<Song[]>([])
+  const [participants, setParticipants] = useState<MassParticipant[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   // Carrega dados
@@ -258,14 +260,16 @@ export default function MassRepertoirePage() {
     async function load() {
       setIsLoading(true)
       try {
-        const [massData, massSongs, songs] = await Promise.all([
+        const [massData, massSongs, songs, participantsData] = await Promise.all([
           fetchPublicMass(id!),
           fetchMassSongs(id!),
           fetchSongs(teamId),
+          fetchMassParticipants(id!).catch(() => [] as MassParticipant[]),
         ])
         setMass(massData)
         setTeamSongs(songs)
         setSongsByPart(groupByPart(massSongs))
+        setParticipants(participantsData)
       } finally {
         setIsLoading(false)
       }
@@ -424,6 +428,29 @@ export default function MassRepertoirePage() {
           </div>
         </div>
       </header>
+
+      {/* Participantes */}
+      {participants.length > 0 && (
+        <div className="mb-6 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
+          <p className="mb-3 text-xs font-bold uppercase tracking-widest text-outline">
+            Participantes
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {participants.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center gap-2 rounded-full border border-outline-variant/30 bg-surface-container-lowest px-3 py-1.5"
+              >
+                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {p.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-sm font-medium text-on-surface">{p.name}</span>
+                {p.type === 'guest' && <span className="text-xs text-outline">· Visitante</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Partes litúrgicas */}
       <div className="space-y-4">

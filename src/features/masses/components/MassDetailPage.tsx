@@ -6,8 +6,8 @@ import { FileViewerModal } from '@/features/songs/components/FileViewerModal'
 
 import { ORIGIN_LABEL } from '@/features/songs/songs.schemas'
 
-import { fetchPublicMass, fetchMassSongs } from '../masses.service'
-import type { Mass } from '../types'
+import { fetchPublicMass, fetchMassSongs, fetchMassParticipants } from '../masses.service'
+import type { Mass, MassParticipant } from '../types'
 import type { MassSongWithSong } from '../masses.service'
 import type { MassPart } from '@/types/database'
 
@@ -159,6 +159,7 @@ export default function MassDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [mass, setMass] = useState<Mass | null>(null)
   const [songs, setSongs] = useState<MassSongWithSong[]>([])
+  const [participants, setParticipants] = useState<MassParticipant[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [viewer, setViewer] = useState<ViewerState | null>(null)
@@ -170,7 +171,11 @@ export default function MassDetailPage() {
     async function load() {
       setIsLoading(true)
       try {
-        const [massData, songsData] = await Promise.all([fetchPublicMass(id!), fetchMassSongs(id!)])
+        const [massData, songsData, participantsData] = await Promise.all([
+          fetchPublicMass(id!),
+          fetchMassSongs(id!),
+          fetchMassParticipants(id!).catch(() => [] as MassParticipant[]),
+        ])
 
         if (!massData) {
           setNotFound(true)
@@ -178,6 +183,7 @@ export default function MassDetailPage() {
         }
         setMass(massData)
         setSongs(songsData)
+        setParticipants(participantsData)
       } finally {
         setIsLoading(false)
       }
@@ -311,6 +317,29 @@ export default function MassDetailPage() {
             </p>
           )}
         </header>
+
+        {/* Participantes */}
+        {participants.length > 0 && (
+          <div className="mb-10 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-outline">
+              Participantes
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {participants.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-2 rounded-full border border-outline-variant/30 bg-surface-container-lowest px-3 py-1.5"
+                >
+                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                    {p.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium text-on-surface">{p.name}</span>
+                  {p.type === 'guest' && <span className="text-xs text-outline">· Visitante</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Conteúdo litúrgico */}
         {partsWithSongs.length === 0 ? (
