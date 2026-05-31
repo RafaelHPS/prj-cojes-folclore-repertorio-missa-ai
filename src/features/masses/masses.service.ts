@@ -171,6 +171,9 @@ export async function deleteMass(id: string): Promise<void> {
 
 // ── Gestão do repertório ──────────────────────────────────────
 
+const SONG_FIELDS =
+  'id, title, artist, key, origin, book_number, singer_file_url, instrumental_file_url, partitura_url, letra_url, cifra_url'
+
 export async function addSongToMass(
   massId: string,
   songId: string,
@@ -180,9 +183,7 @@ export async function addSongToMass(
   const { data, error } = await supabase
     .from('mass_songs')
     .insert({ mass_id: massId, song_id: songId, part, position } as never)
-    .select(
-      'id, mass_id, song_id, part, position, created_at, songs(id, title, artist, key, singer_file_url, instrumental_file_url, partitura_url, letra_url, cifra_url)',
-    )
+    .select(`id, mass_id, song_id, part, position, created_at, songs(${SONG_FIELDS})`)
     .single()
 
   if (error) throw error
@@ -242,6 +243,8 @@ export interface MassSongWithSong {
     title: string
     artist: string | null
     key: string | null
+    origin: string | null
+    book_number: string | null
     singer_file_url: string | null
     instrumental_file_url: string | null
     partitura_url: string | null
@@ -260,9 +263,7 @@ export async function fetchPublicMass(id: string): Promise<Mass | null> {
 export async function fetchMassSongs(massId: string): Promise<MassSongWithSong[]> {
   const { data, error } = await supabase
     .from('mass_songs')
-    .select(
-      'id, mass_id, song_id, part, position, created_at, songs(id, title, artist, key, singer_file_url, instrumental_file_url, partitura_url, letra_url, cifra_url)',
-    )
+    .select(`id, mass_id, song_id, part, position, created_at, songs(${SONG_FIELDS})`)
     .eq('mass_id', massId)
     .order('position', { ascending: true })
 

@@ -92,6 +92,11 @@ function SongCard({ item, index, onView }: SongCardProps) {
               {song.key}
             </span>
           )}
+          {song.book_number && (
+            <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-xs font-semibold text-secondary">
+              nº {song.book_number}
+            </span>
+          )}
         </div>
 
         {files.length > 0 && (
