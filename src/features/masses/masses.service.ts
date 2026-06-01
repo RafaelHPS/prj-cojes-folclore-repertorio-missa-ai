@@ -172,7 +172,7 @@ export async function deleteMass(id: string): Promise<void> {
 // ── Gestão do repertório ──────────────────────────────────────
 
 const SONG_FIELDS =
-  'id, title, artist, key, origin, book_number, singer_file_url, instrumental_file_url, partitura_url, letra_url, cifra_url'
+  'id, title, artist, key, origin, book_number, audio_url, singer_file_url, instrumental_file_url, partitura_url, letra_url, cifra_url'
 
 export async function addSongToMass(
   massId: string,
@@ -245,6 +245,7 @@ export interface MassSongWithSong {
     key: string | null
     origin: string | null
     book_number: string | null
+    audio_url: string | null
     singer_file_url: string | null
     instrumental_file_url: string | null
     partitura_url: string | null

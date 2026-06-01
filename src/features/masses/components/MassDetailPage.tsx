@@ -75,6 +75,8 @@ function SongCard({ item, index, onView }: SongCardProps) {
     { label: 'Instrumentos', icon: 'queue_music', url: song.instrumental_file_url },
   ].filter((f) => f.url)
 
+  const audioUrl = song.audio_url
+
   return (
     <div className="flex items-start gap-4 rounded-3xl border border-outline-variant/20 bg-surface-container-lowest p-5 tonal-shadow">
       {/* Número */}
@@ -102,7 +104,7 @@ function SongCard({ item, index, onView }: SongCardProps) {
           )}
         </div>
 
-        {files.length > 0 && (
+        {(files.length > 0 || audioUrl) && (
           <div className="mt-3 flex flex-wrap gap-2">
             {files.map((f) => (
               <button
@@ -117,6 +119,20 @@ function SongCard({ item, index, onView }: SongCardProps) {
                 {f.label}
               </button>
             ))}
+            {audioUrl && (
+              <a
+                href={audioUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Ouvir áudio de ${song.title}`}
+                className="flex items-center gap-1.5 rounded-full border border-outline-variant/40 bg-surface-container-low px-3 py-1.5 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+              >
+                <span aria-hidden="true" className="material-symbols-outlined text-sm">
+                  headphones
+                </span>
+                Áudio
+              </a>
+            )}
           </div>
         )}
       </div>
