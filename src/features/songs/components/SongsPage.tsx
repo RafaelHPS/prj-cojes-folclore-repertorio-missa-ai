@@ -6,7 +6,7 @@ import { formatDateTime } from '@/utils/date.util'
 
 import { fetchSongs, deleteSong } from '../songs.service'
 import type { Song } from '../types'
-import { ORIGIN_LABEL } from '../songs.schemas'
+import { ORIGIN_LABEL, MASS_PART_LABEL } from '../songs.schemas'
 
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { FileBadges } from './FileBadges'
@@ -83,7 +83,8 @@ export default function SongsPage() {
         s.title.toLowerCase().includes(q) ||
         (s.artist ?? '').toLowerCase().includes(q) ||
         (s.key ?? '').toLowerCase().includes(q) ||
-        (s.book_number ?? '').toLowerCase().includes(q),
+        (s.book_number ?? '').toLowerCase().includes(q) ||
+        (s.suggested_parts ?? []).some((p) => MASS_PART_LABEL[p].toLowerCase().includes(q)),
     )
   }, [songs, search])
 
@@ -160,7 +161,7 @@ export default function SongsPage() {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por título, artista, tom ou nº…"
+              placeholder="Buscar título, artista, tom…"
               aria-label="Buscar músicas"
               className="w-full rounded-2xl border-none bg-surface-container-lowest py-3 pl-12 pr-4 text-sm text-on-surface outline-none placeholder:text-outline focus:ring-2 focus:ring-primary/20"
             />
@@ -334,6 +335,19 @@ function GridView({ songs, onEdit, onDelete, onView, canEdit, canDelete }: ViewP
             )}
           </div>
 
+          {(song.suggested_parts ?? []).length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {song.suggested_parts.map((p) => (
+                <span
+                  key={p}
+                  className="rounded-full border border-outline-variant/40 bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
+                >
+                  {MASS_PART_LABEL[p]}
+                </span>
+              ))}
+            </div>
+          )}
+
           <FileBadges song={song} onView={onView} />
 
           <div className="mt-3 space-y-0.5">
@@ -418,6 +432,18 @@ function ListView({
                   </span>
                 )}
               </div>
+              {(song.suggested_parts ?? []).length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {song.suggested_parts.map((p) => (
+                    <span
+                      key={p}
+                      className="rounded-full border border-outline-variant/40 bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
+                    >
+                      {MASS_PART_LABEL[p]}
+                    </span>
+                  ))}
+                </div>
+              )}
               <FileBadges song={song} onView={onView} />
             </div>
             {(canEdit || canDelete) && (
@@ -484,6 +510,9 @@ function ListView({
                 onSort={onSort}
               />
               <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
+                Momentos
+              </th>
+              <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
                 Arquivos
               </th>
               <SortableTh
@@ -543,6 +572,22 @@ function ListView({
                     </div>
                   ) : (
                     <span className="text-xs text-outline">Outros</span>
+                  )}
+                </td>
+                <td className="px-6 py-5">
+                  {(song.suggested_parts ?? []).length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {song.suggested_parts.map((p) => (
+                        <span
+                          key={p}
+                          className="rounded-full border border-outline-variant/40 bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
+                        >
+                          {MASS_PART_LABEL[p]}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-outline">—</span>
                   )}
                 </td>
                 <td className="px-6 py-5">
