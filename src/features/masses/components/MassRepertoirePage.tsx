@@ -89,12 +89,12 @@ function SortableSongRow({ item, index, canEdit, canDelete, onRemove }: SongRowP
   const SWIPE_THRESHOLD = 80
 
   function onTouchStart(e: React.TouchEvent) {
-    touchStartX.current = e.touches[0].clientX
+    touchStartX.current = e.touches[0]?.clientX ?? 0
   }
 
   function onTouchMove(e: React.TouchEvent) {
     if (isDragging) return
-    const delta = e.touches[0].clientX - touchStartX.current
+    const delta = (e.touches[0]?.clientX ?? touchStartX.current) - touchStartX.current
     if (delta < 0) setSwipeX(Math.max(delta, -120))
   }
 
