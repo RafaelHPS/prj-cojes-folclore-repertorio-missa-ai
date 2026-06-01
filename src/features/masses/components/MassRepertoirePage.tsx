@@ -429,9 +429,26 @@ export default function MassRepertoirePage() {
         </div>
       </header>
 
+      {/* Partes litúrgicas */}
+      <div className="space-y-4">
+        {PART_ORDER.map((part) => (
+          <PartSection
+            key={part}
+            part={part}
+            songs={songsByPart[part] ?? []}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            onAdd={() => handleOpenPicker(part)}
+            onMoveUp={(i) => void handleMoveUp(part, i)}
+            onMoveDown={(i) => void handleMoveDown(part, i)}
+            onRemove={(songId) => void handleRemove(part, songId)}
+          />
+        ))}
+      </div>
+
       {/* Participantes */}
       {participants.length > 0 && (
-        <div className="mb-6 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
+        <div className="mt-6 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
           <p className="mb-3 text-xs font-bold uppercase tracking-widest text-outline">
             Participantes
           </p>
@@ -451,23 +468,6 @@ export default function MassRepertoirePage() {
           </div>
         </div>
       )}
-
-      {/* Partes litúrgicas */}
-      <div className="space-y-4">
-        {PART_ORDER.map((part) => (
-          <PartSection
-            key={part}
-            part={part}
-            songs={songsByPart[part] ?? []}
-            canEdit={canEdit}
-            canDelete={canDelete}
-            onAdd={() => handleOpenPicker(part)}
-            onMoveUp={(i) => void handleMoveUp(part, i)}
-            onMoveDown={(i) => void handleMoveDown(part, i)}
-            onRemove={(songId) => void handleRemove(part, songId)}
-          />
-        ))}
-      </div>
     </div>
   )
 }

@@ -318,29 +318,6 @@ export default function MassDetailPage() {
           )}
         </header>
 
-        {/* Participantes */}
-        {participants.length > 0 && (
-          <div className="mb-10 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
-            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-outline">
-              Participantes
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {participants.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center gap-2 rounded-full border border-outline-variant/30 bg-surface-container-lowest px-3 py-1.5"
-                >
-                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                    {p.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-sm font-medium text-on-surface">{p.name}</span>
-                  {p.type === 'guest' && <span className="text-xs text-outline">· Visitante</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Conteúdo litúrgico */}
         {partsWithSongs.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-center">
@@ -365,6 +342,29 @@ export default function MassDetailPage() {
                 onView={(title, url) => setViewer({ title, url })}
               />
             ))}
+          </div>
+        )}
+
+        {/* Participantes */}
+        {participants.length > 0 && (
+          <div className="mt-10 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-outline">
+              Participantes
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {participants.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-2 rounded-full border border-outline-variant/30 bg-surface-container-lowest px-3 py-1.5"
+                >
+                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                    {p.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium text-on-surface">{p.name}</span>
+                  {p.type === 'guest' && <span className="text-xs text-outline">· Visitante</span>}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
