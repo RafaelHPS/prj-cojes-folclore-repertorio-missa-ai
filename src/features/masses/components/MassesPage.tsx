@@ -189,7 +189,7 @@ export default function MassesPage() {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nome ou data (dd/mm/aaaa)…"
+              placeholder="Buscar nome ou data…"
               aria-label="Buscar missas"
               className="w-full rounded-2xl border-none bg-surface-container-lowest py-3 pl-12 pr-4 text-sm text-on-surface outline-none placeholder:text-outline focus:ring-2 focus:ring-primary/20"
             />
