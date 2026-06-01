@@ -160,13 +160,13 @@ export default function MassesPage() {
       <section className="mb-8 rounded-3xl bg-surface-container-low p-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           {/* Tabs */}
-          <div className="flex rounded-2xl bg-surface-container p-1">
+          <div className="flex overflow-hidden rounded-2xl bg-surface-container p-1">
             {FILTERS.map((f) => (
               <button
                 key={f.value}
                 onClick={() => setFilter(f.value)}
                 aria-pressed={filter === f.value}
-                className={`flex-1 rounded-xl px-6 py-2.5 text-sm font-semibold transition-colors lg:flex-none ${
+                className={`flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors focus:outline-none lg:flex-none lg:px-6 ${
                   filter === f.value
                     ? 'bg-surface-container-lowest text-primary shadow-sm'
                     : 'text-outline hover:text-on-surface'
