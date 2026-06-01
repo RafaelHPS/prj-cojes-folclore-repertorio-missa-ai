@@ -177,7 +177,7 @@ function SortableSongRow({ item, index, canEdit, canDelete, onRemove }: SongRowP
 
       {/* Confirmação de exclusão */}
       {confirming && canDelete && (
-        <div className="absolute inset-0 flex items-center justify-between rounded-2xl bg-error/10 px-4">
+        <div className="absolute inset-0 flex items-center justify-between rounded-2xl border border-error/30 bg-surface-container-lowest px-4">
           <p className="text-sm font-semibold text-error">Remover música?</p>
           <div className="flex gap-2">
             <button
