@@ -198,20 +198,32 @@ export default function SongPickerPage() {
                 <button
                   onClick={() => void handleSelect(song)}
                   disabled={isAdding}
-                  className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-surface-container-low disabled:opacity-60"
+                  className="flex w-full items-center gap-3 px-5 py-4 text-left transition hover:bg-surface-container-low disabled:opacity-60"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate font-semibold text-on-surface">{song.title}</p>
+                    {/* Título + badge Sugerida */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="font-semibold text-on-surface">{song.title}</p>
                       {song.suggested_parts?.includes(massPart) && (
                         <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
                           Sugerida
                         </span>
                       )}
                     </div>
-                    {song.artist && (
-                      <p className="mt-0.5 truncate text-xs text-outline">{song.artist}</p>
+
+                    {/* Artista + Tom */}
+                    {(song.artist || song.key) && (
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                        {song.artist && <span className="text-xs text-outline">{song.artist}</span>}
+                        {song.key && (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                            {song.key}
+                          </span>
+                        )}
+                      </div>
                     )}
+
+                    {/* Origem + Número */}
                     {song.origin !== 'outros' && BOOK_ORIGINS.includes(song.origin) && (
                       <p className="mt-0.5 text-xs text-secondary">
                         {ORIGIN_LABEL[song.origin]}
@@ -220,21 +232,9 @@ export default function SongPickerPage() {
                     )}
                   </div>
 
-                  <div className="flex flex-shrink-0 flex-col items-end gap-1">
-                    {song.key && (
-                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
-                        {song.key}
-                      </span>
-                    )}
-                    {song.book_number && !BOOK_ORIGINS.includes(song.origin) && (
-                      <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-semibold text-secondary">
-                        nº {song.book_number}
-                      </span>
-                    )}
-                    {isAdding && (
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                    )}
-                  </div>
+                  {isAdding && (
+                    <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  )}
                 </button>
               </li>
             ))}
