@@ -11,6 +11,7 @@ export interface Song {
   origin: SongOrigin
   book_number: string | null
   suggested_parts: MassPart[]
+  audio_url: string | null
   singer_file_url: string | null
   instrumental_file_url: string | null
   partitura_url: string | null

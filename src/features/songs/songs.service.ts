@@ -37,6 +37,7 @@ export async function createSong(teamId: string, form: SongFormData): Promise<So
       origin: form.origin,
       book_number: BOOK_ORIGINS.includes(form.origin) ? form.book_number.trim() || null : null,
       suggested_parts: form.suggested_parts ?? [],
+      audio_url: null,
       created_by: user?.id ?? null,
     } as never)
     .select()
@@ -110,6 +111,14 @@ export async function removeSongFile(
     const { error } = await supabase.storage.from(BUCKET).remove(paths)
     if (error) throw error
   }
+}
+
+export async function updateSongAudioUrl(songId: string, url: string | null): Promise<void> {
+  const { error } = await supabase
+    .from('songs')
+    .update({ audio_url: url } as never)
+    .eq('id', songId)
+  if (error) throw error
 }
 
 export async function updateSongFileUrl(

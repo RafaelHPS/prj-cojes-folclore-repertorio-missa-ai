@@ -11,6 +11,7 @@ import {
   uploadSongFile,
   removeSongFile,
   updateSongFileUrl,
+  updateSongAudioUrl,
 } from '../songs.service'
 import type { SongFileType } from '../songs.service'
 import {
@@ -25,6 +26,7 @@ import { MUSICAL_KEYS, FILE_CONFIG } from '../songs.constants'
 import type { Song } from '../types'
 
 import { FileRow } from './FileRow'
+import { AudioLinkRow } from './AudioLinkRow'
 import { FileViewerModal } from './FileViewerModal'
 
 const EMPTY_FORM: SongFormData = {
@@ -53,6 +55,7 @@ export default function SongFormPage() {
     letra: song?.letra_url ?? null,
     cifra: song?.cifra_url ?? null,
   })
+  const [audioUrl, setAudioUrl] = useState<string | null>(song?.audio_url ?? null)
 
   const {
     register,
@@ -92,6 +95,7 @@ export default function SongFormPage() {
           letra: fetched.letra_url ?? null,
           cifra: fetched.cifra_url ?? null,
         })
+        setAudioUrl(fetched.audio_url ?? null)
         reset({
           title: fetched.title,
           artist: fetched.artist ?? '',
@@ -370,8 +374,10 @@ export default function SongFormPage() {
       {/* Arquivos — só no modo edição */}
       {isEdit && song && (
         <div className="mt-6 rounded-3xl bg-surface-container-lowest p-6 tonal-shadow">
-          <p className="mb-1 text-sm font-bold text-on-surface">Arquivos</p>
-          <p className="mb-4 text-xs text-outline">PDF, imagem ou documento de texto</p>
+          <p className="mb-1 text-sm font-bold text-on-surface">Arquivos e links</p>
+          <p className="mb-4 text-xs text-outline">
+            PDF, imagem, documento de texto ou link de áudio
+          </p>
           <div className="divide-y divide-outline-variant/10">
             {FILE_CONFIG.map(({ type, label, accept }) => (
               <FileRow
@@ -384,6 +390,14 @@ export default function SongFormPage() {
                 onView={(url) => setViewer({ label, url })}
               />
             ))}
+            <AudioLinkRow
+              url={audioUrl}
+              onSave={async (url) => {
+                if (!song) return
+                await updateSongAudioUrl(song.id, url)
+                setAudioUrl(url)
+              }}
+            />
           </div>
         </div>
       )}
