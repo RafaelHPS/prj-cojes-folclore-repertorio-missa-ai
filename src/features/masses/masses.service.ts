@@ -201,6 +201,17 @@ export async function removeMassSong(massSongId: string): Promise<void> {
   if (error) throw error
 }
 
+export async function reorderPartSongs(updates: { id: string; position: number }[]): Promise<void> {
+  await Promise.all(
+    updates.map(({ id, position }) =>
+      supabase
+        .from('mass_songs')
+        .update({ position } as never)
+        .eq('id', id),
+    ),
+  )
+}
+
 export async function swapMassSongPositions(
   idA: string,
   posA: number,

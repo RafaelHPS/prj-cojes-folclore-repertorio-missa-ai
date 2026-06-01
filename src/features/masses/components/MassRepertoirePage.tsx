@@ -1,5 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
@@ -13,7 +29,7 @@ import {
   fetchMassSongs,
   fetchMassParticipants,
   removeMassSong,
-  swapMassSongPositions,
+  reorderPartSongs,
 } from '../masses.service'
 import type { MassSongWithSong } from '../masses.service'
 import type { Mass, MassParticipant } from '../types'
@@ -50,44 +66,80 @@ const PART_LABEL: Record<MassPart, string> = {
   final: 'Final',
 }
 
-// ── Linha de música ───────────────────────────────────────────
+// ── Linha de música (sortable + swipe-to-delete) ─────────────
 
 interface SongRowProps {
   item: MassSongWithSong
   index: number
-  total: number
-  isFirst: boolean
-  isLast: boolean
   canEdit: boolean
   canDelete: boolean
-  onMoveUp: () => void
-  onMoveDown: () => void
   onRemove: () => void
 }
 
-function SongRow({
-  item,
-  index,
-  isFirst,
-  isLast,
-  canEdit,
-  canDelete,
-  onMoveUp,
-  onMoveDown,
-  onRemove,
-}: SongRowProps) {
+function SortableSongRow({ item, index, canEdit, canDelete, onRemove }: SongRowProps) {
   const { song } = item
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+    disabled: !canEdit,
+  })
+
+  const [swipeX, setSwipeX] = useState(0)
+  const [confirming, setConfirming] = useState(false)
+  const touchStartX = useRef(0)
+  const SWIPE_THRESHOLD = 80
+
+  function onTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    if (isDragging) return
+    const delta = e.touches[0].clientX - touchStartX.current
+    if (delta < 0) setSwipeX(Math.max(delta, -120))
+  }
+
+  function onTouchEnd() {
+    if (swipeX < -SWIPE_THRESHOLD) {
+      setConfirming(true)
+    }
+    setSwipeX(0)
+  }
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  }
 
   return (
-    <div className="group rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 tonal-shadow">
-      {/* Linha principal: número + info + ações */}
-      <div className="flex items-start gap-3">
+    <div ref={setNodeRef} style={style} className="relative overflow-hidden rounded-2xl">
+      {/* Fundo vermelho revelado no swipe */}
+      {canDelete && (
+        <div
+          className="absolute inset-y-0 right-0 flex items-center justify-end rounded-2xl bg-error/10 px-4"
+          aria-hidden="true"
+        >
+          <span className="material-symbols-outlined text-error">delete</span>
+        </div>
+      )}
+
+      {/* Conteúdo do card */}
+      <div
+        className="relative flex items-start gap-2 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-3 py-3 tonal-shadow"
+        style={{
+          transform: `translateX(${swipeX}px)`,
+          transition: swipeX === 0 ? 'transform 0.2s' : 'none',
+        }}
+        onTouchStart={canDelete ? onTouchStart : undefined}
+        onTouchMove={canDelete ? onTouchMove : undefined}
+        onTouchEnd={canDelete ? onTouchEnd : undefined}
+      >
         {/* Número */}
-        <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">
+        <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">
           {index + 1}
         </span>
 
-        {/* Info da música */}
+        {/* Info */}
         <div className="min-w-0 flex-1">
           <p className="font-semibold leading-snug text-on-surface">{song.title}</p>
           {(song.artist || song.key) && (
@@ -108,47 +160,44 @@ function SongRow({
           )}
         </div>
 
-        {/* Ações */}
-        {(canEdit || canDelete) && (
-          <div className="flex flex-shrink-0 items-center gap-1">
-            {canEdit && (
-              <>
-                <button
-                  onClick={onMoveUp}
-                  disabled={isFirst}
-                  aria-label="Mover para cima"
-                  className="rounded-lg p-1.5 text-outline transition hover:bg-surface-container-low hover:text-on-surface disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <span aria-hidden="true" className="material-symbols-outlined text-base">
-                    expand_less
-                  </span>
-                </button>
-                <button
-                  onClick={onMoveDown}
-                  disabled={isLast}
-                  aria-label="Mover para baixo"
-                  className="rounded-lg p-1.5 text-outline transition hover:bg-surface-container-low hover:text-on-surface disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <span aria-hidden="true" className="material-symbols-outlined text-base">
-                    expand_more
-                  </span>
-                </button>
-              </>
-            )}
-            {canDelete && (
-              <button
-                onClick={onRemove}
-                aria-label={`Remover ${song.title}`}
-                className="rounded-lg p-1.5 text-outline transition hover:bg-error/5 hover:text-error"
-              >
-                <span aria-hidden="true" className="material-symbols-outlined text-base">
-                  delete
-                </span>
-              </button>
-            )}
-          </div>
+        {/* Alça de arrastar (desktop + touch) */}
+        {canEdit && (
+          <button
+            {...attributes}
+            {...listeners}
+            aria-label="Arrastar para reordenar"
+            className="flex-shrink-0 cursor-grab touch-none rounded-lg p-1.5 text-outline active:cursor-grabbing"
+          >
+            <span aria-hidden="true" className="material-symbols-outlined text-base">
+              drag_indicator
+            </span>
+          </button>
         )}
       </div>
+
+      {/* Confirmação de exclusão */}
+      {confirming && canDelete && (
+        <div className="absolute inset-0 flex items-center justify-between rounded-2xl bg-error/10 px-4">
+          <p className="text-sm font-semibold text-error">Remover música?</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirming(false)}
+              className="rounded-full border border-outline-variant bg-surface-container-lowest px-3 py-1.5 text-xs font-semibold text-on-surface-variant"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => {
+                setConfirming(false)
+                onRemove()
+              }}
+              className="rounded-full bg-error px-3 py-1.5 text-xs font-bold text-white"
+            >
+              Remover
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -161,8 +210,7 @@ interface PartSectionProps {
   canEdit: boolean
   canDelete: boolean
   onAdd: () => void
-  onMoveUp: (index: number) => void
-  onMoveDown: (index: number) => void
+  onReorder: (newSongs: MassSongWithSong[]) => void
   onRemove: (id: string) => void
 }
 
@@ -172,17 +220,29 @@ function PartSection({
   canEdit,
   canDelete,
   onAdd,
-  onMoveUp,
-  onMoveDown,
+  onReorder,
   onRemove,
 }: PartSectionProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+  )
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = songs.findIndex((s) => s.id === active.id)
+    const newIndex = songs.findIndex((s) => s.id === over.id)
+    onReorder(arrayMove(songs, oldIndex, newIndex))
+  }
+
   return (
     <section
       aria-labelledby={`part-${part}`}
-      className="rounded-3xl border border-outline-variant/20 bg-surface-container-low overflow-hidden"
+      className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-low"
     >
-      {/* Header da parte */}
-      <div className="flex items-center justify-between px-5 py-3 bg-surface-container">
+      {/* Header */}
+      <div className="flex items-center justify-between bg-surface-container px-5 py-3">
         <h2
           id={`part-${part}`}
           className="text-xs font-extrabold uppercase tracking-widest text-outline"
@@ -208,35 +268,49 @@ function PartSection({
         )}
       </div>
 
-      {/* Músicas */}
-      <div className="p-3 space-y-2">
-        {songs.length === 0
-          ? canEdit && (
-              <button
-                onClick={onAdd}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-outline-variant/40 py-4 text-sm text-outline transition hover:border-primary/30 hover:text-primary"
-              >
-                <span aria-hidden="true" className="material-symbols-outlined text-base">
-                  add_circle
-                </span>
-                Adicionar música
-              </button>
-            )
-          : songs.map((item, i) => (
-              <SongRow
-                key={item.id}
-                item={item}
-                index={i}
-                total={songs.length}
-                isFirst={i === 0}
-                isLast={i === songs.length - 1}
-                canEdit={canEdit}
-                canDelete={canDelete}
-                onMoveUp={() => onMoveUp(i)}
-                onMoveDown={() => onMoveDown(i)}
-                onRemove={() => onRemove(item.id)}
-              />
-            ))}
+      {/* Dica de gestos */}
+      {songs.length > 0 && (canEdit || canDelete) && (
+        <p className="px-5 pt-2 text-xs text-outline">
+          {canEdit && canDelete && 'Segure ⠿ para reordenar · deslize ← para remover'}
+          {canEdit && !canDelete && 'Segure ⠿ para reordenar'}
+          {!canEdit && canDelete && 'Deslize ← para remover'}
+        </p>
+      )}
+
+      {/* Lista */}
+      <div className="space-y-2 p-3">
+        {songs.length === 0 ? (
+          canEdit && (
+            <button
+              onClick={onAdd}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-outline-variant/40 py-4 text-sm text-outline transition hover:border-primary/30 hover:text-primary"
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-base">
+                add_circle
+              </span>
+              Adicionar música
+            </button>
+          )
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={songs.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+              {songs.map((item, i) => (
+                <SortableSongRow
+                  key={item.id}
+                  item={item}
+                  index={i}
+                  canEdit={canEdit}
+                  canDelete={canDelete}
+                  onRemove={() => onRemove(item.id)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+        )}
       </div>
     </section>
   )
@@ -315,32 +389,11 @@ export default function MassRepertoirePage() {
     touchMassTimestamp()
   }
 
-  async function handleMoveUp(part: MassPart, index: number) {
-    if (index === 0) return
-    const list = [...(songsByPart[part] ?? [])]
-    const a = list[index]!
-    const b = list[index - 1]!
-    await swapMassSongPositions(a.id, a.position, b.id, b.position)
-    ;[list[index - 1], list[index]] = [
-      { ...a, position: b.position },
-      { ...b, position: a.position },
-    ]
-    setSongsByPart((prev) => ({ ...prev, [part]: list }))
+  async function handleReorder(part: MassPart, newSongs: MassSongWithSong[]) {
+    const updated = newSongs.map((s, i) => ({ ...s, position: i }))
+    setSongsByPart((prev) => ({ ...prev, [part]: updated }))
     touchMassTimestamp()
-  }
-
-  async function handleMoveDown(part: MassPart, index: number) {
-    const list = [...(songsByPart[part] ?? [])]
-    if (index >= list.length - 1) return
-    const a = list[index]!
-    const b = list[index + 1]!
-    await swapMassSongPositions(a.id, a.position, b.id, b.position)
-    ;[list[index], list[index + 1]] = [
-      { ...b, position: a.position },
-      { ...a, position: b.position },
-    ]
-    setSongsByPart((prev) => ({ ...prev, [part]: list }))
-    touchMassTimestamp()
+    await reorderPartSongs(updated.map((s) => ({ id: s.id, position: s.position })))
   }
 
   const totalSongs = PART_ORDER.reduce((sum, p) => sum + (songsByPart[p]?.length ?? 0), 0)
@@ -444,8 +497,7 @@ export default function MassRepertoirePage() {
             canEdit={canEdit}
             canDelete={canDelete}
             onAdd={() => handleOpenPicker(part)}
-            onMoveUp={(i) => void handleMoveUp(part, i)}
-            onMoveDown={(i) => void handleMoveDown(part, i)}
+            onReorder={(newSongs) => void handleReorder(part, newSongs)}
             onRemove={(songId) => void handleRemove(part, songId)}
           />
         ))}
