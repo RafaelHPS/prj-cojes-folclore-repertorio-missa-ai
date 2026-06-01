@@ -79,73 +79,76 @@ function SongRow({
   const { song } = item
 
   return (
-    <div className="group flex items-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 tonal-shadow">
-      {/* Número */}
-      <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">
-        {index + 1}
-      </span>
+    <div className="group rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 tonal-shadow">
+      {/* Linha principal: número + info + ações */}
+      <div className="flex items-start gap-3">
+        {/* Número */}
+        <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">
+          {index + 1}
+        </span>
 
-      {/* Info da música */}
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-on-surface">{song.title}</p>
-        {(song.artist || song.key) && (
-          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-            {song.artist && <span className="text-xs text-outline">{song.artist}</span>}
-            {song.key && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
-                {song.key}
-              </span>
+        {/* Info da música */}
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold leading-snug text-on-surface">{song.title}</p>
+          {(song.artist || song.key) && (
+            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+              {song.artist && <span className="text-xs text-outline">{song.artist}</span>}
+              {song.key && (
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                  {song.key}
+                </span>
+              )}
+            </div>
+          )}
+          {song.origin && song.origin !== 'outros' && (
+            <p className="mt-0.5 text-xs text-secondary">
+              {ORIGIN_LABEL[song.origin as keyof typeof ORIGIN_LABEL]}
+              {song.book_number && ` · nº ${song.book_number}`}
+            </p>
+          )}
+        </div>
+
+        {/* Ações */}
+        {(canEdit || canDelete) && (
+          <div className="flex flex-shrink-0 items-center gap-1">
+            {canEdit && (
+              <>
+                <button
+                  onClick={onMoveUp}
+                  disabled={isFirst}
+                  aria-label="Mover para cima"
+                  className="rounded-lg p-1.5 text-outline transition hover:bg-surface-container-low hover:text-on-surface disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <span aria-hidden="true" className="material-symbols-outlined text-base">
+                    expand_less
+                  </span>
+                </button>
+                <button
+                  onClick={onMoveDown}
+                  disabled={isLast}
+                  aria-label="Mover para baixo"
+                  className="rounded-lg p-1.5 text-outline transition hover:bg-surface-container-low hover:text-on-surface disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <span aria-hidden="true" className="material-symbols-outlined text-base">
+                    expand_more
+                  </span>
+                </button>
+              </>
+            )}
+            {canDelete && (
+              <button
+                onClick={onRemove}
+                aria-label={`Remover ${song.title}`}
+                className="rounded-lg p-1.5 text-outline transition hover:bg-error/5 hover:text-error"
+              >
+                <span aria-hidden="true" className="material-symbols-outlined text-base">
+                  delete
+                </span>
+              </button>
             )}
           </div>
         )}
-        {song.origin && song.origin !== 'outros' && (
-          <p className="mt-0.5 truncate text-xs text-secondary">
-            {ORIGIN_LABEL[song.origin as keyof typeof ORIGIN_LABEL]}
-            {song.book_number && ` · nº ${song.book_number}`}
-          </p>
-        )}
       </div>
-
-      {/* Ações */}
-      {(canEdit || canDelete) && (
-        <div className="flex flex-shrink-0 items-center gap-1">
-          {canEdit && (
-            <>
-              <button
-                onClick={onMoveUp}
-                disabled={isFirst}
-                aria-label="Mover para cima"
-                className="rounded-lg p-1.5 text-outline transition hover:bg-surface-container-low hover:text-on-surface disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <span aria-hidden="true" className="material-symbols-outlined text-base">
-                  expand_less
-                </span>
-              </button>
-              <button
-                onClick={onMoveDown}
-                disabled={isLast}
-                aria-label="Mover para baixo"
-                className="rounded-lg p-1.5 text-outline transition hover:bg-surface-container-low hover:text-on-surface disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <span aria-hidden="true" className="material-symbols-outlined text-base">
-                  expand_more
-                </span>
-              </button>
-            </>
-          )}
-          {canDelete && (
-            <button
-              onClick={onRemove}
-              aria-label={`Remover ${song.title}`}
-              className="rounded-lg p-1.5 text-outline transition hover:bg-error/5 hover:text-error"
-            >
-              <span aria-hidden="true" className="material-symbols-outlined text-base">
-                delete
-              </span>
-            </button>
-          )}
-        </div>
-      )}
     </div>
   )
 }
