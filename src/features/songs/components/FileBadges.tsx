@@ -13,7 +13,8 @@ const FILE_FIELDS = [
 
 export function FileBadges({ song, onView }: Props) {
   const existing = FILE_FIELDS.filter((f) => !!song[f.key])
-  if (existing.length === 0) return null
+  const hasAudio = !!song.audio_url
+  if (existing.length === 0 && !hasAudio) return null
 
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -33,6 +34,21 @@ export function FileBadges({ song, onView }: Props) {
           {f.label}
         </button>
       ))}
+      {hasAudio && (
+        <a
+          href={song.audio_url!}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`Ouvir áudio de ${song.title}`}
+          className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary transition hover:bg-primary/20"
+        >
+          <span aria-hidden="true" className="material-symbols-outlined text-xs">
+            headphones
+          </span>
+          Áudio
+        </a>
+      )}
     </div>
   )
 }

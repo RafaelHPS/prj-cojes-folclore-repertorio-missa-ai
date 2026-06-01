@@ -616,9 +616,20 @@ function ListView({
                         Cifra
                       </button>
                     )}
-                    {!song.partitura_url && !song.letra_url && !song.cifra_url && (
-                      <span className="text-xs text-outline">—</span>
+                    {song.audio_url && (
+                      <a
+                        href={song.audio_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-semibold text-primary hover:underline"
+                      >
+                        Áudio
+                      </a>
                     )}
+                    {!song.partitura_url &&
+                      !song.letra_url &&
+                      !song.cifra_url &&
+                      !song.audio_url && <span className="text-xs text-outline">—</span>}
                   </div>
                 </td>
                 <td className="px-6 py-5 text-xs text-outline">
