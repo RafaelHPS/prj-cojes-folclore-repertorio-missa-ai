@@ -21,6 +21,7 @@ export async function fetchSongs(teamId: string): Promise<Song[]> {
     .select('*')
     .eq('team_id', teamId)
     .order('title')
+    .limit(10000)
 
   if (error) throw error
   return (data ?? []) as unknown as Song[]
