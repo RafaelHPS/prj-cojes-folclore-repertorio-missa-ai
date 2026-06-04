@@ -13,7 +13,7 @@ import { FileBadges } from './FileBadges'
 import { FileViewerModal } from './FileViewerModal'
 
 type ViewMode = 'grid' | 'list'
-type SortKey = 'title' | 'artist' | 'key' | 'origin' | 'created_at' | 'updated_at'
+type SortKey = 'title' | 'artist' | 'key' | 'origin' | 'book_number' | 'created_at' | 'updated_at'
 type SortDir = 'asc' | 'desc'
 
 interface SortableThProps {
@@ -106,6 +106,8 @@ export default function SongsPage() {
       else if (sortKey === 'artist') cmp = (a.artist ?? '').localeCompare(b.artist ?? '', 'pt-BR')
       else if (sortKey === 'key') cmp = (a.key ?? '').localeCompare(b.key ?? '', 'pt-BR')
       else if (sortKey === 'origin') cmp = a.origin.localeCompare(b.origin, 'pt-BR')
+      else if (sortKey === 'book_number')
+        cmp = (a.book_number ?? '').localeCompare(b.book_number ?? '', undefined, { numeric: true })
       else if (sortKey === 'created_at') cmp = a.created_at.localeCompare(b.created_at)
       else if (sortKey === 'updated_at') cmp = a.updated_at.localeCompare(b.updated_at)
       return sortDir === 'asc' ? cmp : -cmp
@@ -196,6 +198,8 @@ export default function SongsPage() {
               <option value="key-desc">Tom Z→A</option>
               <option value="origin-asc">Origem A→Z</option>
               <option value="origin-desc">Origem Z→A</option>
+              <option value="book_number-asc">Nº no livro ↑</option>
+              <option value="book_number-desc">Nº no livro ↓</option>
               <option value="updated_at-desc">Atualização recente</option>
               <option value="updated_at-asc">Atualização antiga</option>
               <option value="created_at-desc">Adição recente</option>
@@ -537,6 +541,13 @@ function ListView({
                 dir={sortDir}
                 onSort={onSort}
               />
+              <SortableTh
+                label="Nº livro"
+                sortKey="book_number"
+                current={sortKey}
+                dir={sortDir}
+                onSort={onSort}
+              />
               <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
                 Momentos
               </th>
@@ -593,17 +604,15 @@ function ListView({
                 </td>
                 <td className="px-6 py-5">
                   {song.origin !== 'outros' ? (
-                    <div>
-                      <span className="rounded-full bg-secondary/10 px-2.5 py-1 text-xs font-semibold text-secondary">
-                        {ORIGIN_LABEL[song.origin]}
-                      </span>
-                      {song.book_number && (
-                        <span className="ml-1.5 text-xs text-outline">nº {song.book_number}</span>
-                      )}
-                    </div>
+                    <span className="rounded-full bg-secondary/10 px-2.5 py-1 text-xs font-semibold text-secondary">
+                      {ORIGIN_LABEL[song.origin]}
+                    </span>
                   ) : (
                     <span className="text-xs text-outline">Outros</span>
                   )}
+                </td>
+                <td className="px-6 py-5 text-xs font-mono text-outline">
+                  {song.book_number ?? '—'}
                 </td>
                 <td className="px-6 py-5">
                   {(song.suggested_parts ?? []).length > 0 ? (
