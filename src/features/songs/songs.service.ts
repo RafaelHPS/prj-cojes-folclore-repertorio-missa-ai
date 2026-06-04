@@ -16,15 +16,27 @@ export async function fetchSongCount(teamId: string): Promise<number> {
 }
 
 export async function fetchSongs(teamId: string): Promise<Song[]> {
-  const { data, error } = await supabase
-    .from('songs')
-    .select('*')
-    .eq('team_id', teamId)
-    .order('title')
-    .limit(10000)
+  const PAGE_SIZE = 1000
+  const all: Song[] = []
+  let from = 0
 
-  if (error) throw error
-  return (data ?? []) as unknown as Song[]
+  while (true) {
+    const { data, error } = await supabase
+      .from('songs')
+      .select('*')
+      .eq('team_id', teamId)
+      .order('title')
+      .range(from, from + PAGE_SIZE - 1)
+
+    if (error) throw error
+
+    all.push(...((data ?? []) as unknown as Song[]))
+
+    if (!data || data.length < PAGE_SIZE) break
+    from += PAGE_SIZE
+  }
+
+  return all
 }
 
 export async function fetchSongById(id: string): Promise<Song | null> {
