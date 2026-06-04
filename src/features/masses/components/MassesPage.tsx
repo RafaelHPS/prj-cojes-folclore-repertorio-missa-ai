@@ -12,6 +12,15 @@ import { DeleteMassModal } from './DeleteMassModal'
 
 const LITURGICAL_YEAR_LABEL = { A: 'Ano A', B: 'Ano B', C: 'Ano C' } as const
 
+const LITURGICAL_SEASON_LABEL = {
+  tempo_comum: 'Tempo Comum',
+  advento: 'Advento',
+  natal: 'Natal',
+  quaresma: 'Quaresma',
+  pascoa: 'Páscoa',
+  pentecostes: 'Pentecostes',
+} as const
+
 const FILTERS: { value: MassFilter; label: string }[] = [
   { value: 'upcoming', label: 'Próximas' },
   { value: 'past', label: 'Passadas' },
@@ -249,6 +258,11 @@ export default function MassesPage() {
                         {LITURGICAL_YEAR_LABEL[mass.liturgical_year]}
                       </span>
                     )}
+                    {mass.liturgical_season && (
+                      <span className="rounded-full border border-tertiary/30 bg-tertiary/5 px-2 py-0.5 text-xs font-medium text-tertiary">
+                        {LITURGICAL_SEASON_LABEL[mass.liturgical_season]}
+                      </span>
+                    )}
                     <span className="text-xs text-outline">
                       {mass.song_count} música{mass.song_count !== 1 ? 's' : ''}
                     </span>
@@ -310,6 +324,9 @@ export default function MassesPage() {
                   />
                   <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-outline">
                     Ano Litúrgico
+                  </th>
+                  <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-outline">
+                    Tempo Litúrgico
                   </th>
                   <SortableTh
                     label="Músicas"
@@ -385,6 +402,17 @@ export default function MassesPage() {
                       {mass.liturgical_year ? (
                         <span className="inline-flex rounded-full bg-secondary/10 px-3 py-1 text-xs font-bold text-secondary">
                           {LITURGICAL_YEAR_LABEL[mass.liturgical_year]}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-outline">—</span>
+                      )}
+                    </td>
+
+                    {/* Tempo litúrgico */}
+                    <td className="px-6 py-5">
+                      {mass.liturgical_season ? (
+                        <span className="inline-flex rounded-full border border-tertiary/30 bg-tertiary/5 px-3 py-1 text-xs font-medium text-tertiary">
+                          {LITURGICAL_SEASON_LABEL[mass.liturgical_season]}
                         </span>
                       ) : (
                         <span className="text-sm text-outline">—</span>

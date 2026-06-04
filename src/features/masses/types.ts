@@ -1,4 +1,4 @@
-import type { LiturgicalYear, MassPart } from '@/types/database'
+import type { LiturgicalYear, LiturgicalSeason, MassPart } from '@/types/database'
 
 export interface Mass {
   id: string
@@ -8,6 +8,7 @@ export interface Mass {
   time: string | null
   description: string | null
   liturgical_year: LiturgicalYear | null
+  liturgical_season: LiturgicalSeason | null
   is_public: boolean
   created_by: string | null
   created_at: string

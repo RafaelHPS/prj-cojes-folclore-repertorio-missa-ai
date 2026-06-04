@@ -134,6 +134,7 @@ export async function createMass(teamId: string, form: MassFormData): Promise<Ma
       date: form.date,
       time: form.time?.trim() || null,
       liturgical_year: form.liturgical_year ?? null,
+      liturgical_season: form.liturgical_season ?? null,
       description: form.description?.trim() || null,
       is_public: form.is_public,
       created_by: user?.id ?? null,
@@ -153,6 +154,7 @@ export async function updateMass(id: string, form: MassFormData): Promise<Mass> 
       date: form.date,
       time: form.time?.trim() || null,
       liturgical_year: form.liturgical_year ?? null,
+      liturgical_season: form.liturgical_season ?? null,
       description: form.description?.trim() || null,
       is_public: form.is_public,
     } as never)

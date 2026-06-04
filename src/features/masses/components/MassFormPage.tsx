@@ -12,7 +12,7 @@ import {
   addMassParticipant,
   removeMassParticipant,
 } from '../masses.service'
-import { massSchema } from '../masses.schemas'
+import { massSchema, LITURGICAL_SEASONS, LITURGICAL_SEASON_LABEL } from '../masses.schemas'
 import type { MassFormData } from '../masses.schemas'
 import type { Mass, MassParticipant } from '../types'
 import { fetchTeamMembers } from '@/features/teams/settings.service'
@@ -30,6 +30,7 @@ function defaultForm(): MassFormData {
     date: '',
     time: '',
     liturgical_year: undefined,
+    liturgical_season: undefined,
     description: '',
     is_public: false,
   }
@@ -41,6 +42,7 @@ function massToForm(mass: Mass): MassFormData {
     date: mass.date,
     time: mass.time ?? '',
     liturgical_year: mass.liturgical_year ?? undefined,
+    liturgical_season: mass.liturgical_season ?? undefined,
     description: mass.description ?? '',
     is_public: mass.is_public,
   }
@@ -287,26 +289,49 @@ export default function MassFormPage() {
             </div>
           </div>
 
-          {/* Ano litúrgico */}
-          <div>
-            <label
-              htmlFor="mass-year"
-              className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
-            >
-              Ano litúrgico
-            </label>
-            <select
-              id="mass-year"
-              className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-              {...register('liturgical_year')}
-            >
-              <option value="">Selecionar ano</option>
-              {LITURGICAL_YEARS.map(({ value, label }) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+          {/* Ano + Tempo litúrgico */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label
+                htmlFor="mass-year"
+                className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+              >
+                Ano litúrgico
+              </label>
+              <select
+                id="mass-year"
+                className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                {...register('liturgical_year')}
+              >
+                <option value="">Selecionar ano</option>
+                {LITURGICAL_YEARS.map(({ value, label }) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="mass-season"
+                className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+              >
+                Tempo litúrgico
+              </label>
+              <select
+                id="mass-season"
+                className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                {...register('liturgical_season')}
+              >
+                <option value="">Selecionar tempo</option>
+                {LITURGICAL_SEASONS.map((season) => (
+                  <option key={season} value={season}>
+                    {LITURGICAL_SEASON_LABEL[season]}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Descrição */}
