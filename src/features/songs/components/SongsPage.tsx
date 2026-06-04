@@ -12,6 +12,8 @@ import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { FileBadges } from './FileBadges'
 import { FileViewerModal } from './FileViewerModal'
 
+const PER_PAGE = 24
+
 type ViewMode = 'grid' | 'list'
 type SortKey = 'title' | 'artist' | 'key' | 'origin' | 'book_number' | 'created_at' | 'updated_at'
 type SortDir = 'asc' | 'desc'
@@ -59,6 +61,7 @@ export default function SongsPage() {
   const [viewer, setViewer] = useState<ViewerState | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>('title')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     if (!team) return
@@ -97,6 +100,7 @@ export default function SongsPage() {
       setSortKey(key)
       setSortDir('asc')
     }
+    setPage(1)
   }
 
   const sortedSongs = useMemo(() => {
@@ -113,6 +117,9 @@ export default function SongsPage() {
       return sortDir === 'asc' ? cmp : -cmp
     })
   }, [filteredSongs, sortKey, sortDir])
+
+  const totalPages = Math.max(1, Math.ceil(sortedSongs.length / PER_PAGE))
+  const pagedSongs = sortedSongs.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   async function handleDelete() {
     if (!toDelete) return
@@ -136,7 +143,9 @@ export default function SongsPage() {
             Músicas
           </h1>
           <p className="mt-2 text-outline">
-            {songs.length} música{songs.length !== 1 ? 's' : ''} no repertório
+            {search
+              ? `${filteredSongs.length} encontrada${filteredSongs.length !== 1 ? 's' : ''} de ${songs.length} no repertório`
+              : `${songs.length} música${songs.length !== 1 ? 's' : ''} no repertório`}
           </p>
         </div>
         {canEdit && (
@@ -165,7 +174,10 @@ export default function SongsPage() {
             <input
               type="search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value)
+                setPage(1)
+              }}
               placeholder="Buscar título, artista, tom…"
               aria-label="Buscar músicas"
               className="w-full rounded-2xl border-none bg-surface-container-lowest py-3 pl-12 pr-4 text-sm text-on-surface outline-none placeholder:text-outline focus:ring-2 focus:ring-primary/20"
@@ -187,6 +199,7 @@ export default function SongsPage() {
                 const [k, d] = e.target.value.split('-') as [SortKey, SortDir]
                 setSortKey(k)
                 setSortDir(d)
+                setPage(1)
               }}
               className="rounded-xl border-none bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20"
             >
@@ -258,27 +271,90 @@ export default function SongsPage() {
             {search ? 'Tente outro termo de busca.' : 'Clique em "Nova música" para começar.'}
           </p>
         </div>
-      ) : view === 'grid' ? (
-        <GridView
-          songs={sortedSongs}
-          onEdit={(song) => navigate(`/musicas/${song.id}/editar`, { state: { song } })}
-          onDelete={setToDelete}
-          onView={(label, url) => setViewer({ label, url })}
-          canEdit={canEdit}
-          canDelete={canDelete}
-        />
       ) : (
-        <ListView
-          songs={sortedSongs}
-          sortKey={sortKey}
-          sortDir={sortDir}
-          onSort={handleSort}
-          onEdit={(song) => navigate(`/musicas/${song.id}/editar`, { state: { song } })}
-          onDelete={setToDelete}
-          onView={(label, url) => setViewer({ label, url })}
-          canEdit={canEdit}
-          canDelete={canDelete}
-        />
+        <>
+          {view === 'grid' ? (
+            <GridView
+              songs={pagedSongs}
+              onEdit={(song) => navigate(`/musicas/${song.id}/editar`, { state: { song } })}
+              onDelete={setToDelete}
+              onView={(label, url) => setViewer({ label, url })}
+              canEdit={canEdit}
+              canDelete={canDelete}
+            />
+          ) : (
+            <ListView
+              songs={pagedSongs}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={handleSort}
+              onEdit={(song) => navigate(`/musicas/${song.id}/editar`, { state: { song } })}
+              onDelete={setToDelete}
+              onView={(label, url) => setViewer({ label, url })}
+              canEdit={canEdit}
+              canDelete={canDelete}
+            />
+          )}
+
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <nav
+              aria-label="Paginação de músicas"
+              className="mt-8 flex items-center justify-center gap-2"
+            >
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                aria-label="Página anterior"
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-outline transition hover:bg-surface-container hover:text-on-surface disabled:pointer-events-none disabled:opacity-30"
+              >
+                <span aria-hidden="true" className="material-symbols-outlined">
+                  chevron_left
+                </span>
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                  if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis')
+                  acc.push(p)
+                  return acc
+                }, [])
+                .map((item, idx) =>
+                  item === 'ellipsis' ? (
+                    <span key={`ellipsis-${idx}`} className="px-1 text-outline">
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={item}
+                      onClick={() => setPage(item)}
+                      aria-label={`Página ${item}`}
+                      aria-current={item === page ? 'page' : undefined}
+                      className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold transition ${
+                        item === page
+                          ? 'bg-primary text-on-primary shadow-sm'
+                          : 'text-outline hover:bg-surface-container hover:text-on-surface'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  ),
+                )}
+
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                aria-label="Próxima página"
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-outline transition hover:bg-surface-container hover:text-on-surface disabled:pointer-events-none disabled:opacity-30"
+              >
+                <span aria-hidden="true" className="material-symbols-outlined">
+                  chevron_right
+                </span>
+              </button>
+            </nav>
+          )}
+        </>
       )}
 
       {viewer && (

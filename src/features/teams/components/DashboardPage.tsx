@@ -9,7 +9,7 @@ import {
   fetchMassCount,
   fetchTopSongs,
 } from '@/features/masses/masses.service'
-import { fetchSongs } from '@/features/songs/songs.service'
+import { fetchSongCount } from '@/features/songs/songs.service'
 import type { Mass } from '@/features/masses/types'
 
 const LITURGICAL_YEAR_LABEL = { A: 'Ano A', B: 'Ano B', C: 'Ano C' } as const
@@ -65,13 +65,13 @@ export default function DashboardPage() {
       if (!team) return
       setIsLoading(true)
       try {
-        const [songs, mCount, upcoming, top] = await Promise.all([
-          fetchSongs(team.id),
+        const [sCount, mCount, upcoming, top] = await Promise.all([
+          fetchSongCount(team.id),
           fetchMassCount(team.id),
           fetchUpcomingMasses(team.id, 5),
           fetchTopSongs(team.id, 5),
         ])
-        setSongCount(songs.length)
+        setSongCount(sCount)
         setMassCount(mCount)
         setUpcomingMasses(upcoming)
         setTopSongs(top)

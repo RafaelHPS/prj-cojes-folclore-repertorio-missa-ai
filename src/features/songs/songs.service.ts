@@ -5,6 +5,16 @@ import { BOOK_ORIGINS } from './songs.schemas'
 
 const BUCKET = 'song-files'
 
+export async function fetchSongCount(teamId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('songs')
+    .select('*', { count: 'exact', head: true })
+    .eq('team_id', teamId)
+
+  if (error) throw error
+  return count ?? 0
+}
+
 export async function fetchSongs(teamId: string): Promise<Song[]> {
   const { data, error } = await supabase
     .from('songs')
