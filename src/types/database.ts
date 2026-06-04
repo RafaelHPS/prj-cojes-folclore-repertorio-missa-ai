@@ -7,6 +7,7 @@ export type LiturgicalSeason =
   | 'quaresma'
   | 'pascoa'
   | 'pentecostes'
+  | 'outros'
 
 export type MassPart =
   | 'entrada'

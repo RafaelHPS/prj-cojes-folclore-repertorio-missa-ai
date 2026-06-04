@@ -8,6 +8,7 @@ export const LITURGICAL_SEASONS = [
   'quaresma',
   'pascoa',
   'pentecostes',
+  'outros',
 ] as const
 
 export const LITURGICAL_SEASON_LABEL: Record<(typeof LITURGICAL_SEASONS)[number], string> = {
@@ -17,6 +18,7 @@ export const LITURGICAL_SEASON_LABEL: Record<(typeof LITURGICAL_SEASONS)[number]
   quaresma: 'Quaresma',
   pascoa: 'Páscoa',
   pentecostes: 'Pentecostes',
+  outros: 'Outros',
 }
 
 export const MASS_PARTS = [

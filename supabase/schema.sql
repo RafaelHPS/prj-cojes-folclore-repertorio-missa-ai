@@ -30,7 +30,8 @@ create type liturgical_season as enum (
   'natal',
   'quaresma',
   'pascoa',
-  'pentecostes'
+  'pentecostes',
+  'outros'
 );
 
 -- ── Tabelas ──────────────────────────────────────────────────

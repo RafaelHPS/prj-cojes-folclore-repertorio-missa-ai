@@ -19,6 +19,7 @@ const LITURGICAL_SEASON_LABEL = {
   quaresma: 'Quaresma',
   pascoa: 'Páscoa',
   pentecostes: 'Pentecostes',
+  outros: 'Outros',
 } as const
 
 const FILTERS: { value: MassFilter; label: string }[] = [
