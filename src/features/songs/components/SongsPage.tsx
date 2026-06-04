@@ -6,7 +6,7 @@ import { formatDateTime } from '@/utils/date.util'
 
 import { fetchSongs, deleteSong } from '../songs.service'
 import type { Song } from '../types'
-import { ORIGIN_LABEL, MASS_PART_LABEL } from '../songs.schemas'
+import { ORIGIN_LABEL, MASS_PART_LABEL, LITURGICAL_SEASON_LABEL } from '../songs.schemas'
 
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { FileBadges } from './FileBadges'
@@ -84,7 +84,10 @@ export default function SongsPage() {
         (s.artist ?? '').toLowerCase().includes(q) ||
         (s.key ?? '').toLowerCase().includes(q) ||
         (s.book_number ?? '').toLowerCase().includes(q) ||
-        (s.suggested_parts ?? []).some((p) => MASS_PART_LABEL[p].toLowerCase().includes(q)),
+        (s.suggested_parts ?? []).some((p) => MASS_PART_LABEL[p].toLowerCase().includes(q)) ||
+        (s.suggested_seasons ?? []).some((s) =>
+          LITURGICAL_SEASON_LABEL[s].toLowerCase().includes(q),
+        ),
     )
   }, [songs, search])
 
@@ -348,6 +351,19 @@ function GridView({ songs, onEdit, onDelete, onView, canEdit, canDelete }: ViewP
             </div>
           )}
 
+          {(song.suggested_seasons ?? []).length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {song.suggested_seasons.map((s) => (
+                <span
+                  key={s}
+                  className="rounded-full border border-tertiary/30 bg-tertiary/5 px-2 py-0.5 text-xs font-medium text-tertiary"
+                >
+                  {LITURGICAL_SEASON_LABEL[s]}
+                </span>
+              ))}
+            </div>
+          )}
+
           <FileBadges song={song} onView={onView} />
 
           <div className="mt-3 space-y-0.5">
@@ -444,6 +460,18 @@ function ListView({
                   ))}
                 </div>
               )}
+              {(song.suggested_seasons ?? []).length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {song.suggested_seasons.map((s) => (
+                    <span
+                      key={s}
+                      className="rounded-full border border-tertiary/30 bg-tertiary/5 px-2 py-0.5 text-xs font-medium text-tertiary"
+                    >
+                      {LITURGICAL_SEASON_LABEL[s]}
+                    </span>
+                  ))}
+                </div>
+              )}
               <FileBadges song={song} onView={onView} />
             </div>
             {(canEdit || canDelete) && (
@@ -511,6 +539,9 @@ function ListView({
               />
               <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
                 Momentos
+              </th>
+              <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
+                Tempos
               </th>
               <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline">
                 Arquivos
@@ -583,6 +614,22 @@ function ListView({
                           className="rounded-full border border-outline-variant/40 bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
                         >
                           {MASS_PART_LABEL[p]}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-outline">—</span>
+                  )}
+                </td>
+                <td className="px-6 py-5">
+                  {(song.suggested_seasons ?? []).length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {song.suggested_seasons.map((s) => (
+                        <span
+                          key={s}
+                          className="rounded-full border border-tertiary/30 bg-tertiary/5 px-2 py-0.5 text-xs font-medium text-tertiary"
+                        >
+                          {LITURGICAL_SEASON_LABEL[s]}
                         </span>
                       ))}
                     </div>

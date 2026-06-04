@@ -1,6 +1,6 @@
 export type SongOrigin = 'outros' | 'arquidiocese' | 'cojes' | 'salmos'
 
-import type { MassPart } from '@/types/database'
+import type { MassPart, LiturgicalSeason } from '@/types/database'
 
 export interface Song {
   id: string
@@ -11,6 +11,7 @@ export interface Song {
   origin: SongOrigin
   book_number: string | null
   suggested_parts: MassPart[]
+  suggested_seasons: LiturgicalSeason[]
   audio_url: string | null
   singer_file_url: string | null
   instrumental_file_url: string | null

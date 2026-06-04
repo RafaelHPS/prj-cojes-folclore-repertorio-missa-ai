@@ -37,6 +37,7 @@ export async function createSong(teamId: string, form: SongFormData): Promise<So
       origin: form.origin,
       book_number: BOOK_ORIGINS.includes(form.origin) ? form.book_number.trim() || null : null,
       suggested_parts: form.suggested_parts ?? [],
+      suggested_seasons: form.suggested_seasons ?? [],
       audio_url: null,
       created_by: user?.id ?? null,
     } as never)
@@ -57,6 +58,7 @@ export async function updateSong(id: string, form: SongFormData): Promise<Song> 
       origin: form.origin,
       book_number: BOOK_ORIGINS.includes(form.origin) ? form.book_number.trim() || null : null,
       suggested_parts: form.suggested_parts ?? [],
+      suggested_seasons: form.suggested_seasons ?? [],
     } as never)
     .eq('id', id)
     .select()

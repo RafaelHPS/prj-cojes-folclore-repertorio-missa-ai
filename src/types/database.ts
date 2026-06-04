@@ -1,5 +1,13 @@
 export type UserRole = 'admin' | 'editor' | 'contributor' | 'viewer'
 export type LiturgicalYear = 'A' | 'B' | 'C'
+export type LiturgicalSeason =
+  | 'tempo_comum'
+  | 'advento'
+  | 'natal'
+  | 'quaresma'
+  | 'pascoa'
+  | 'pentecostes'
+
 export type MassPart =
   | 'entrada'
   | 'ato_penitencial'

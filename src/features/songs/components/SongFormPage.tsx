@@ -20,6 +20,8 @@ import {
   ORIGIN_LABEL,
   MASS_PARTS,
   MASS_PART_LABEL,
+  LITURGICAL_SEASONS,
+  LITURGICAL_SEASON_LABEL,
 } from '../songs.schemas'
 import type { SongFormData } from '../songs.schemas'
 import { MUSICAL_KEYS, FILE_CONFIG } from '../songs.constants'
@@ -36,6 +38,7 @@ const EMPTY_FORM: SongFormData = {
   origin: 'outros',
   book_number: '',
   suggested_parts: [],
+  suggested_seasons: [],
 }
 
 export default function SongFormPage() {
@@ -70,12 +73,20 @@ export default function SongFormPage() {
   })
 
   const suggestedParts = watch('suggested_parts') ?? []
+  const suggestedSeasons = watch('suggested_seasons') ?? []
 
   function togglePart(part: (typeof MASS_PARTS)[number]) {
     const next = suggestedParts.includes(part)
       ? suggestedParts.filter((p) => p !== part)
       : [...suggestedParts, part]
     setValue('suggested_parts', next, { shouldDirty: true })
+  }
+
+  function toggleSeason(season: (typeof LITURGICAL_SEASONS)[number]) {
+    const next = suggestedSeasons.includes(season)
+      ? suggestedSeasons.filter((s) => s !== season)
+      : [...suggestedSeasons, season]
+    setValue('suggested_seasons', next, { shouldDirty: true })
   }
 
   useEffect(() => {
@@ -103,6 +114,7 @@ export default function SongFormPage() {
           origin: fetched.origin ?? 'outros',
           book_number: fetched.book_number ?? '',
           suggested_parts: fetched.suggested_parts ?? [],
+          suggested_seasons: fetched.suggested_seasons ?? [],
         })
       } catch {
         setLoadError('Erro ao carregar a música.')
@@ -123,6 +135,7 @@ export default function SongFormPage() {
         origin: state.song.origin ?? 'outros',
         book_number: state.song.book_number ?? '',
         suggested_parts: state.song.suggested_parts ?? [],
+        suggested_seasons: state.song.suggested_seasons ?? [],
       })
     }
   }, [state?.song, reset])
@@ -333,6 +346,36 @@ export default function SongFormPage() {
                     }`}
                   >
                     {MASS_PART_LABEL[part]}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Tempos litúrgicos sugeridos */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-on-surface-variant">
+              Tempos litúrgicos sugeridos
+            </label>
+            <p className="mb-3 text-xs text-outline">
+              Indique em quais tempos do ano litúrgico esta música costuma ser usada.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {LITURGICAL_SEASONS.map((season) => {
+                const selected = suggestedSeasons.includes(season)
+                return (
+                  <button
+                    key={season}
+                    type="button"
+                    onClick={() => toggleSeason(season)}
+                    aria-pressed={selected}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      selected
+                        ? 'border-tertiary bg-tertiary text-on-tertiary'
+                        : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:border-tertiary/40 hover:text-tertiary'
+                    }`}
+                  >
+                    {LITURGICAL_SEASON_LABEL[season]}
                   </button>
                 )
               })}

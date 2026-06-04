@@ -1,6 +1,24 @@
 import { z } from 'zod'
 import type { SongOrigin } from './types'
 
+export const LITURGICAL_SEASONS = [
+  'tempo_comum',
+  'advento',
+  'natal',
+  'quaresma',
+  'pascoa',
+  'pentecostes',
+] as const
+
+export const LITURGICAL_SEASON_LABEL: Record<(typeof LITURGICAL_SEASONS)[number], string> = {
+  tempo_comum: 'Tempo Comum',
+  advento: 'Advento',
+  natal: 'Natal',
+  quaresma: 'Quaresma',
+  pascoa: 'Páscoa',
+  pentecostes: 'Pentecostes',
+}
+
 export const MASS_PARTS = [
   'entrada',
   'ato_penitencial',
@@ -48,6 +66,7 @@ export const songSchema = z
     origin: z.enum(['outros', 'arquidiocese', 'cojes', 'salmos'] as const),
     book_number: z.string().max(20, 'Número muito longo'),
     suggested_parts: z.array(z.enum(MASS_PARTS)),
+    suggested_seasons: z.array(z.enum(LITURGICAL_SEASONS)),
   })
   .refine(
     (data) =>

@@ -24,6 +24,15 @@ create type mass_part as enum (
   'final'
 );
 
+create type liturgical_season as enum (
+  'tempo_comum',
+  'advento',
+  'natal',
+  'quaresma',
+  'pascoa',
+  'pentecostes'
+);
+
 -- ── Tabelas ──────────────────────────────────────────────────
 
 -- Equipes litúrgicas
