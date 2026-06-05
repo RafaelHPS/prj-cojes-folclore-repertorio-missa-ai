@@ -430,7 +430,7 @@ export default function SongFormPage() {
                 url={fileUrls[type]}
                 onUpload={(file) => handleUpload(type, file)}
                 onRemove={() => handleRemove(type)}
-                onView={(url) => setViewer({ label, url })}
+                onView={(url) => setViewer({ label, url: `${url}?t=${Date.now()}` })}
               />
             ))}
             <AudioLinkRow
