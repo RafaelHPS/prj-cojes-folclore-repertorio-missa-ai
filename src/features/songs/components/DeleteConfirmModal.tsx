@@ -4,27 +4,30 @@ import type { Song } from '../types'
 interface Props {
   song: Song
   onClose: () => void
-  onConfirm: (force?: boolean) => Promise<void>
+  onConfirm: () => Promise<void>
 }
 
 export function DeleteConfirmModal({ song, onClose, onConfirm }: Props) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isUsedInMasses, setIsUsedInMasses] = useState(false)
+  const [blocked, setBlocked] = useState(false)
 
-  async function handleConfirm(force = false) {
+  async function handleConfirm() {
     setIsLoading(true)
     setError(null)
     try {
-      await onConfirm(force)
+      await onConfirm()
       onClose()
     } catch (err) {
+      // Supabase retorna objeto com .code, não um Error padrão
+      const code = (err as Record<string, unknown>)?.code as string | undefined
+      const details = (err as Record<string, unknown>)?.details as string | undefined
       const msg = err instanceof Error ? err.message : String(err)
-      // FK violation — música usada em missas
-      if (msg.includes('mass_songs') || msg.includes('23503')) {
-        setIsUsedInMasses(true)
+
+      if (code === '23503' || details?.includes('mass_songs') || msg.includes('mass_songs')) {
+        setBlocked(true)
         setError(
-          'Esta música está sendo usada em uma ou mais missas. Deseja removê-la de todas as missas e excluí-la?',
+          'Esta música está atrelada a uma ou mais missas e não pode ser removida. Desvincule-a das missas antes de excluí-la.',
         )
       } else {
         setError('Erro ao remover a música. Tente novamente.')
@@ -47,17 +50,26 @@ export function DeleteConfirmModal({ song, onClose, onConfirm }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-error/10">
-            <span aria-hidden="true" className="material-symbols-outlined text-error">
-              delete
+          <div
+            className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${blocked ? 'bg-warning/10' : 'bg-error/10'}`}
+          >
+            <span
+              aria-hidden="true"
+              className={`material-symbols-outlined ${blocked ? 'text-warning' : 'text-error'}`}
+            >
+              {blocked ? 'link' : 'delete'}
             </span>
           </div>
           <h2 id="delete-dialog-title" className="font-headline text-lg font-bold text-on-surface">
-            Remover música?
+            {blocked ? 'Não é possível remover' : 'Remover música?'}
           </h2>
           <p className="mt-2 text-sm text-on-surface-variant">
-            <span className="font-bold text-on-surface">"{song.title}"</span> será removida do
-            repertório permanentemente.
+            {!blocked && (
+              <>
+                <span className="font-bold text-on-surface">"{song.title}"</span> será removida do
+                repertório permanentemente.
+              </>
+            )}
           </p>
 
           {error && (
@@ -71,26 +83,11 @@ export function DeleteConfirmModal({ song, onClose, onConfirm }: Props) {
               onClick={onClose}
               className="flex-1 rounded-full border border-outline-variant px-4 py-2.5 text-sm font-semibold text-on-surface-variant transition hover:bg-surface-container-low"
             >
-              Cancelar
+              {blocked ? 'Fechar' : 'Cancelar'}
             </button>
-            {isUsedInMasses ? (
+            {!blocked && (
               <button
-                onClick={() => void handleConfirm(true)}
-                disabled={isLoading}
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-error px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
-              >
-                {isLoading ? (
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                ) : (
-                  <span aria-hidden="true" className="material-symbols-outlined text-base">
-                    delete_forever
-                  </span>
-                )}
-                {isLoading ? 'Removendo…' : 'Remover mesmo assim'}
-              </button>
-            ) : (
-              <button
-                onClick={() => void handleConfirm(false)}
+                onClick={() => void handleConfirm()}
                 disabled={isLoading}
                 className="flex flex-1 items-center justify-center gap-2 rounded-full bg-error px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
               >

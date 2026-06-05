@@ -5,7 +5,6 @@ import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { formatDateTime } from '@/utils/date.util'
 
 import { fetchSongs, deleteSong } from '../songs.service'
-import { deleteMassSongsBySongId } from '@/features/masses/masses.service'
 import type { Song } from '../types'
 import { ORIGIN_LABEL, MASS_PART_LABEL, LITURGICAL_SEASON_LABEL } from '../songs.schemas'
 
@@ -127,9 +126,8 @@ export default function SongsPage() {
   const totalPages = Math.max(1, Math.ceil(sortedSongs.length / PER_PAGE))
   const pagedSongs = sortedSongs.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
-  async function handleDelete(force = false) {
+  async function handleDelete() {
     if (!toDelete) return
-    if (force) await deleteMassSongsBySongId(toDelete.id)
     await deleteSong(toDelete.id)
     setSongs((prev) => prev.filter((s) => s.id !== toDelete.id))
   }
@@ -372,7 +370,7 @@ export default function SongsPage() {
         <DeleteConfirmModal
           song={toDelete}
           onClose={() => setToDelete(null)}
-          onConfirm={(force) => handleDelete(force)}
+          onConfirm={handleDelete}
         />
       )}
     </div>
