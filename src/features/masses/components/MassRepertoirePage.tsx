@@ -160,6 +160,19 @@ function SortableSongRow({ item, index, canEdit, canDelete, onRemove }: SongRowP
           )}
         </div>
 
+        {/* Botão remover — visível no hover em desktop, oculto em mobile (usa swipe) */}
+        {canDelete && (
+          <button
+            onClick={() => setConfirming(true)}
+            aria-label={`Remover ${song.title}`}
+            className="hidden flex-shrink-0 rounded-lg p-1.5 text-outline transition hover:bg-error/5 hover:text-error md:flex"
+          >
+            <span aria-hidden="true" className="material-symbols-outlined text-base">
+              delete
+            </span>
+          </button>
+        )}
+
         {/* Alça de arrastar (desktop + touch) */}
         {canEdit && (
           <button
