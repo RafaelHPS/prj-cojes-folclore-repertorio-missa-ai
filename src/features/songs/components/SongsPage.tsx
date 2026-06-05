@@ -14,6 +14,11 @@ import { FileViewerModal } from './FileViewerModal'
 
 const PER_PAGE = 24
 
+/** Adiciona ?t=<timestamp> para invalidar cache do CDN quando o arquivo é atualizado. */
+function bustCache(url: string, updatedAt: string): string {
+  return `${url}?t=${new Date(updatedAt).getTime()}`
+}
+
 type ViewMode = 'grid' | 'list'
 type SortKey = 'title' | 'artist' | 'key' | 'origin' | 'book_number' | 'created_at' | 'updated_at'
 type SortDir = 'asc' | 'desc'
@@ -726,7 +731,9 @@ function ListView({
                   <div className="flex flex-wrap gap-1.5">
                     {song.partitura_url && (
                       <button
-                        onClick={() => onView('Partitura', song.partitura_url!)}
+                        onClick={() =>
+                          onView('Partitura', bustCache(song.partitura_url!, song.updated_at))
+                        }
                         className="text-xs font-semibold text-primary hover:underline"
                       >
                         Partitura
@@ -734,7 +741,7 @@ function ListView({
                     )}
                     {song.letra_url && (
                       <button
-                        onClick={() => onView('Letra', song.letra_url!)}
+                        onClick={() => onView('Letra', bustCache(song.letra_url!, song.updated_at))}
                         className="text-xs font-semibold text-primary hover:underline"
                       >
                         Letra
@@ -742,7 +749,7 @@ function ListView({
                     )}
                     {song.cifra_url && (
                       <button
-                        onClick={() => onView('Cifra', song.cifra_url!)}
+                        onClick={() => onView('Cifra', bustCache(song.cifra_url!, song.updated_at))}
                         className="text-xs font-semibold text-primary hover:underline"
                       >
                         Cifra

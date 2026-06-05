@@ -5,6 +5,12 @@ interface Props {
   onView: (label: string, url: string) => void
 }
 
+/** Adiciona ?t=<timestamp> para invalidar cache do CDN quando o arquivo é atualizado. */
+function bustCache(url: string, updatedAt: string): string {
+  const t = new Date(updatedAt).getTime()
+  return `${url}?t=${t}`
+}
+
 const FILE_FIELDS = [
   { key: 'partitura_url', label: 'Partitura', icon: 'description' },
   { key: 'letra_url', label: 'Letra', icon: 'article' },
@@ -23,7 +29,7 @@ export function FileBadges({ song, onView }: Props) {
           key={f.key}
           onClick={(e) => {
             e.stopPropagation()
-            onView(f.label, song[f.key]!)
+            onView(f.label, bustCache(song[f.key]!, song.updated_at))
           }}
           aria-label={`Visualizar ${f.label}`}
           className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary transition hover:bg-primary/20"
