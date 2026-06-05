@@ -171,6 +171,11 @@ export async function deleteMass(id: string): Promise<void> {
   if (error) throw error
 }
 
+export async function deleteMassSongsBySongId(songId: string): Promise<void> {
+  const { error } = await supabase.from('mass_songs').delete().eq('song_id', songId)
+  if (error) throw error
+}
+
 // ── Gestão do repertório ──────────────────────────────────────
 
 const SONG_FIELDS =
