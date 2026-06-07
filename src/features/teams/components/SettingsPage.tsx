@@ -655,6 +655,7 @@ function AuditSection({ teamId }: { teamId: string }) {
       const idx = prev.findIndex((s) => s.key === key)
       if (idx === -1) return [...prev, { key, dir: 'asc' }]
       const cur = prev[idx]
+      if (!cur) return prev
       if (cur.dir === 'asc') {
         const next = [...prev]
         next[idx] = { key, dir: 'desc' }
