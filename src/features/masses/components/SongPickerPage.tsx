@@ -5,9 +5,27 @@ import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { fetchSongs } from '@/features/songs/songs.service'
 import type { Song } from '@/features/songs/types'
 import { ORIGIN_LABEL, BOOK_ORIGINS } from '@/features/songs/songs.schemas'
+import { FileViewerModal } from '@/features/songs/components/FileViewerModal'
 import type { MassPart } from '@/types/database'
 
 import { addSongToMass, fetchMassSongs } from '../masses.service'
+
+// ── Arquivos disponíveis por música ───────────────────────────
+
+const FILE_META = [
+  { key: 'partitura_url', label: 'Partitura', icon: 'description' },
+  { key: 'letra_url', label: 'Letra', icon: 'article' },
+  { key: 'cifra_url', label: 'Cifra', icon: 'piano' },
+  { key: 'singer_file_url', label: 'Cantor', icon: 'mic' },
+  { key: 'instrumental_file_url', label: 'Instrumentos', icon: 'queue_music' },
+] as const
+
+type FileKey = (typeof FILE_META)[number]['key']
+
+interface ViewerState {
+  title: string
+  url: string
+}
 
 const PART_LABEL: Record<MassPart, string> = {
   entrada: 'Entrada',
@@ -43,6 +61,7 @@ export default function SongPickerPage() {
   const [search, setSearch] = useState('')
   const [isAdding, setIsAdding] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
+  const [viewer, setViewer] = useState<ViewerState | null>(null)
 
   const massPart = part as MassPart
   const partLabel = PART_LABEL[massPart] ?? part
@@ -193,14 +212,17 @@ export default function SongPickerPage() {
           </div>
         ) : (
           <ul className="divide-y divide-outline-variant/10">
-            {filtered.map((song) => (
-              <li key={song.id}>
-                <button
-                  onClick={() => void handleSelect(song)}
-                  disabled={isAdding}
-                  className="flex w-full items-center gap-3 px-5 py-4 text-left transition hover:bg-surface-container-low disabled:opacity-60"
-                >
-                  <div className="min-w-0 flex-1">
+            {filtered.map((song) => {
+              const availableFiles = FILE_META.filter((f) => !!song[f.key as FileKey])
+              const hasAudio = !!song.audio_url
+              return (
+                <li key={song.id} className="flex items-stretch">
+                  {/* Área clicável para selecionar — ocupa todo o espaço menos os botões de arquivo */}
+                  <button
+                    onClick={() => void handleSelect(song)}
+                    disabled={isAdding}
+                    className="min-w-0 flex-1 px-5 py-4 text-left transition hover:bg-surface-container-low disabled:opacity-60"
+                  >
                     {/* Título + badge Sugerida */}
                     <div className="flex flex-wrap items-center gap-1.5">
                       <p className="font-semibold text-on-surface">{song.title}</p>
@@ -230,14 +252,65 @@ export default function SongPickerPage() {
                         {song.book_number && ` · nº ${song.book_number}`}
                       </p>
                     )}
-                  </div>
 
+                    {/* Ícones de arquivos disponíveis — clicáveis inline */}
+                    {(availableFiles.length > 0 || hasAudio) && (
+                      <div
+                        className="mt-2 flex flex-wrap gap-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {availableFiles.map((f) => (
+                          <button
+                            key={f.key}
+                            type="button"
+                            onClick={() =>
+                              setViewer({
+                                title: `${f.label} · ${song.title}`,
+                                url: song[f.key as FileKey]!,
+                              })
+                            }
+                            aria-label={`Abrir ${f.label} de ${song.title}`}
+                            className="flex items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-low px-2.5 py-1 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+                          >
+                            <span
+                              aria-hidden="true"
+                              className="material-symbols-outlined text-sm leading-none"
+                            >
+                              {f.icon}
+                            </span>
+                            {f.label}
+                          </button>
+                        ))}
+                        {hasAudio && (
+                          <a
+                            href={song.audio_url!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Ouvir áudio de ${song.title}`}
+                            className="flex items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-low px-2.5 py-1 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+                          >
+                            <span
+                              aria-hidden="true"
+                              className="material-symbols-outlined text-sm leading-none"
+                            >
+                              headphones
+                            </span>
+                            Áudio
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Indicador de carregamento à direita */}
                   {isAdding && (
-                    <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <div className="flex items-center pr-5">
+                      <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    </div>
                   )}
-                </button>
-              </li>
-            ))}
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>
@@ -254,6 +327,11 @@ export default function SongPickerPage() {
           Cancelar
         </button>
       </div>
+
+      {/* Visualizador de arquivos */}
+      {viewer && (
+        <FileViewerModal title={viewer.title} url={viewer.url} onClose={() => setViewer(null)} />
+      )}
     </div>
   )
 }
