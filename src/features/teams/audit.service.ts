@@ -29,10 +29,13 @@ interface LogParams {
  * Registra uma ação auditável. Fire-and-forget — nunca lança erro.
  */
 export function logAudit(params: LogParams): void {
-  supabase.auth
-    .getUser()
-    .then(({ data: { user } }) => {
-      void supabase.from('audit_logs').insert({
+  void (async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      await supabase.from('audit_logs').insert({
         team_id: params.teamId,
         user_id: user?.id ?? null,
         action: params.action,
@@ -41,8 +44,10 @@ export function logAudit(params: LogParams): void {
         entity_name: params.entityName ?? null,
         description: params.description ?? null,
       } as never)
-    })
-    .catch(() => {})
+    } catch {
+      // fire-and-forget — nunca propaga erro
+    }
+  })()
 }
 
 export async function fetchAuditLogs(teamId: string, limit = 150): Promise<AuditLog[]> {

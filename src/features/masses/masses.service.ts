@@ -245,13 +245,14 @@ export async function addSongToMass(
   const row = data as unknown as RawRow
   const result = { ...row, song: row.songs!, added_by_name: row.profiles?.full_name ?? null }
 
-  // Auditoria: busca o teamId via mass (fire-and-forget)
-  void supabase
-    .from('masses')
-    .select('team_id, title')
-    .eq('id', massId)
-    .maybeSingle()
-    .then(({ data: m }) => {
+  // Auditoria: busca teamId via mass (fire-and-forget)
+  void (async () => {
+    try {
+      const { data: m } = await supabase
+        .from('masses')
+        .select('team_id, title')
+        .eq('id', massId)
+        .maybeSingle()
       if (!m) return
       const mRow = m as unknown as { team_id: string; title: string }
       logAudit({
@@ -262,7 +263,10 @@ export async function addSongToMass(
         entityName: result.song.title,
         description: `"${result.song.title}" adicionada ao repertório de "${mRow.title}"`,
       })
-    })
+    } catch {
+      // fire-and-forget
+    }
+  })()
 
   return result
 }
