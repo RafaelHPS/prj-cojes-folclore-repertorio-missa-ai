@@ -172,6 +172,7 @@ export interface Database {
           song_id: string
           part: MassPart
           position: number
+          added_by: string | null
           created_at: string
         }
         Insert: {
@@ -180,6 +181,7 @@ export interface Database {
           song_id: string
           part: MassPart
           position?: number
+          added_by?: string | null
           created_at?: string
         }
         Update: {
@@ -188,6 +190,7 @@ export interface Database {
           song_id?: string
           part?: MassPart
           position?: number
+          added_by?: string | null
           created_at?: string
         }
       }

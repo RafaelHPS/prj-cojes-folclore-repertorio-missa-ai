@@ -176,26 +176,39 @@ export async function deleteMass(id: string): Promise<void> {
 const SONG_FIELDS =
   'id, title, artist, key, origin, book_number, audio_url, singer_file_url, instrumental_file_url, partitura_url, letra_url, cifra_url'
 
+const MASS_SONG_SELECT = `id, mass_id, song_id, part, position, added_by, created_at, songs(${SONG_FIELDS}), profiles(full_name)`
+
 export async function addSongToMass(
   massId: string,
   songId: string,
   part: MassPart,
   position: number,
 ): Promise<MassSongWithSong> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   const { data, error } = await supabase
     .from('mass_songs')
-    .insert({ mass_id: massId, song_id: songId, part, position } as never)
-    .select(`id, mass_id, song_id, part, position, created_at, songs(${SONG_FIELDS})`)
+    .insert({
+      mass_id: massId,
+      song_id: songId,
+      part,
+      position,
+      added_by: user?.id ?? null,
+    } as never)
+    .select(MASS_SONG_SELECT)
     .single()
 
   if (error) throw error
 
-  type RawRow = Omit<MassSongWithSong, 'song'> & {
+  type RawRow = Omit<MassSongWithSong, 'song' | 'added_by_name'> & {
     songs: MassSongWithSong['song'] | null
+    profiles: { full_name: string | null } | null
   }
 
   const row = data as unknown as RawRow
-  return { ...row, song: row.songs! }
+  return { ...row, song: row.songs!, added_by_name: row.profiles?.full_name ?? null }
 }
 
 export async function removeMassSong(massSongId: string): Promise<void> {
@@ -250,6 +263,8 @@ export interface MassSongWithSong {
   song_id: string
   part: string
   position: number
+  added_by: string | null
+  added_by_name: string | null
   created_at: string
   song: {
     id: string
@@ -277,19 +292,20 @@ export async function fetchPublicMass(id: string): Promise<Mass | null> {
 export async function fetchMassSongs(massId: string): Promise<MassSongWithSong[]> {
   const { data, error } = await supabase
     .from('mass_songs')
-    .select(`id, mass_id, song_id, part, position, created_at, songs(${SONG_FIELDS})`)
+    .select(MASS_SONG_SELECT)
     .eq('mass_id', massId)
     .order('position', { ascending: true })
 
   if (error) throw error
 
-  type RawRow = Omit<MassSongWithSong, 'song'> & {
+  type RawRow = Omit<MassSongWithSong, 'song' | 'added_by_name'> & {
     songs: MassSongWithSong['song'] | null
+    profiles: { full_name: string | null } | null
   }
 
   return ((data ?? []) as unknown as RawRow[])
     .filter((r) => r.songs !== null)
-    .map((r) => ({ ...r, song: r.songs! }))
+    .map((r) => ({ ...r, song: r.songs!, added_by_name: r.profiles?.full_name ?? null }))
 }
 
 // ── Participantes ─────────────────────────────────────────────

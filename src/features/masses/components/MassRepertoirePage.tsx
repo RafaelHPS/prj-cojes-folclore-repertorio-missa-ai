@@ -73,10 +73,11 @@ interface SongRowProps {
   index: number
   canEdit: boolean
   canDelete: boolean
+  showAddedBy: boolean
   onRemove: () => void
 }
 
-function SortableSongRow({ item, index, canEdit, canDelete, onRemove }: SongRowProps) {
+function SortableSongRow({ item, index, canEdit, canDelete, showAddedBy, onRemove }: SongRowProps) {
   const { song } = item
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
@@ -158,6 +159,14 @@ function SortableSongRow({ item, index, canEdit, canDelete, onRemove }: SongRowP
               {song.book_number && ` · nº ${song.book_number}`}
             </p>
           )}
+          {showAddedBy && item.added_by_name && (
+            <p className="mt-1 flex items-center gap-1 text-xs text-outline/70">
+              <span aria-hidden="true" className="material-symbols-outlined text-xs leading-none">
+                person
+              </span>
+              {item.added_by_name}
+            </p>
+          )}
         </div>
 
         {/* Botão remover — visível no hover em desktop, oculto em mobile (usa swipe) */}
@@ -222,6 +231,7 @@ interface PartSectionProps {
   songs: MassSongWithSong[]
   canEdit: boolean
   canDelete: boolean
+  showAddedBy: boolean
   onAdd: () => void
   onReorder: (newSongs: MassSongWithSong[]) => void
   onRemove: (id: string) => void
@@ -232,6 +242,7 @@ function PartSection({
   songs,
   canEdit,
   canDelete,
+  showAddedBy,
   onAdd,
   onReorder,
   onRemove,
@@ -318,6 +329,7 @@ function PartSection({
                   index={i}
                   canEdit={canEdit}
                   canDelete={canDelete}
+                  showAddedBy={showAddedBy}
                   onRemove={() => onRemove(item.id)}
                 />
               ))}
@@ -337,6 +349,7 @@ export default function MassRepertoirePage() {
   const navigate = useNavigate()
   const canEdit = team?.role !== 'viewer'
   const canDelete = team?.role === 'admin' || team?.role === 'editor'
+  const showAddedBy = team?.role === 'admin' || team?.role === 'editor'
 
   const [mass, setMass] = useState<Mass | null>(null)
   const [songsByPart, setSongsByPart] = useState<Partial<Record<MassPart, MassSongWithSong[]>>>({})
@@ -509,6 +522,7 @@ export default function MassRepertoirePage() {
             songs={songsByPart[part] ?? []}
             canEdit={canEdit}
             canDelete={canDelete}
+            showAddedBy={showAddedBy}
             onAdd={() => handleOpenPicker(part)}
             onReorder={(newSongs) => void handleReorder(part, newSongs)}
             onRemove={(songId) => void handleRemove(part, songId)}
