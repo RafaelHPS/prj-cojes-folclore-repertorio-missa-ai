@@ -536,11 +536,103 @@ const ENTITY_FILTER_OPTIONS: { value: AuditEntity | 'all'; label: string }[] = [
   { value: 'mass_song', label: 'Repertório' },
 ]
 
+// ── Tipos e helpers de ordenação multi-coluna ─────────────────
+
+type SortKey = 'created_at' | 'action' | 'entity' | 'description' | 'user_name'
+type SortDir = 'asc' | 'desc'
+
+interface SortEntry {
+  key: SortKey
+  dir: SortDir
+}
+
+function getLogValue(log: AuditLog, key: SortKey): string {
+  switch (key) {
+    case 'created_at':
+      return log.created_at // ISO 8601 — inclui ms, comparação lexicográfica é correta
+    case 'action':
+      return ACTION_LABEL[log.action as AuditAction] ?? ''
+    case 'entity':
+      return ENTITY_LABEL[log.entity as AuditEntity] ?? ''
+    case 'description':
+      return log.description ?? log.entity_name ?? ''
+    case 'user_name':
+      return log.user_name ?? ''
+  }
+}
+
+function applySort(rows: AuditLog[], sorts: SortEntry[]): AuditLog[] {
+  if (sorts.length === 0) return rows
+  return [...rows].sort((a, b) => {
+    for (const { key, dir } of sorts) {
+      const va = getLogValue(a, key)
+      const vb = getLogValue(b, key)
+      const cmp = va.localeCompare(vb, 'pt-BR', { sensitivity: 'base' })
+      if (cmp !== 0) return dir === 'asc' ? cmp : -cmp
+    }
+    return 0
+  })
+}
+
+// Ícone de seta baseado no estado atual da coluna
+function SortIcon({ dir }: { dir: SortDir | null }) {
+  if (dir === null)
+    return (
+      <span aria-hidden="true" className="material-symbols-outlined text-sm opacity-30">
+        unfold_more
+      </span>
+    )
+  return (
+    <span aria-hidden="true" className="material-symbols-outlined text-sm text-primary">
+      {dir === 'asc' ? 'arrow_upward' : 'arrow_downward'}
+    </span>
+  )
+}
+
+// Cabeçalho clicável com indicador de prioridade de ordenação
+function SortTh({
+  label,
+  sortKey,
+  sorts,
+  onSort,
+}: {
+  label: string
+  sortKey: SortKey
+  sorts: SortEntry[]
+  onSort: (key: SortKey) => void
+}) {
+  const idx = sorts.findIndex((s) => s.key === sortKey)
+  const entry = idx >= 0 ? sorts[idx] : null
+
+  return (
+    <th scope="col" className="px-4 py-3 first:pl-6">
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className="flex items-center gap-1 text-left text-xs font-semibold uppercase tracking-wide text-on-surface-variant transition hover:text-on-surface"
+        aria-label={`Ordenar por ${label}`}
+      >
+        {label}
+        <SortIcon dir={entry?.dir ?? null} />
+        {sorts.length > 1 && entry && (
+          <span className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-extrabold text-on-primary">
+            {idx + 1}
+          </span>
+        )}
+      </button>
+    </th>
+  )
+}
+
+// ── Componente principal ───────────────────────────────────────
+
 function AuditSection({ teamId }: { teamId: string }) {
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [entityFilter, setEntityFilter] = useState<AuditEntity | 'all'>('all')
   const [search, setSearch] = useState('')
+  // Ordenação padrão: data decrescente (mais recente primeiro)
+  const [sorts, setSorts] = useState<SortEntry[]>([{ key: 'created_at', dir: 'desc' }])
 
   useEffect(() => {
     let cancelled = false
@@ -557,6 +649,22 @@ function AuditSection({ teamId }: { teamId: string }) {
     }
   }, [teamId])
 
+  // Clique na coluna: asc → desc → remove; se ainda não existe, adiciona ao final
+  function handleSort(key: SortKey) {
+    setSorts((prev) => {
+      const idx = prev.findIndex((s) => s.key === key)
+      if (idx === -1) return [...prev, { key, dir: 'asc' }]
+      const cur = prev[idx]
+      if (cur.dir === 'asc') {
+        const next = [...prev]
+        next[idx] = { key, dir: 'desc' }
+        return next
+      }
+      // desc → remove a coluna da ordenação
+      return prev.filter((_, i) => i !== idx)
+    })
+  }
+
   const filtered = logs.filter((l) => {
     if (entityFilter !== 'all' && l.entity !== entityFilter) return false
     if (search.trim()) {
@@ -570,10 +678,12 @@ function AuditSection({ teamId }: { teamId: string }) {
     return true
   })
 
+  const sorted = applySort(filtered, sorts)
+
   return (
     <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-lowest tonal-shadow">
       {/* Header */}
-      <div className="border-b border-outline-variant/10 px-6 py-4 space-y-3">
+      <div className="space-y-3 border-b border-outline-variant/10 px-6 py-4">
         <div className="flex items-center gap-2">
           <span aria-hidden="true" className="material-symbols-outlined text-primary">
             manage_search
@@ -617,13 +727,45 @@ function AuditSection({ teamId }: { teamId: string }) {
             ))}
           </div>
         </div>
+
+        {/* Indicador de ordenações ativas */}
+        {sorts.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-outline">Ordenando por:</span>
+            {sorts.map((s, i) => (
+              <span
+                key={s.key}
+                className="flex items-center gap-1 rounded-full bg-primary/8 px-2.5 py-0.5 text-xs font-semibold text-primary"
+              >
+                {i + 1}.{' '}
+                {s.key === 'created_at'
+                  ? 'Data'
+                  : s.key === 'action'
+                    ? 'Ação'
+                    : s.key === 'entity'
+                      ? 'Categoria'
+                      : s.key === 'description'
+                        ? 'Descrição'
+                        : 'Usuário'}{' '}
+                {s.dir === 'asc' ? '↑' : '↓'}
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={() => setSorts([{ key: 'created_at', dir: 'desc' }])}
+              className="text-xs text-outline underline-offset-2 hover:text-on-surface hover:underline"
+            >
+              Limpar
+            </button>
+          </div>
+        )}
       </div>
 
       {isLoading ? (
         <div className="flex h-40 items-center justify-center">
           <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
-      ) : filtered.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
           <p className="text-sm text-outline">Nenhum registro encontrado.</p>
         </div>
@@ -631,29 +773,19 @@ function AuditSection({ teamId }: { teamId: string }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm" aria-label="Histórico de ações">
             <thead>
-              <tr className="border-b border-outline-variant/10 bg-surface-container-low/40 text-left text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
-                <th scope="col" className="px-6 py-3">
-                  Data
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Ação
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Categoria
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Descrição
-                </th>
-                <th scope="col" className="px-4 py-3">
-                  Usuário
-                </th>
+              <tr className="border-b border-outline-variant/10 bg-surface-container-low/40">
+                <SortTh label="Data" sortKey="created_at" sorts={sorts} onSort={handleSort} />
+                <SortTh label="Ação" sortKey="action" sorts={sorts} onSort={handleSort} />
+                <SortTh label="Categoria" sortKey="entity" sorts={sorts} onSort={handleSort} />
+                <SortTh label="Descrição" sortKey="description" sorts={sorts} onSort={handleSort} />
+                <SortTh label="Usuário" sortKey="user_name" sorts={sorts} onSort={handleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/10">
-              {filtered.map((log) => (
+              {sorted.map((log) => (
                 <tr key={log.id} className="transition-colors hover:bg-surface-container-low/30">
                   <td className="whitespace-nowrap px-6 py-3 text-xs text-outline">
-                    <time dateTime={log.created_at} title={formatDateTime(log.created_at)}>
+                    <time dateTime={log.created_at} title={log.created_at}>
                       {formatRelativeTime(log.created_at)}
                     </time>
                   </td>
@@ -682,10 +814,10 @@ function AuditSection({ teamId }: { teamId: string }) {
         </div>
       )}
 
-      {filtered.length > 0 && (
+      {sorted.length > 0 && (
         <p className="border-t border-outline-variant/10 px-6 py-3 text-xs text-outline">
-          {filtered.length} registro{filtered.length !== 1 ? 's' : ''} exibido
-          {filtered.length !== 1 ? 's' : ''}.
+          {sorted.length} registro{sorted.length !== 1 ? 's' : ''} exibido
+          {sorted.length !== 1 ? 's' : ''}.
         </p>
       )}
     </section>
