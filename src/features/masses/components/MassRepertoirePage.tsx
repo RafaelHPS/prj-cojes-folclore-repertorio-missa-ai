@@ -19,6 +19,7 @@ import { CSS } from '@dnd-kit/utilities'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
+import { supabase } from '@/lib/supabase'
 import { fetchSongs } from '@/features/songs/songs.service'
 import { ORIGIN_LABEL } from '@/features/songs/songs.schemas'
 import type { Song } from '@/features/songs/types'
@@ -72,7 +73,7 @@ interface SongRowProps {
   item: MassSongWithSong
   index: number
   canEdit: boolean
-  canDelete: boolean
+  canDelete: boolean // já pré-computado por item
   showAddedBy: boolean
   onRemove: () => void
 }
@@ -230,7 +231,7 @@ interface PartSectionProps {
   part: MassPart
   songs: MassSongWithSong[]
   canEdit: boolean
-  canDelete: boolean
+  canDeleteItem: (item: MassSongWithSong) => boolean
   showAddedBy: boolean
   onAdd: () => void
   onReorder: (newSongs: MassSongWithSong[]) => void
@@ -241,12 +242,13 @@ function PartSection({
   part,
   songs,
   canEdit,
-  canDelete,
+  canDeleteItem,
   showAddedBy,
   onAdd,
   onReorder,
   onRemove,
 }: PartSectionProps) {
+  const anyDeletable = songs.some(canDeleteItem)
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
@@ -293,11 +295,11 @@ function PartSection({
       </div>
 
       {/* Dica de gestos */}
-      {songs.length > 0 && (canEdit || canDelete) && (
+      {songs.length > 0 && (canEdit || anyDeletable) && (
         <p className="px-5 pt-2 text-xs text-outline">
-          {canEdit && canDelete && 'Segure ⠿ para reordenar · deslize ← para remover'}
-          {canEdit && !canDelete && 'Segure ⠿ para reordenar'}
-          {!canEdit && canDelete && 'Deslize ← para remover'}
+          {canEdit && anyDeletable && 'Segure ⠿ para reordenar · deslize ← para remover'}
+          {canEdit && !anyDeletable && 'Segure ⠿ para reordenar'}
+          {!canEdit && anyDeletable && 'Deslize ← para remover'}
         </p>
       )}
 
@@ -328,7 +330,7 @@ function PartSection({
                   item={item}
                   index={i}
                   canEdit={canEdit}
-                  canDelete={canDelete}
+                  canDelete={canDeleteItem(item)}
                   showAddedBy={showAddedBy}
                   onRemove={() => onRemove(item.id)}
                 />
@@ -348,14 +350,26 @@ export default function MassRepertoirePage() {
   const team = useActiveTeam()
   const navigate = useNavigate()
   const canEdit = team?.role !== 'viewer'
-  const canDelete = team?.role === 'admin' || team?.role === 'editor'
-  const showAddedBy = team?.role === 'admin' || team?.role === 'editor'
+  const isAdminOrEditor = team?.role === 'admin' || team?.role === 'editor'
+  const isContributor = team?.role === 'contributor'
+  const showAddedBy = isAdminOrEditor
 
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [mass, setMass] = useState<Mass | null>(null)
   const [songsByPart, setSongsByPart] = useState<Partial<Record<MassPart, MassSongWithSong[]>>>({})
   const [teamSongs, setTeamSongs] = useState<Song[]>([])
   const [participants, setParticipants] = useState<MassParticipant[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  // Busca o userId uma única vez
+  useEffect(() => {
+    supabase.auth
+      .getUser()
+      .then(({ data: { user } }) => {
+        setCurrentUserId(user?.id ?? null)
+      })
+      .catch(() => {})
+  }, [])
 
   // Carrega dados
   useEffect(() => {
@@ -423,6 +437,12 @@ export default function MassRepertoirePage() {
   }
 
   const totalSongs = PART_ORDER.reduce((sum, p) => sum + (songsByPart[p]?.length ?? 0), 0)
+
+  function canDeleteItem(item: MassSongWithSong): boolean {
+    if (isAdminOrEditor) return true
+    if (isContributor && currentUserId && item.added_by === currentUserId) return true
+    return false
+  }
 
   if (isLoading) {
     return (
@@ -521,7 +541,7 @@ export default function MassRepertoirePage() {
             part={part}
             songs={songsByPart[part] ?? []}
             canEdit={canEdit}
-            canDelete={canDelete}
+            canDeleteItem={canDeleteItem}
             showAddedBy={showAddedBy}
             onAdd={() => handleOpenPicker(part)}
             onReorder={(newSongs) => void handleReorder(part, newSongs)}
