@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import type { Song } from './types'
 import type { SongFormData } from './songs.schemas'
 import { BOOK_ORIGINS } from './songs.schemas'
+import { logAudit } from '@/features/teams/audit.service'
 
 const BUCKET = 'song-files'
 
@@ -68,7 +69,16 @@ export async function createSong(teamId: string, form: SongFormData): Promise<So
     .single()
 
   if (error) throw error
-  return data as unknown as Song
+  const song = data as unknown as Song
+  logAudit({
+    teamId,
+    action: 'create',
+    entity: 'song',
+    entityId: song.id,
+    entityName: song.title,
+    description: `Música adicionada: "${song.title}"`,
+  })
+  return song
 }
 
 export async function updateSong(id: string, form: SongFormData): Promise<Song> {
@@ -88,12 +98,38 @@ export async function updateSong(id: string, form: SongFormData): Promise<Song> 
     .single()
 
   if (error) throw error
-  return data as unknown as Song
+  const song = data as unknown as Song
+  logAudit({
+    teamId: song.team_id,
+    action: 'update',
+    entity: 'song',
+    entityId: song.id,
+    entityName: song.title,
+    description: `Música editada: "${song.title}"`,
+  })
+  return song
 }
 
 export async function deleteSong(id: string): Promise<void> {
+  // Pre-fetch para obter contexto de auditoria antes de deletar
+  const { data: songData } = await supabase
+    .from('songs')
+    .select('id, team_id, title')
+    .eq('id', id)
+    .maybeSingle()
   const { error } = await supabase.from('songs').delete().eq('id', id)
   if (error) throw error
+  if (songData) {
+    const s = songData as unknown as { id: string; team_id: string; title: string }
+    logAudit({
+      teamId: s.team_id,
+      action: 'delete',
+      entity: 'song',
+      entityId: s.id,
+      entityName: s.title,
+      description: `Música removida: "${s.title}"`,
+    })
+  }
 }
 
 // ── Storage ───────────────────────────────────────────────────

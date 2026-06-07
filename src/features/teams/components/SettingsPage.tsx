@@ -6,8 +6,10 @@ import { z } from 'zod'
 import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { useAppStore } from '@/app/app.store'
 import { supabase } from '@/lib/supabase'
-import { formatDateTime } from '@/utils/date.util'
+import { formatDateTime, formatRelativeTime } from '@/utils/date.util'
 import type { UserRole } from '@/types/database'
+import { fetchAuditLogs } from '../audit.service'
+import type { AuditLog, AuditAction, AuditEntity } from '../audit.service'
 
 import {
   fetchTeamDetails,
@@ -507,9 +509,157 @@ function RemoveConfirmModal({
   )
 }
 
+// ── Seção: Auditoria ──────────────────────────────────────────
+
+const ACTION_META: Record<AuditAction, { label: string; icon: string; color: string; bg: string }> =
+  {
+    create: { label: 'Adição', icon: 'add_circle', color: 'text-primary', bg: 'bg-primary/10' },
+    update: { label: 'Edição', icon: 'edit', color: 'text-secondary', bg: 'bg-secondary/10' },
+    delete: { label: 'Remoção', icon: 'delete', color: 'text-error', bg: 'bg-error/10' },
+  }
+
+const ENTITY_LABEL: Record<AuditEntity, string> = {
+  song: 'Música',
+  mass: 'Missa',
+  mass_song: 'Repertório',
+}
+
+const ENTITY_FILTER_OPTIONS: { value: AuditEntity | 'all'; label: string }[] = [
+  { value: 'all', label: 'Tudo' },
+  { value: 'song', label: 'Músicas' },
+  { value: 'mass', label: 'Missas' },
+  { value: 'mass_song', label: 'Repertório' },
+]
+
+function AuditSection({ teamId }: { teamId: string }) {
+  const [logs, setLogs] = useState<AuditLog[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [entityFilter, setEntityFilter] = useState<AuditEntity | 'all'>('all')
+
+  useEffect(() => {
+    let cancelled = false
+    fetchAuditLogs(teamId)
+      .then((data) => {
+        if (!cancelled) setLogs(data)
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [teamId])
+
+  const filtered = entityFilter === 'all' ? logs : logs.filter((l) => l.entity === entityFilter)
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-lowest tonal-shadow">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-outline-variant/10 px-6 py-4">
+        <div className="flex items-center gap-2">
+          <span aria-hidden="true" className="material-symbols-outlined text-primary">
+            manage_search
+          </span>
+          <h2 className="font-headline font-bold text-on-surface">Auditoria</h2>
+        </div>
+        {/* Filtro de entidade */}
+        <div className="flex gap-1 rounded-xl bg-surface-container-low p-1">
+          {ENTITY_FILTER_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setEntityFilter(opt.value)}
+              className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                entityFilter === opt.value
+                  ? 'bg-surface-container-lowest text-on-surface shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex h-40 items-center justify-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+          <span aria-hidden="true" className="material-symbols-outlined mb-3 text-4xl text-outline">
+            history
+          </span>
+          <p className="text-sm text-outline">Nenhum registro encontrado.</p>
+        </div>
+      ) : (
+        <ol aria-label="Histórico de ações" className="divide-y divide-outline-variant/10">
+          {filtered.map((log) => {
+            const meta = ACTION_META[log.action as AuditAction]
+            return (
+              <li
+                key={log.id}
+                className="flex items-start gap-4 px-6 py-4 transition-colors hover:bg-surface-container-low/40"
+              >
+                {/* Ícone da ação */}
+                <div
+                  className={`mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-2xl ${meta.bg}`}
+                  aria-hidden="true"
+                >
+                  <span className={`material-symbols-outlined text-base ${meta.color}`}>
+                    {meta.icon}
+                  </span>
+                </div>
+
+                {/* Conteúdo */}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold leading-snug text-on-surface">
+                    {log.description ?? log.entity_name ?? '—'}
+                  </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    {/* Badge entidade */}
+                    <span className="rounded-full bg-surface-container px-2 py-0.5 text-xs font-bold text-on-surface-variant">
+                      {ENTITY_LABEL[log.entity as AuditEntity]}
+                    </span>
+                    {/* Quem fez */}
+                    <span className="flex items-center gap-1 text-xs text-outline">
+                      <span
+                        aria-hidden="true"
+                        className="material-symbols-outlined text-xs leading-none"
+                      >
+                        person
+                      </span>
+                      {log.profiles?.full_name ?? 'Usuário desconhecido'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Tempo relativo */}
+                <time
+                  dateTime={log.created_at}
+                  title={formatDateTime(log.created_at)}
+                  className="flex-shrink-0 text-xs text-outline"
+                >
+                  {formatRelativeTime(log.created_at)}
+                </time>
+              </li>
+            )
+          })}
+        </ol>
+      )}
+
+      {filtered.length > 0 && (
+        <p className="border-t border-outline-variant/10 px-6 py-3 text-xs text-outline">
+          Exibindo os últimos {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.
+        </p>
+      )}
+    </section>
+  )
+}
+
 // ── Página principal ──────────────────────────────────────────
 
-type SettingsTab = 'account' | 'team'
+type SettingsTab = 'account' | 'team' | 'audit'
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('account')
@@ -656,9 +806,9 @@ export default function SettingsPage() {
           Configurações
         </h1>
         <p className="mt-2 text-outline">
-          {activeTab === 'account'
-            ? 'Gerencie seu perfil e senha.'
-            : 'Gerencie os dados e membros da equipe.'}
+          {activeTab === 'account' && 'Gerencie seu perfil e senha.'}
+          {activeTab === 'team' && 'Gerencie os dados e membros da equipe.'}
+          {activeTab === 'audit' && 'Histórico de adições, edições e remoções.'}
         </p>
       </header>
 
@@ -696,9 +846,28 @@ export default function SettingsPage() {
             Equipe
           </button>
         )}
+        {isAdmin && (
+          <button
+            role="tab"
+            aria-selected={activeTab === 'audit'}
+            onClick={() => setActiveTab('audit')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+              activeTab === 'audit'
+                ? 'bg-surface-container-lowest text-on-surface shadow-sm'
+                : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <span aria-hidden="true" className="material-symbols-outlined text-base">
+              manage_search
+            </span>
+            Auditoria
+          </button>
+        )}
       </div>
 
       {activeTab === 'account' && <ProfileSection />}
+
+      {activeTab === 'audit' && isAdmin && activeTeam && <AuditSection teamId={activeTeam.id} />}
 
       {activeTab === 'team' && isAdmin && (
         <div className="space-y-6">

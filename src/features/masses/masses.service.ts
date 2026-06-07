@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import type { Mass, MassParticipant } from './types'
 import type { MassFormData } from './masses.schemas'
 import type { MassPart } from '@/types/database'
+import { logAudit } from '@/features/teams/audit.service'
 
 export type MassFilter = 'upcoming' | 'past' | 'all'
 
@@ -143,7 +144,16 @@ export async function createMass(teamId: string, form: MassFormData): Promise<Ma
     .single()
 
   if (error) throw error
-  return data as unknown as Mass
+  const mass = data as unknown as Mass
+  logAudit({
+    teamId,
+    action: 'create',
+    entity: 'mass',
+    entityId: mass.id,
+    entityName: mass.title,
+    description: `Missa criada: "${mass.title}"`,
+  })
+  return mass
 }
 
 export async function updateMass(id: string, form: MassFormData): Promise<Mass> {
@@ -163,12 +173,37 @@ export async function updateMass(id: string, form: MassFormData): Promise<Mass> 
     .single()
 
   if (error) throw error
-  return data as unknown as Mass
+  const mass = data as unknown as Mass
+  logAudit({
+    teamId: mass.team_id,
+    action: 'update',
+    entity: 'mass',
+    entityId: mass.id,
+    entityName: mass.title,
+    description: `Missa editada: "${mass.title}"`,
+  })
+  return mass
 }
 
 export async function deleteMass(id: string): Promise<void> {
+  const { data: massData } = await supabase
+    .from('masses')
+    .select('id, team_id, title')
+    .eq('id', id)
+    .maybeSingle()
   const { error } = await supabase.from('masses').delete().eq('id', id)
   if (error) throw error
+  if (massData) {
+    const m = massData as unknown as { id: string; team_id: string; title: string }
+    logAudit({
+      teamId: m.team_id,
+      action: 'delete',
+      entity: 'mass',
+      entityId: m.id,
+      entityName: m.title,
+      description: `Missa removida: "${m.title}"`,
+    })
+  }
 }
 
 // ── Gestão do repertório ──────────────────────────────────────
@@ -208,12 +243,59 @@ export async function addSongToMass(
   }
 
   const row = data as unknown as RawRow
-  return { ...row, song: row.songs!, added_by_name: row.profiles?.full_name ?? null }
+  const result = { ...row, song: row.songs!, added_by_name: row.profiles?.full_name ?? null }
+
+  // Auditoria: busca o teamId via mass
+  supabase
+    .from('masses')
+    .select('team_id, title')
+    .eq('id', massId)
+    .maybeSingle()
+    .then(({ data: m }) => {
+      if (!m) return
+      const mRow = m as unknown as { team_id: string; title: string }
+      logAudit({
+        teamId: mRow.team_id,
+        action: 'create',
+        entity: 'mass_song',
+        entityId: massSongId,
+        entityName: result.song.title,
+        description: `"${result.song.title}" adicionada ao repertório de "${mRow.title}"`,
+      })
+    })
+    .catch(() => {})
+
+  return result
 }
 
 export async function removeMassSong(massSongId: string): Promise<void> {
+  // Pre-fetch para auditoria
+  const { data: ctx } = await supabase
+    .from('mass_songs')
+    .select('id, songs(title), masses(team_id, title)')
+    .eq('id', massSongId)
+    .maybeSingle()
+
   const { error } = await supabase.from('mass_songs').delete().eq('id', massSongId)
   if (error) throw error
+
+  if (ctx) {
+    type Ctx = {
+      songs: { title: string } | null
+      masses: { team_id: string; title: string } | null
+    }
+    const c = ctx as unknown as Ctx
+    if (c.songs && c.masses) {
+      logAudit({
+        teamId: c.masses.team_id,
+        action: 'delete',
+        entity: 'mass_song',
+        entityId: massSongId,
+        entityName: c.songs.title,
+        description: `"${c.songs.title}" removida do repertório de "${c.masses.title}"`,
+      })
+    }
+  }
 }
 
 export async function reorderPartSongs(updates: { id: string; position: number }[]): Promise<void> {
