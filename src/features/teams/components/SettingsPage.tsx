@@ -511,12 +511,17 @@ function RemoveConfirmModal({
 
 // ── Seção: Auditoria ──────────────────────────────────────────
 
-const ACTION_META: Record<AuditAction, { label: string; icon: string; color: string; bg: string }> =
-  {
-    create: { label: 'Adição', icon: 'add_circle', color: 'text-primary', bg: 'bg-primary/10' },
-    update: { label: 'Edição', icon: 'edit', color: 'text-secondary', bg: 'bg-secondary/10' },
-    delete: { label: 'Remoção', icon: 'delete', color: 'text-error', bg: 'bg-error/10' },
-  }
+const ACTION_LABEL: Record<AuditAction, string> = {
+  create: 'Adição',
+  update: 'Edição',
+  delete: 'Remoção',
+}
+
+const ACTION_BADGE: Record<AuditAction, string> = {
+  create: 'bg-primary/10 text-primary',
+  update: 'bg-secondary/10 text-secondary',
+  delete: 'bg-error/10 text-error',
+}
 
 const ENTITY_LABEL: Record<AuditEntity, string> = {
   song: 'Música',
@@ -535,6 +540,7 @@ function AuditSection({ teamId }: { teamId: string }) {
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [entityFilter, setEntityFilter] = useState<AuditEntity | 'all'>('all')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -551,33 +557,65 @@ function AuditSection({ teamId }: { teamId: string }) {
     }
   }, [teamId])
 
-  const filtered = entityFilter === 'all' ? logs : logs.filter((l) => l.entity === entityFilter)
+  const filtered = logs.filter((l) => {
+    if (entityFilter !== 'all' && l.entity !== entityFilter) return false
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      return (
+        (l.description ?? '').toLowerCase().includes(q) ||
+        (l.entity_name ?? '').toLowerCase().includes(q) ||
+        (l.user_name ?? '').toLowerCase().includes(q)
+      )
+    }
+    return true
+  })
 
   return (
     <section className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-lowest tonal-shadow">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-outline-variant/10 px-6 py-4">
+      <div className="border-b border-outline-variant/10 px-6 py-4 space-y-3">
         <div className="flex items-center gap-2">
           <span aria-hidden="true" className="material-symbols-outlined text-primary">
             manage_search
           </span>
           <h2 className="font-headline font-bold text-on-surface">Auditoria</h2>
         </div>
-        {/* Filtro de entidade */}
-        <div className="flex gap-1 rounded-xl bg-surface-container-low p-1">
-          {ENTITY_FILTER_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setEntityFilter(opt.value)}
-              className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
-                entityFilter === opt.value
-                  ? 'bg-surface-container-lowest text-on-surface shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
-              }`}
+
+        {/* Filtros */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          {/* Busca */}
+          <div className="relative flex-1">
+            <span
+              aria-hidden="true"
+              className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-base text-outline"
             >
-              {opt.label}
-            </button>
-          ))}
+              search
+            </span>
+            <input
+              type="search"
+              placeholder="Buscar por descrição, nome ou usuário…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-xl border border-outline-variant bg-surface-container-low py-2 pl-9 pr-4 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+
+          {/* Filtro de entidade */}
+          <div className="flex gap-1 rounded-xl bg-surface-container-low p-1">
+            {ENTITY_FILTER_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setEntityFilter(opt.value)}
+                className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                  entityFilter === opt.value
+                    ? 'bg-surface-container-lowest text-on-surface shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -587,70 +625,67 @@ function AuditSection({ teamId }: { teamId: string }) {
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-          <span aria-hidden="true" className="material-symbols-outlined mb-3 text-4xl text-outline">
-            history
-          </span>
           <p className="text-sm text-outline">Nenhum registro encontrado.</p>
         </div>
       ) : (
-        <ol aria-label="Histórico de ações" className="divide-y divide-outline-variant/10">
-          {filtered.map((log) => {
-            const meta = ACTION_META[log.action as AuditAction]
-            return (
-              <li
-                key={log.id}
-                className="flex items-start gap-4 px-6 py-4 transition-colors hover:bg-surface-container-low/40"
-              >
-                {/* Ícone da ação */}
-                <div
-                  className={`mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-2xl ${meta.bg}`}
-                  aria-hidden="true"
-                >
-                  <span className={`material-symbols-outlined text-base ${meta.color}`}>
-                    {meta.icon}
-                  </span>
-                </div>
-
-                {/* Conteúdo */}
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold leading-snug text-on-surface">
-                    {log.description ?? log.entity_name ?? '—'}
-                  </p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    {/* Badge entidade */}
-                    <span className="rounded-full bg-surface-container px-2 py-0.5 text-xs font-bold text-on-surface-variant">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm" aria-label="Histórico de ações">
+            <thead>
+              <tr className="border-b border-outline-variant/10 bg-surface-container-low/40 text-left text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                <th scope="col" className="px-6 py-3">
+                  Data
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Ação
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Categoria
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Descrição
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Usuário
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-outline-variant/10">
+              {filtered.map((log) => (
+                <tr key={log.id} className="transition-colors hover:bg-surface-container-low/30">
+                  <td className="whitespace-nowrap px-6 py-3 text-xs text-outline">
+                    <time dateTime={log.created_at} title={formatDateTime(log.created_at)}>
+                      {formatRelativeTime(log.created_at)}
+                    </time>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${ACTION_BADGE[log.action as AuditAction]}`}
+                    >
+                      {ACTION_LABEL[log.action as AuditAction]}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="inline-block rounded-full bg-surface-container px-2.5 py-0.5 text-xs font-semibold text-on-surface-variant">
                       {ENTITY_LABEL[log.entity as AuditEntity]}
                     </span>
-                    {/* Quem fez */}
-                    <span className="flex items-center gap-1 text-xs text-outline">
-                      <span
-                        aria-hidden="true"
-                        className="material-symbols-outlined text-xs leading-none"
-                      >
-                        person
-                      </span>
-                      {log.user_name ?? 'Usuário desconhecido'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Tempo relativo */}
-                <time
-                  dateTime={log.created_at}
-                  title={formatDateTime(log.created_at)}
-                  className="flex-shrink-0 text-xs text-outline"
-                >
-                  {formatRelativeTime(log.created_at)}
-                </time>
-              </li>
-            )
-          })}
-        </ol>
+                  </td>
+                  <td className="px-4 py-3 text-on-surface">
+                    {log.description ?? log.entity_name ?? '—'}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-xs text-outline">
+                    {log.user_name ?? '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {filtered.length > 0 && (
         <p className="border-t border-outline-variant/10 px-6 py-3 text-xs text-outline">
-          Exibindo os últimos {filtered.length} registro{filtered.length !== 1 ? 's' : ''}.
+          {filtered.length} registro{filtered.length !== 1 ? 's' : ''} exibido
+          {filtered.length !== 1 ? 's' : ''}.
         </p>
       )}
     </section>
