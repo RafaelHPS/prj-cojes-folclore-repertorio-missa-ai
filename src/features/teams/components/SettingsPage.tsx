@@ -534,15 +534,21 @@ const ENTITY_FILTER_OPTIONS: { value: AuditEntity | 'all'; label: string }[] = [
 function AuditSection({ teamId }: { teamId: string }) {
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [entityFilter, setEntityFilter] = useState<AuditEntity | 'all'>('all')
 
   useEffect(() => {
     let cancelled = false
     fetchAuditLogs(teamId)
       .then((data) => {
-        if (!cancelled) setLogs(data)
+        if (!cancelled) {
+          setLogs(data)
+          setFetchError(null)
+        }
       })
-      .catch(() => {})
+      .catch((err: unknown) => {
+        if (!cancelled) setFetchError(err instanceof Error ? err.message : JSON.stringify(err))
+      })
       .finally(() => {
         if (!cancelled) setIsLoading(false)
       })
@@ -584,6 +590,14 @@ function AuditSection({ teamId }: { teamId: string }) {
       {isLoading ? (
         <div className="flex h-40 items-center justify-center">
           <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      ) : fetchError ? (
+        <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+          <span aria-hidden="true" className="material-symbols-outlined mb-3 text-4xl text-error">
+            error
+          </span>
+          <p className="text-sm font-semibold text-error">Erro ao carregar auditoria</p>
+          <p className="mt-1 max-w-sm text-xs text-outline">{fetchError}</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
