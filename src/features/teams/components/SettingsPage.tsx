@@ -629,7 +629,7 @@ function AuditSection({ teamId }: { teamId: string }) {
                       >
                         person
                       </span>
-                      {log.profiles?.full_name ?? 'Usuário desconhecido'}
+                      {log.user_name ?? 'Usuário desconhecido'}
                     </span>
                   </div>
                 </div>
