@@ -76,7 +76,7 @@ export default function SelectTeamPage() {
 
   function handleSelectTeam(team: TeamWithRole) {
     setActiveTeam({ id: team.id, name: team.name, role: team.role })
-    navigate('/dashboard')
+    navigate('/')
   }
 
   return (

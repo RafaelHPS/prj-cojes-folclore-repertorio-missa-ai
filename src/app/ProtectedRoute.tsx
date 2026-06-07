@@ -27,7 +27,7 @@ export function ProtectedRoute({ requireTeam = false, allowedRoles }: Props) {
   if (requireTeam && !activeTeam) return <Navigate to="/selecionar-equipe" replace />
 
   if (allowedRoles && activeTeam && !allowedRoles.includes(activeTeam.role)) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to="/" replace />
   }
 
   return <Outlet />

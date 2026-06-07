@@ -57,7 +57,7 @@ export const router = createBrowserRouter(
         {
           element: <DashboardLayout />,
           children: [
-            { path: '/dashboard', element: withSuspense(<DashboardPage />) },
+            { path: '/', element: withSuspense(<DashboardPage />) },
             { path: '/musicas', element: withSuspense(<SongsPage />) },
             { path: '/musicas/nova', element: withSuspense(<SongFormPage />) },
             { path: '/musicas/:id/editar', element: withSuspense(<SongFormPage />) },
@@ -76,8 +76,7 @@ export const router = createBrowserRouter(
       ],
     },
 
-    { path: '/', element: <Navigate to="/dashboard" replace /> },
-    { path: '*', element: <Navigate to="/dashboard" replace /> },
+    { path: '*', element: <Navigate to="/" replace /> },
   ],
   { basename: import.meta.env.BASE_URL },
 )

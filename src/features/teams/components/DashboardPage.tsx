@@ -174,16 +174,16 @@ export default function DashboardPage() {
               {upcomingMasses.map((mass) => (
                 <li
                   key={mass.id}
-                  className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-surface-container-low/50"
+                  className="flex items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-surface-container-low/50"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/5 text-primary">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-primary/5 text-primary">
                       <span aria-hidden="true" className="material-symbols-outlined text-lg">
                         church
                       </span>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-on-surface">{mass.title}</p>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-on-surface">{mass.title}</p>
                       <p className="text-xs text-outline">
                         {formatDateShort(mass.date)}
                         {mass.time && ` · ${formatTime(mass.time)}`}
@@ -192,11 +192,26 @@ export default function DashboardPage() {
                       </p>
                     </div>
                   </div>
-                  {mass.is_public && (
-                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
-                      Público
-                    </span>
-                  )}
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    {mass.is_public && (
+                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+                        Público
+                      </span>
+                    )}
+                    <Link
+                      to={`/missas/${mass.id}/gerenciar`}
+                      className="flex items-center gap-1 rounded-xl bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/15"
+                      aria-label={`Ver repertório de ${mass.title}`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="material-symbols-outlined text-sm leading-none"
+                      >
+                        queue_music
+                      </span>
+                      <span className="hidden sm:inline">Repertório</span>
+                    </Link>
+                  </div>
                 </li>
               ))}
             </ul>

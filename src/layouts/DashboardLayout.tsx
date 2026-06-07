@@ -6,11 +6,11 @@ import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { useAppStore } from '@/app/app.store'
 
 const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard' },
-  { to: '/missas', label: 'Missas' },
-  { to: '/musicas', label: 'Músicas' },
-  { to: '/estatisticas', label: 'Estatísticas' },
-  { to: '/configuracoes', label: 'Configurações' },
+  { to: '/', label: 'Início', end: true },
+  { to: '/missas', label: 'Missas', end: false },
+  { to: '/musicas', label: 'Músicas', end: false },
+  { to: '/estatisticas', label: 'Estatísticas', end: false },
+  { to: '/configuracoes', label: 'Configurações', end: false },
 ] as const
 
 export function DashboardLayout() {
@@ -55,6 +55,7 @@ export function DashboardLayout() {
                 <NavLink
                   key={item.to}
                   to={item.to}
+                  end={item.end}
                   className={({ isActive }) =>
                     isActive
                       ? 'border-b-2 border-primary pb-0.5 text-sm font-semibold text-primary'
@@ -137,6 +138,7 @@ export function DashboardLayout() {
               <NavLink
                 key={item.to}
                 to={item.to}
+                end={item.end}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   `block px-6 py-3 text-sm font-medium transition-colors ${
