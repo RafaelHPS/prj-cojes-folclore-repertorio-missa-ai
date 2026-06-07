@@ -245,8 +245,8 @@ export async function addSongToMass(
   const row = data as unknown as RawRow
   const result = { ...row, song: row.songs!, added_by_name: row.profiles?.full_name ?? null }
 
-  // Auditoria: busca o teamId via mass
-  supabase
+  // Auditoria: busca o teamId via mass (fire-and-forget)
+  void supabase
     .from('masses')
     .select('team_id, title')
     .eq('id', massId)
@@ -258,12 +258,11 @@ export async function addSongToMass(
         teamId: mRow.team_id,
         action: 'create',
         entity: 'mass_song',
-        entityId: massSongId,
+        entityId: result.id,
         entityName: result.song.title,
         description: `"${result.song.title}" adicionada ao repertório de "${mRow.title}"`,
       })
     })
-    .catch(() => {})
 
   return result
 }
