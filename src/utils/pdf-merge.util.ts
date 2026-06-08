@@ -171,7 +171,7 @@ export async function mergeMassPdfs(
   }
 
   const pdfBytes = await merged.save()
-  return new Blob([pdfBytes], { type: 'application/pdf' })
+  return new Blob([pdfBytes as BlobPart], { type: 'application/pdf' })
 }
 
 /**

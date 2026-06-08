@@ -62,7 +62,7 @@ export function MassPdfMergeButton({ songs }: Props) {
           onClick={() => setStatus('picking')}
           className="flex items-center gap-1.5 rounded-full border border-outline-variant px-4 py-2 text-sm font-semibold text-on-surface-variant transition hover:border-primary/30 hover:text-primary"
           aria-haspopup="menu"
-          aria-expanded={status === 'picking'}
+          aria-expanded={false}
         >
           <span aria-hidden="true" className="material-symbols-outlined text-base">
             merge
