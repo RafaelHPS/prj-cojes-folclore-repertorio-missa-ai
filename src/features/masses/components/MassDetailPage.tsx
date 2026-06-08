@@ -233,6 +233,7 @@ export default function MassDetailPage() {
       title: item.song.title,
       partLabel: PART_LABEL[part],
       partitura_url: item.song.partitura_url,
+      letra_url: item.song.letra_url,
       cifra_url: item.song.cifra_url,
     })),
   )

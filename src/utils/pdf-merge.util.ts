@@ -1,12 +1,13 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 
-export type MergeMode = 'partitura' | 'cifra' | 'both'
+export type MergeMode = 'partitura' | 'cifra' | 'letra' | 'both'
 
 export interface MergeSong {
   title: string
   partLabel: string
   partitura_url: string | null
   cifra_url: string | null
+  letra_url: string | null
 }
 
 export interface MergeProgress {
@@ -30,10 +31,13 @@ export async function mergeMassPdfs(
   onProgress?: (p: MergeProgress) => void,
 ): Promise<Blob> {
   // Constrói a lista de itens a baixar (mantém ordem: partitura antes de cifra)
-  const items: { song: MergeSong; type: 'partitura' | 'cifra'; url: string }[] = []
+  const items: { song: MergeSong; type: 'partitura' | 'letra' | 'cifra'; url: string }[] = []
   for (const song of songs) {
     if ((mode === 'partitura' || mode === 'both') && song.partitura_url) {
       items.push({ song, type: 'partitura', url: song.partitura_url })
+    }
+    if ((mode === 'letra' || mode === 'both') && song.letra_url) {
+      items.push({ song, type: 'letra', url: song.letra_url })
     }
     if ((mode === 'cifra' || mode === 'both') && song.cifra_url) {
       items.push({ song, type: 'cifra', url: song.cifra_url })
@@ -119,7 +123,8 @@ export async function mergeMassPdfs(
 
       // Tipo de documento (quando mode === 'both')
       if (mode === 'both') {
-        const typeLabel = item.type === 'partitura' ? 'Partitura' : 'Cifra'
+        const typeLabel =
+          item.type === 'partitura' ? 'Partitura' : item.type === 'letra' ? 'Letra' : 'Cifra'
         sep.drawText(typeLabel, {
           x: 60,
           y: titleY - 10,
@@ -142,7 +147,7 @@ export async function mergeMassPdfs(
         color: rgb(0.1, 0.1, 0.1),
         maxWidth: width - 120,
       })
-      sep.drawText('Cifra', {
+      sep.drawText(item.type === 'letra' ? 'Letra' : 'Cifra', {
         x: 60,
         y: height / 2 - 20,
         size: 12,
