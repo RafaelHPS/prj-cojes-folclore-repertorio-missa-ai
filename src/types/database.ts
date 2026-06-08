@@ -13,6 +13,7 @@ export type MassPart =
   | 'entrada'
   | 'ato_penitencial'
   | 'hino_de_louvor'
+  | 'refrao_orante'
   | 'salmo'
   | 'sequencia'
   | 'aclamacao'

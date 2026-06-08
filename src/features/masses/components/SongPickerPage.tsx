@@ -31,6 +31,7 @@ const PART_LABEL: Record<MassPart, string> = {
   entrada: 'Entrada',
   ato_penitencial: 'Ato Penitencial',
   hino_de_louvor: 'Glória',
+  refrao_orante: 'Refrão Orante',
   salmo: 'Salmo Responsorial',
   sequencia: 'Sequência',
   aclamacao: 'Aclamação ao Evangelho',
