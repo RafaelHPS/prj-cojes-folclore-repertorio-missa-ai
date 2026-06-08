@@ -406,8 +406,8 @@ function GridView({ songs, onEdit, onDelete, onView, canEdit, canDelete }: ViewP
             </span>
           </div>
 
-          <p className="font-headline pr-14 font-bold text-on-surface truncate">{song.title}</p>
-          {song.artist && <p className="mt-0.5 truncate text-sm text-outline">{song.artist}</p>}
+          <p className="font-headline pr-14 font-bold text-on-surface break-words">{song.title}</p>
+          {song.artist && <p className="mt-0.5 break-words text-sm text-outline">{song.artist}</p>}
 
           <div className="mt-2 flex flex-wrap gap-1.5">
             {song.key && (
@@ -516,10 +516,10 @@ function ListView({
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-bold text-on-surface">{song.title}</p>
+              <p className="break-words font-bold text-on-surface">{song.title}</p>
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                 {song.artist && (
-                  <span className="truncate text-xs text-outline">{song.artist}</span>
+                  <span className="break-words text-xs text-outline">{song.artist}</span>
                 )}
                 {song.key && (
                   <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
