@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   DndContext,
@@ -22,8 +22,26 @@ import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
 import { supabase } from '@/lib/supabase'
 import { fetchSongs } from '@/features/songs/songs.service'
 import { ORIGIN_LABEL } from '@/features/songs/songs.schemas'
+import { FileViewerModal } from '@/features/songs/components/FileViewerModal'
 import type { Song } from '@/features/songs/types'
 import type { MassPart } from '@/types/database'
+
+// ── Metadados de arquivos ─────────────────────────────────────
+
+const FILE_META = [
+  { key: 'partitura_url', label: 'Partitura', icon: 'description' },
+  { key: 'letra_url', label: 'Letra', icon: 'article' },
+  { key: 'cifra_url', label: 'Cifra', icon: 'piano' },
+  { key: 'singer_file_url', label: 'Cantor', icon: 'mic' },
+  { key: 'instrumental_file_url', label: 'Instrumentos', icon: 'queue_music' },
+] as const
+
+type FileKey = (typeof FILE_META)[number]['key']
+
+interface ViewerState {
+  title: string
+  url: string
+}
 
 import {
   fetchPublicMass,
@@ -76,9 +94,18 @@ interface SongRowProps {
   canDelete: boolean // já pré-computado por item
   showAddedBy: boolean
   onRemove: () => void
+  onView: (title: string, url: string) => void
 }
 
-function SortableSongRow({ item, index, canEdit, canDelete, showAddedBy, onRemove }: SongRowProps) {
+function SortableSongRow({
+  item,
+  index,
+  canEdit,
+  canDelete,
+  showAddedBy,
+  onRemove,
+  onView,
+}: SongRowProps) {
   const { song } = item
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
@@ -168,6 +195,51 @@ function SortableSongRow({ item, index, canEdit, canDelete, showAddedBy, onRemov
               {item.added_by_name}
             </p>
           )}
+
+          {/* Botões de arquivo */}
+          {(() => {
+            const files = FILE_META.filter((f) => !!song[f.key as FileKey])
+            const hasAudio = !!song.audio_url
+            if (files.length === 0 && !hasAudio) return null
+            return (
+              <div className="mt-2 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
+                {files.map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => onView(`${f.label} · ${song.title}`, song[f.key as FileKey]!)}
+                    aria-label={`Abrir ${f.label} de ${song.title}`}
+                    className="flex items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-low px-2.5 py-1 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="material-symbols-outlined text-sm leading-none"
+                    >
+                      {f.icon}
+                    </span>
+                    {f.label}
+                  </button>
+                ))}
+                {hasAudio && (
+                  <a
+                    href={song.audio_url!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Ouvir áudio de ${song.title}`}
+                    className="flex items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-low px-2.5 py-1 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="material-symbols-outlined text-sm leading-none"
+                    >
+                      headphones
+                    </span>
+                    Áudio
+                  </a>
+                )}
+              </div>
+            )
+          })()}
         </div>
 
         {/* Botão remover — visível no hover em desktop, oculto em mobile (usa swipe) */}
@@ -236,6 +308,7 @@ interface PartSectionProps {
   onAdd: () => void
   onReorder: (newSongs: MassSongWithSong[]) => void
   onRemove: (id: string) => void
+  onView: (title: string, url: string) => void
 }
 
 function PartSection({
@@ -247,6 +320,7 @@ function PartSection({
   onAdd,
   onReorder,
   onRemove,
+  onView,
 }: PartSectionProps) {
   const anyDeletable = songs.some(canDeleteItem)
   const sensors = useSensors(
@@ -333,6 +407,7 @@ function PartSection({
                   canDelete={canDeleteItem(item)}
                   showAddedBy={showAddedBy}
                   onRemove={() => onRemove(item.id)}
+                  onView={onView}
                 />
               ))}
             </SortableContext>
@@ -360,6 +435,11 @@ export default function MassRepertoirePage() {
   const [teamSongs, setTeamSongs] = useState<Song[]>([])
   const [participants, setParticipants] = useState<MassParticipant[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [viewer, setViewer] = useState<ViewerState | null>(null)
+
+  const handleView = useCallback((title: string, url: string) => {
+    setViewer({ title, url })
+  }, [])
 
   // Busca o userId uma única vez
   useEffect(() => {
@@ -546,9 +626,15 @@ export default function MassRepertoirePage() {
             onAdd={() => handleOpenPicker(part)}
             onReorder={(newSongs) => void handleReorder(part, newSongs)}
             onRemove={(songId) => void handleRemove(part, songId)}
+            onView={handleView}
           />
         ))}
       </div>
+
+      {/* Visualizador de arquivos */}
+      {viewer && (
+        <FileViewerModal title={viewer.title} url={viewer.url} onClose={() => setViewer(null)} />
+      )}
 
       {/* Participantes */}
       {participants.length > 0 && (
