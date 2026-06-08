@@ -93,7 +93,7 @@ export function MassPdfMergeButton({ songs }: Props) {
           />
           <div
             role="menu"
-            className="absolute right-0 top-full z-40 mt-1 min-w-[210px] overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-lowest shadow-xl"
+            className="absolute left-0 top-full z-40 mt-1 min-w-[210px] overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-lowest shadow-xl sm:left-auto sm:right-0"
           >
             <p className="border-b border-outline-variant/10 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-outline">
               O que visualizar?
