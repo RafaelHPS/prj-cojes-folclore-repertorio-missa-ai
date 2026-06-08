@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 
 interface Props {
   title: string
@@ -38,7 +39,7 @@ export function FileViewerModal({ title, url, onClose }: Props) {
   const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)
   const isPdf = ext === 'pdf'
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[60] flex flex-col bg-black/90">
       <div className="flex flex-shrink-0 items-center justify-between bg-gray-900 px-6 py-3">
         <p className="truncate text-sm font-medium text-white">{title}</p>
@@ -78,6 +79,7 @@ export function FileViewerModal({ title, url, onClose }: Props) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
