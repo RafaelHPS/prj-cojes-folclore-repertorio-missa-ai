@@ -10,6 +10,7 @@ import { fetchPublicMass, fetchMassSongs, fetchMassParticipants } from '../masse
 import type { Mass, MassParticipant } from '../types'
 import type { MassSongWithSong } from '../masses.service'
 import type { MassPart } from '@/types/database'
+import { MassPdfMergeButton } from './MassPdfMergeButton'
 
 // ── Constantes litúrgicas ─────────────────────────────────────
 
@@ -226,6 +227,16 @@ export default function MassDetailPage() {
 
   const partsWithSongs = PART_ORDER.filter((p) => songsByPart[p]?.length)
 
+  // Lista ordenada para merge de PDFs
+  const mergeSongs = PART_ORDER.flatMap((part) =>
+    (songsByPart[part] ?? []).map((item) => ({
+      title: item.song.title,
+      partLabel: PART_LABEL[part],
+      partitura_url: item.song.partitura_url,
+      cifra_url: item.song.cifra_url,
+    })),
+  )
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface">
@@ -332,6 +343,11 @@ export default function MassDetailPage() {
               Repertório atualizado em {formatDateTime(mass.updated_at)}
             </p>
           )}
+
+          {/* Botão de merge de PDFs */}
+          <div className="mt-4">
+            <MassPdfMergeButton songs={mergeSongs} />
+          </div>
         </header>
 
         {/* Conteúdo litúrgico */}

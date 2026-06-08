@@ -52,6 +52,7 @@ import {
 } from '../masses.service'
 import type { MassSongWithSong } from '../masses.service'
 import type { Mass, MassParticipant } from '../types'
+import { MassPdfMergeButton } from './MassPdfMergeButton'
 
 // ── Constantes litúrgicas ─────────────────────────────────────
 
@@ -518,6 +519,16 @@ export default function MassRepertoirePage() {
 
   const totalSongs = PART_ORDER.reduce((sum, p) => sum + (songsByPart[p]?.length ?? 0), 0)
 
+  // Lista ordenada de músicas para merge de PDFs (ordem litúrgica)
+  const mergeSongs = PART_ORDER.flatMap((part) =>
+    (songsByPart[part] ?? []).map((item) => ({
+      title: item.song.title,
+      partLabel: PART_LABEL[part],
+      partitura_url: item.song.partitura_url,
+      cifra_url: item.song.cifra_url,
+    })),
+  )
+
   function canDeleteItem(item: MassSongWithSong): boolean {
     if (isAdminOrEditor) return true
     if (isContributor && currentUserId && item.added_by === currentUserId) return true
@@ -579,7 +590,10 @@ export default function MassRepertoirePage() {
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {/* Merge de PDFs */}
+            <MassPdfMergeButton songs={mergeSongs} />
+
             {/* Visualização da celebração — sempre disponível para membros */}
             <Link
               to={`/missas/${mass.id}`}
