@@ -36,7 +36,7 @@ export async function mergeMassPdfs(
     if ((mode === 'partitura' || mode === 'both') && song.partitura_url) {
       items.push({ song, type: 'partitura', url: song.partitura_url })
     }
-    if ((mode === 'letra' || mode === 'both') && song.letra_url) {
+    if (mode === 'letra' && song.letra_url) {
       items.push({ song, type: 'letra', url: song.letra_url })
     }
     if ((mode === 'cifra' || mode === 'both') && song.cifra_url) {

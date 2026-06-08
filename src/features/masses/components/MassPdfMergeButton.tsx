@@ -10,7 +10,7 @@ const MODE_OPTIONS: { value: MergeMode; label: string; icon: string }[] = [
   { value: 'partitura', label: 'Partituras', icon: 'description' },
   { value: 'letra', label: 'Letras', icon: 'article' },
   { value: 'cifra', label: 'Cifras', icon: 'piano' },
-  { value: 'both', label: 'Partituras + Letras + Cifras', icon: 'library_books' },
+  { value: 'both', label: 'Partituras + Cifras', icon: 'library_books' },
 ]
 
 type Status = 'idle' | 'picking' | 'loading' | 'error'
@@ -29,7 +29,7 @@ export function MassPdfMergeButton({ songs }: Props) {
     if (m.value === 'partitura') return hasPartitura
     if (m.value === 'letra') return hasLetra
     if (m.value === 'cifra') return hasCifra
-    return hasPartitura || hasLetra || hasCifra
+    return hasPartitura && hasCifra
   })
 
   if (availableModes.length === 0) return null
