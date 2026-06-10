@@ -4,6 +4,7 @@ import {
   PDFDocument,
   PDFFont,
   PDFName,
+  PDFNull,
   PDFNumber,
   PDFPage,
   PDFRef,
@@ -96,7 +97,8 @@ function createLinkAnnot(
 
   const dest = PDFArray.withContext(doc.context)
   dest.push(targetPage.ref)
-  dest.push(PDFName.of('Fit'))
+  dest.push(PDFName.of('FitH'))
+  dest.push(PDFNull.of()) // null = topo da página (melhor experiência mobile)
 
   const annotRect = PDFArray.withContext(doc.context)
   annotRect.push(PDFNumber.of(x1))
