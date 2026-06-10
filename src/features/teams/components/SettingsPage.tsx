@@ -10,6 +10,7 @@ import { formatDateTime, formatRelativeTime } from '@/utils/date.util'
 import type { UserRole } from '@/types/database'
 import { fetchAuditLogs } from '../audit.service'
 import type { AuditLog, AuditAction, AuditEntity } from '../audit.service'
+import { PermissionsSection } from './PermissionsSection'
 
 import {
   fetchTeamDetails,
@@ -827,7 +828,7 @@ function AuditSection({ teamId }: { teamId: string }) {
 
 // ── Página principal ──────────────────────────────────────────
 
-type SettingsTab = 'account' | 'team' | 'audit'
+type SettingsTab = 'account' | 'team' | 'permissions' | 'audit'
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('account')
@@ -976,6 +977,7 @@ export default function SettingsPage() {
         <p className="mt-2 text-outline">
           {activeTab === 'account' && 'Gerencie seu perfil e senha.'}
           {activeTab === 'team' && 'Gerencie os dados e membros da equipe.'}
+          {activeTab === 'permissions' && 'Configure o que cada função pode fazer.'}
           {activeTab === 'audit' && 'Histórico de adições, edições e remoções.'}
         </p>
       </header>
@@ -1017,6 +1019,23 @@ export default function SettingsPage() {
         {isAdmin && (
           <button
             role="tab"
+            aria-selected={activeTab === 'permissions'}
+            onClick={() => setActiveTab('permissions')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+              activeTab === 'permissions'
+                ? 'bg-surface-container-lowest text-on-surface shadow-sm'
+                : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <span aria-hidden="true" className="material-symbols-outlined text-base">
+              admin_panel_settings
+            </span>
+            Permissões
+          </button>
+        )}
+        {isAdmin && (
+          <button
+            role="tab"
             aria-selected={activeTab === 'audit'}
             onClick={() => setActiveTab('audit')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
@@ -1034,6 +1053,10 @@ export default function SettingsPage() {
       </div>
 
       {activeTab === 'account' && <ProfileSection />}
+
+      {activeTab === 'permissions' && isAdmin && activeTeam && (
+        <PermissionsSection teamId={activeTeam.id} />
+      )}
 
       {activeTab === 'audit' && isAdmin && activeTeam && <AuditSection teamId={activeTeam.id} />}
 
