@@ -52,6 +52,32 @@ export interface Database {
           created_at?: string
         }
       }
+      role_permissions: {
+        Row: {
+          id: string
+          team_id: string
+          role: UserRole
+          permission: string
+          allowed: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          team_id: string
+          role: UserRole
+          permission: string
+          allowed: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          team_id?: string
+          role?: UserRole
+          permission?: string
+          allowed?: boolean
+          updated_at?: string
+        }
+      }
       team_members: {
         Row: {
           id: string
