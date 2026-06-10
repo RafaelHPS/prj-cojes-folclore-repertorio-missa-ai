@@ -601,7 +601,7 @@ export default function MassRepertoirePage() {
 
           <div className="flex flex-wrap gap-2">
             {/* Merge de PDFs */}
-            <MassPdfMergeButton songs={mergeSongs} />
+            <MassPdfMergeButton songs={mergeSongs} meta={{ title: mass.title, date: mass.date }} />
 
             {/* Visualização da celebração — sempre disponível para membros */}
             <Link

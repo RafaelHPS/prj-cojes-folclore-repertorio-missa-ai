@@ -145,9 +145,15 @@ function createLinkAnnot(
  * Gera uma primeira página de índice com links clicáveis para cada música.
  * Insere uma página separadora antes de cada música com nome e parte litúrgica.
  */
+export interface MassMeta {
+  title: string
+  date: string // formato ISO 'YYYY-MM-DD'
+}
+
 export async function mergeMassPdfs(
   songs: MergeSong[],
   mode: MergeMode,
+  meta?: MassMeta,
   onProgress?: (p: MergeProgress) => void,
 ): Promise<Blob> {
   // Constrói a lista de itens a baixar
@@ -294,16 +300,31 @@ export async function mergeMassPdfs(
     // Cabeçalho
     if (tpi === 0) {
       tocPage.drawText('ÍNDICE', { x: 60, y: height - 78, size: 30, font: bold, color: DARK })
+
+      // Subtítulo: data + título da missa (se disponíveis) e modo
+      let subtitleY = height - 106
+      if (meta) {
+        const [year, month, day] = meta.date.split('-')
+        const formattedDate = `${day}/${month}/${year}`
+        const massSubtitle = truncateText(
+          `${formattedDate}  ·  ${meta.title}`,
+          bold,
+          11,
+          width - 120,
+        )
+        tocPage.drawText(massSubtitle, { x: 60, y: subtitleY, size: 11, font: bold, color: DARK })
+        subtitleY -= 16
+      }
       tocPage.drawText(MODE_LABEL[mode].toUpperCase(), {
         x: 60,
-        y: height - 106,
+        y: subtitleY,
         size: 9,
         font: regular,
         color: GRAY,
       })
       tocPage.drawLine({
-        start: { x: 60, y: height - 118 },
-        end: { x: width - 60, y: height - 118 },
+        start: { x: 60, y: subtitleY - 12 },
+        end: { x: width - 60, y: subtitleY - 12 },
         thickness: 0.5,
         color: rgb(0.85, 0.85, 0.85),
       })
@@ -324,7 +345,8 @@ export async function mergeMassPdfs(
     }
 
     const pageEntries = tocEntries.slice(tpi * ENTRIES_PER_PAGE, (tpi + 1) * ENTRIES_PER_PAGE)
-    const startY = tpi === 0 ? height - 142 : height - 88
+    // Quando há meta (data + título), o cabeçalho ocupa 16pt a mais
+    const startY = tpi === 0 ? height - (meta ? 158 : 142) : height - 88
     const ROW_H = 42
 
     const annotRefs: PDFRef[] = []

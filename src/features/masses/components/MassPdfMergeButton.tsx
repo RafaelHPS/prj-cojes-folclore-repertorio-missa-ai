@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { mergeMassPdfs } from '@/utils/pdf-merge.util'
-import type { MergeMode, MergeSong } from '@/utils/pdf-merge.util'
+import type { MassMeta, MergeMode, MergeSong } from '@/utils/pdf-merge.util'
 
 interface Props {
   songs: MergeSong[]
+  meta?: MassMeta
 }
 
 const MODE_OPTIONS: { value: MergeMode; label: string; icon: string }[] = [
@@ -22,7 +23,7 @@ const MODE_LABEL: Record<MergeMode, string> = {
 
 type Status = 'idle' | 'picking-mode' | 'picking-action' | 'loading' | 'error'
 
-export function MassPdfMergeButton({ songs }: Props) {
+export function MassPdfMergeButton({ songs, meta }: Props) {
   const [status, setStatus] = useState<Status>('idle')
   const [selectedMode, setSelectedMode] = useState<MergeMode | null>(null)
   const [progress, setProgress] = useState({ loaded: 0, total: 0 })
@@ -52,7 +53,7 @@ export function MassPdfMergeButton({ songs }: Props) {
     setProgress({ loaded: 0, total: 0 })
 
     try {
-      const blob = await mergeMassPdfs(songs, selectedMode, (p) => setProgress(p))
+      const blob = await mergeMassPdfs(songs, selectedMode, meta, (p) => setProgress(p))
 
       if (action === 'whatsapp') {
         const fileName = `partituras-missa-${selectedMode}.pdf`

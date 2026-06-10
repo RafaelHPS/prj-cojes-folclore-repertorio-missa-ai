@@ -355,7 +355,7 @@ export default function MassDetailPage() {
 
           {/* Botão de merge de PDFs */}
           <div className="mt-4">
-            <MassPdfMergeButton songs={mergeSongs} />
+            <MassPdfMergeButton songs={mergeSongs} meta={{ title: mass.title, date: mass.date }} />
           </div>
         </header>
 
