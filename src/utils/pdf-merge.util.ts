@@ -85,7 +85,8 @@ function truncateText(text: string, font: PDFFont, size: number, maxWidth: numbe
 
 /**
  * Cria uma anotação de link PDF (GoTo) e retorna a PDFRef.
- * O link navega para a página `targetPage` (modo Fit).
+ * O link navega para a página `targetPage` (modo FitH — ajusta largura).
+ * Usa ação GoTo explícita para maior compatibilidade com viewers mobile.
  */
 function createLinkAnnot(
   doc: PDFDocument,
@@ -94,10 +95,16 @@ function createLinkAnnot(
 ): PDFRef {
   const [x1, y1, x2, y2] = rect
 
+  // Destino: topo da página alvo ajustado à largura (FitH)
   const dest = PDFArray.withContext(doc.context)
   dest.push(targetPage.ref)
   dest.push(PDFName.of('FitH'))
-  dest.push(PDFNumber.of(842)) // topo da página A4 (melhor experiência mobile)
+  dest.push(PDFNumber.of(842)) // topo da página A4
+
+  // Ação GoTo explícita — maior compatibilidade com viewers mobile
+  const action = PDFDict.withContext(doc.context)
+  action.set(PDFName.of('S'), PDFName.of('GoTo'))
+  action.set(PDFName.of('D'), dest)
 
   const annotRect = PDFArray.withContext(doc.context)
   annotRect.push(PDFNumber.of(x1))
@@ -115,7 +122,7 @@ function createLinkAnnot(
   annot.set(PDFName.of('Subtype'), PDFName.of('Link'))
   annot.set(PDFName.of('Rect'), annotRect)
   annot.set(PDFName.of('Border'), border)
-  annot.set(PDFName.of('Dest'), dest)
+  annot.set(PDFName.of('A'), action) // action explícita em vez de Dest direto
 
   return doc.context.register(annot)
 }
