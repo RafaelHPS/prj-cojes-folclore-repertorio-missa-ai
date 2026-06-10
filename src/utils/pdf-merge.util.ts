@@ -17,6 +17,7 @@ export interface MergeSong {
   title: string
   partLabel: string
   book_number: string | null
+  origin: string | null
   partitura_url: string | null
   cifra_url: string | null
   letra_url: string | null
@@ -41,12 +42,20 @@ const MODE_LABEL: Record<MergeMode, string> = {
   both: 'Partituras + Cifras',
 }
 
+/** Sigla exibida no índice para cada origem de hinário */
+const ORIGIN_ABBR: Record<string, string> = {
+  arquidiocese: 'LvArq',
+  cojes: 'LvCOJES',
+  salmos: 'LvSalmos',
+}
+
 // ── Tipos internos ────────────────────────────────────────────
 
 interface TocEntry {
   title: string
   partLabel: string
   bookNumber: string | null
+  origin: string | null
   /** Índice da página separadora ANTES da inserção do índice */
   separatorPageIndex: number
 }
@@ -187,6 +196,7 @@ export async function mergeMassPdfs(
         title: item.song.title,
         partLabel: item.song.partLabel,
         bookNumber: item.song.book_number,
+        origin: item.song.origin,
         separatorPageIndex: currentPageCount,
       })
       currentPageCount++
@@ -350,11 +360,16 @@ export async function mergeMassPdfs(
         color: GRAY,
       })
 
-      // Título + número do livro (truncado se necessário)
-      const rawTitle = entry.bookNumber ? `${entry.title}  —  nº ${entry.bookNumber}` : entry.title
+      // Título + número e sigla do livro (truncado se necessário)
+      const originAbbr = entry.origin ? (ORIGIN_ABBR[entry.origin] ?? null) : null
+      const bookSuffix = entry.bookNumber
+        ? originAbbr
+          ? `  —  nº ${entry.bookNumber} — ${originAbbr}`
+          : `  —  nº ${entry.bookNumber}`
+        : ''
+      const rawTitle = `${entry.title}${bookSuffix}`
       const maxTitleW = width - 170
       const title = truncateText(rawTitle, bold, 13, maxTitleW)
-      // Parte em negrito (título) e parte em cinza (nº livro) — desenhadas juntas truncadas
       tocPage.drawText(title, { x: 60, y: rowY, size: 13, font: bold, color: DARK })
 
       // Número de página (azul, à direita)
