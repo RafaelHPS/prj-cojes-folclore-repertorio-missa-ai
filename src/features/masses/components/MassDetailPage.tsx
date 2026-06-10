@@ -238,6 +238,7 @@ export default function MassDetailPage() {
     (songsByPart[part] ?? []).map((item) => ({
       title: item.song.title,
       partLabel: PART_LABEL[part],
+      book_number: item.song.book_number ?? null,
       partitura_url: item.song.partitura_url,
       letra_url: item.song.letra_url,
       cifra_url: item.song.cifra_url,

@@ -16,6 +16,7 @@ export type MergeMode = 'partitura' | 'cifra' | 'letra' | 'both'
 export interface MergeSong {
   title: string
   partLabel: string
+  book_number: string | null
   partitura_url: string | null
   cifra_url: string | null
   letra_url: string | null
@@ -45,6 +46,7 @@ const MODE_LABEL: Record<MergeMode, string> = {
 interface TocEntry {
   title: string
   partLabel: string
+  bookNumber: string | null
   /** Índice da página separadora ANTES da inserção do índice */
   separatorPageIndex: number
 }
@@ -184,6 +186,7 @@ export async function mergeMassPdfs(
       tocEntries.push({
         title: item.song.title,
         partLabel: item.song.partLabel,
+        bookNumber: item.song.book_number,
         separatorPageIndex: currentPageCount,
       })
       currentPageCount++
@@ -347,9 +350,11 @@ export async function mergeMassPdfs(
         color: GRAY,
       })
 
-      // Título (truncado se necessário)
+      // Título + número do livro (truncado se necessário)
+      const rawTitle = entry.bookNumber ? `${entry.title}  —  nº ${entry.bookNumber}` : entry.title
       const maxTitleW = width - 170
-      const title = truncateText(entry.title, bold, 13, maxTitleW)
+      const title = truncateText(rawTitle, bold, 13, maxTitleW)
+      // Parte em negrito (título) e parte em cinza (nº livro) — desenhadas juntas truncadas
       tocPage.drawText(title, { x: 60, y: rowY, size: 13, font: bold, color: DARK })
 
       // Número de página (azul, à direita)
