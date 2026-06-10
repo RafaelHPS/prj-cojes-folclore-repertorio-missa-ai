@@ -158,7 +158,9 @@ export async function fetchRolePermissions(teamId: string): Promise<PermissionMa
 
   if (error) throw error
 
-  // Parte dos defaults
+  type RawRow = { role: string; permission: string; allowed: boolean }
+  const rows = (data ?? []) as unknown as RawRow[]
+
   const map: PermissionMap = {
     admin: { ...DEFAULT_PERMISSIONS.admin },
     editor: { ...DEFAULT_PERMISSIONS.editor },
@@ -166,8 +168,7 @@ export async function fetchRolePermissions(teamId: string): Promise<PermissionMa
     viewer: { ...DEFAULT_PERMISSIONS.viewer },
   }
 
-  // Sobrescreve com valores salvos no banco
-  for (const row of data ?? []) {
+  for (const row of rows) {
     const role = row.role as UserRole
     const perm = row.permission as Permission
     if (role in map && ALL_PERMISSIONS.includes(perm)) {
@@ -183,7 +184,13 @@ export async function fetchRolePermissions(teamId: string): Promise<PermissionMa
  * Admin é sempre bloqueado — não salvo.
  */
 export async function saveRolePermissions(teamId: string, map: PermissionMap): Promise<void> {
-  const rows = ROLES_EDITABLE.flatMap((role) =>
+  const rows: {
+    team_id: string
+    role: UserRole
+    permission: string
+    allowed: boolean
+    updated_at: string
+  }[] = ROLES_EDITABLE.flatMap((role) =>
     ALL_PERMISSIONS.map((permission) => ({
       team_id: teamId,
       role,
@@ -193,9 +200,9 @@ export async function saveRolePermissions(teamId: string, map: PermissionMap): P
     })),
   )
 
-  const { error } = await supabase.from('role_permissions').upsert(rows, {
-    onConflict: 'team_id,role,permission',
-  })
+  const { error } = await supabase
+    .from('role_permissions')
+    .upsert(rows as never, { onConflict: 'team_id,role,permission' })
 
   if (error) throw error
 }
