@@ -26,6 +26,7 @@ import {
 import type { SongFormData } from '../songs.schemas'
 import { MUSICAL_KEYS, FILE_CONFIG } from '../songs.constants'
 import type { Song } from '../types'
+import { convertImageToPdfIfNeeded } from '@/utils/image-to-pdf.util'
 
 import { FileRow } from './FileRow'
 import { AudioLinkRow } from './AudioLinkRow'
@@ -158,7 +159,8 @@ export default function SongFormPage() {
 
   async function handleUpload(type: SongFileType, file: File) {
     if (!song) return
-    const url = await uploadSongFile(song.team_id, song.id, type, file)
+    const fileToUpload = await convertImageToPdfIfNeeded(file)
+    const url = await uploadSongFile(song.team_id, song.id, type, fileToUpload)
     await updateSongFileUrl(song.id, `${type}_url`, url)
     setFileUrls((prev) => ({ ...prev, [type]: url }))
   }
