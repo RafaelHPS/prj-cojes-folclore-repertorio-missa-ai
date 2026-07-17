@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { formatDateTime } from '@/utils/date.util'
+import { bustCache } from '@/utils/cache-bust.util'
 
 import { fetchSongs, deleteSong } from '../songs.service'
 import type { Song } from '../types'
@@ -13,11 +14,6 @@ import { FileBadges } from './FileBadges'
 import { FileViewerModal } from './FileViewerModal'
 
 const PER_PAGE = 24
-
-/** Adiciona ?t=<timestamp> para invalidar cache do CDN quando o arquivo é atualizado. */
-function bustCache(url: string, updatedAt: string): string {
-  return `${url}?t=${new Date(updatedAt).getTime()}`
-}
 
 type ViewMode = 'grid' | 'list'
 type SortKey = 'title' | 'artist' | 'key' | 'origin' | 'book_number' | 'created_at' | 'updated_at'

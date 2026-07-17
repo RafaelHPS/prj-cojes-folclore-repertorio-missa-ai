@@ -10,6 +10,7 @@ import {
   StandardFonts,
   rgb,
 } from 'pdf-lib'
+import { bustCache } from './cache-bust.util'
 
 export type MergeMode = 'partitura' | 'cifra' | 'letra' | 'both'
 
@@ -18,6 +19,7 @@ export interface MergeSong {
   partLabel: string
   book_number: string | null
   origin: string | null
+  updated_at: string
   partitura_url: string | null
   cifra_url: string | null
   letra_url: string | null
@@ -156,14 +158,15 @@ export async function mergeMassPdfs(
   meta?: MassMeta,
   onProgress?: (p: MergeProgress) => void,
 ): Promise<Blob> {
-  // Constrói a lista de itens a baixar
+  // Constrói a lista de itens a baixar (URL com cache-bust para sempre pegar a versão mais recente)
   const items: { song: MergeSong; type: 'partitura' | 'letra' | 'cifra'; url: string }[] = []
   for (const song of songs) {
     if ((mode === 'partitura' || mode === 'both') && song.partitura_url)
-      items.push({ song, type: 'partitura', url: song.partitura_url })
-    if (mode === 'letra' && song.letra_url) items.push({ song, type: 'letra', url: song.letra_url })
+      items.push({ song, type: 'partitura', url: bustCache(song.partitura_url, song.updated_at) })
+    if (mode === 'letra' && song.letra_url)
+      items.push({ song, type: 'letra', url: bustCache(song.letra_url, song.updated_at) })
     if ((mode === 'cifra' || mode === 'both') && song.cifra_url)
-      items.push({ song, type: 'cifra', url: song.cifra_url })
+      items.push({ song, type: 'cifra', url: bustCache(song.cifra_url, song.updated_at) })
   }
 
   if (items.length === 0) throw new Error('Nenhum arquivo disponível para o modo selecionado.')

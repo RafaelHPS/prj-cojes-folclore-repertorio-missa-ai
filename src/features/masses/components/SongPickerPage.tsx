@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { useNavigate, useParams, useLocation, Link } from 'react-router-dom'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
+import { bustCache } from '@/utils/cache-bust.util'
 import { fetchSongs } from '@/features/songs/songs.service'
 import type { Song } from '@/features/songs/types'
 import { ORIGIN_LABEL, BOOK_ORIGINS } from '@/features/songs/songs.schemas'
@@ -269,7 +270,7 @@ export default function SongPickerPage() {
                             onClick={() =>
                               setViewer({
                                 title: `${f.label} · ${song.title}`,
-                                url: song[f.key as FileKey]!,
+                                url: bustCache(song[f.key as FileKey]!, song.updated_at),
                               })
                             }
                             aria-label={`Abrir ${f.label} de ${song.title}`}

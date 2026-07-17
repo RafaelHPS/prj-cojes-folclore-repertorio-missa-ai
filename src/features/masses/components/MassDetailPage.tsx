@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 
 import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
+import { bustCache } from '@/utils/cache-bust.util'
 import { FileViewerModal } from '@/features/songs/components/FileViewerModal'
 
 import { ORIGIN_LABEL } from '@/features/songs/songs.schemas'
@@ -116,7 +117,7 @@ function SongCard({ item, index, onView }: SongCardProps) {
             {files.map((f) => (
               <button
                 key={f.label}
-                onClick={() => onView(f.label, f.url!)}
+                onClick={() => onView(f.label, bustCache(f.url!, song.updated_at))}
                 aria-label={`Abrir ${f.label} de ${song.title}`}
                 className="flex items-center gap-1.5 rounded-full border border-outline-variant/40 bg-surface-container-low px-3 py-1.5 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
               >
@@ -240,6 +241,7 @@ export default function MassDetailPage() {
       partLabel: PART_LABEL[part],
       book_number: item.song.book_number ?? null,
       origin: item.song.origin ?? null,
+      updated_at: item.song.updated_at,
       partitura_url: item.song.partitura_url,
       letra_url: item.song.letra_url,
       cifra_url: item.song.cifra_url,

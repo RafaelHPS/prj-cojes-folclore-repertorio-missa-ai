@@ -19,6 +19,7 @@ import { CSS } from '@dnd-kit/utilities'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
+import { bustCache } from '@/utils/cache-bust.util'
 import { supabase } from '@/lib/supabase'
 import { fetchSongs } from '@/features/songs/songs.service'
 import { ORIGIN_LABEL } from '@/features/songs/songs.schemas'
@@ -214,7 +215,12 @@ function SortableSongRow({
                   <button
                     key={f.key}
                     type="button"
-                    onClick={() => onView(`${f.label} · ${song.title}`, song[f.key as FileKey]!)}
+                    onClick={() =>
+                      onView(
+                        `${f.label} · ${song.title}`,
+                        bustCache(song[f.key as FileKey]!, song.updated_at),
+                      )
+                    }
                     aria-label={`Abrir ${f.label} de ${song.title}`}
                     className="flex items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-low px-2.5 py-1 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
                   >
@@ -532,6 +538,7 @@ export default function MassRepertoirePage() {
       partLabel: PART_LABEL[part],
       book_number: item.song.book_number ?? null,
       origin: item.song.origin ?? null,
+      updated_at: item.song.updated_at,
       partitura_url: item.song.partitura_url,
       letra_url: item.song.letra_url,
       cifra_url: item.song.cifra_url,

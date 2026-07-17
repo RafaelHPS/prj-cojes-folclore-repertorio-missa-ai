@@ -1,14 +1,9 @@
 import type { Song } from '../types'
+import { bustCache } from '@/utils/cache-bust.util'
 
 interface Props {
   song: Song
   onView: (label: string, url: string) => void
-}
-
-/** Adiciona ?t=<timestamp> para invalidar cache do CDN quando o arquivo é atualizado. */
-function bustCache(url: string, updatedAt: string): string {
-  const t = new Date(updatedAt).getTime()
-  return `${url}?t=${t}`
 }
 
 const FILE_FIELDS = [
