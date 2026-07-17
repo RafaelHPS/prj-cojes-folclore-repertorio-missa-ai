@@ -3,9 +3,9 @@
  *
  * Conversão retroativa: para cada música que tem partitura/letra/cifra
  * salva como imagem (PNG/JPG), baixa o arquivo, converte para PDF de
- * página única (mesmas dimensões da imagem) e faz upload como um novo
- * arquivo `${type}.pdf` no Storage, atualizando o campo correspondente
- * na tabela `songs`.
+ * página única A4 retrato (imagem centralizada, mantendo proporção) e
+ * faz upload como um novo arquivo `${type}.pdf` no Storage, atualizando
+ * o campo correspondente na tabela `songs`.
  *
  * Não deleta os arquivos de imagem originais no Storage — eles ficam
  * órfãos (sem referência no banco) como backup de segurança. Podem ser
@@ -26,6 +26,11 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const BUCKET = 'song-files'
 const FILE_TYPES = ['partitura', 'letra', 'cifra']
 const IMAGE_EXT_REGEX = /\.(png|jpe?g)$/i
+
+// A4 retrato em pontos PDF (mesmo padrão usado no restante do merge de PDFs)
+const A4_WIDTH = 595
+const A4_HEIGHT = 842
+const MARGIN = 20
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
   console.error('\n❌  Variáveis faltando no .env:')
@@ -72,6 +77,11 @@ function isPngUrl(url) {
   return /\.png$/i.test(cleanUrl(url))
 }
 
+function fitWithinArea(imgWidth, imgHeight, maxWidth, maxHeight) {
+  const scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight)
+  return { width: imgWidth * scale, height: imgHeight * scale }
+}
+
 async function convertImageUrlToPdfBytes(url) {
   const res = await fetch(url)
   if (!res.ok) throw new Error(`Falha ao baixar imagem: HTTP ${res.status}`)
@@ -79,9 +89,20 @@ async function convertImageUrlToPdfBytes(url) {
 
   const pdfDoc = await PDFDocument.create()
   const image = isPngUrl(url) ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes)
-  const { width, height } = image.size()
-  const page = pdfDoc.addPage([width, height])
-  page.drawImage(image, { x: 0, y: 0, width, height })
+
+  const page = pdfDoc.addPage([A4_WIDTH, A4_HEIGHT])
+  const { width, height } = fitWithinArea(
+    image.width,
+    image.height,
+    A4_WIDTH - MARGIN * 2,
+    A4_HEIGHT - MARGIN * 2,
+  )
+  page.drawImage(image, {
+    x: (A4_WIDTH - width) / 2,
+    y: (A4_HEIGHT - height) / 2,
+    width,
+    height,
+  })
 
   return pdfDoc.save()
 }
