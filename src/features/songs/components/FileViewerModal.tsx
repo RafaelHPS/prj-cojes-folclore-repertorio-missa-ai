@@ -55,6 +55,12 @@ export function FileViewerModal({ title, url, onClose }: Props) {
   const ext = cleanUrl.split('.').pop()?.toLowerCase() ?? ''
   const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)
   const isPdf = ext === 'pdf'
+  // Navegadores mobile costumam falhar ao renderizar PDF dentro de <iframe>
+  // (bloqueio silencioso ou página de erro nativa do navegador), mesmo sem
+  // nenhum problema de CORS/CSP — funciona de forma muito mais confiável
+  // como navegação de topo (nova aba). Usa a largura da viewport como proxy
+  // simples, seguindo o mesmo breakpoint (md, 768px) usado no resto do app.
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
   return createPortal(
     <div className="fixed inset-0 z-[60] flex flex-col bg-[#140a08]/90">
@@ -81,8 +87,32 @@ export function FileViewerModal({ title, url, onClose }: Props) {
       <div className="flex-1 overflow-hidden">
         {isImage ? (
           <img src={url} alt={title} className="h-full w-full object-contain" />
-        ) : isPdf ? (
+        ) : isPdf && !isMobile ? (
           <iframe src={url} className="h-full w-full border-0" title={title} />
+        ) : isPdf && isMobile ? (
+          <div className="flex h-full items-center justify-center px-4 text-center">
+            <div>
+              <span
+                aria-hidden="true"
+                className="material-symbols-outlined mb-4 block text-5xl text-white/50"
+              >
+                picture_as_pdf
+              </span>
+              <p className="mb-6 text-white/70">
+                Visualização de PDF não é confiável neste navegador.
+                <br />
+                Abra em uma nova aba para ver o arquivo.
+              </p>
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary transition hover:bg-secondary"
+              >
+                Abrir PDF
+              </a>
+            </div>
+          </div>
         ) : (
           <div className="flex h-full items-center justify-center px-4 text-center">
             <div>
