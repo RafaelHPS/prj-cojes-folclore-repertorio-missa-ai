@@ -218,7 +218,7 @@ export default function MassFormPage() {
         </span>
       </nav>
 
-      <h1 className="font-headline mb-8 text-3xl font-extrabold tracking-tight text-on-surface">
+      <h1 className="font-headline mb-8 text-xl text-on-surface">
         {isEdit ? massTitle || 'Editar celebração' : 'Nova celebração'}
       </h1>
 
@@ -239,7 +239,7 @@ export default function MassFormPage() {
               placeholder="Ex: 32º Domingo do Tempo Comum"
               aria-describedby={errors.title ? 'mass-title-error' : undefined}
               aria-invalid={!!errors.title}
-              className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20 aria-[invalid=true]:border-error aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-error/20"
               {...register('title')}
             />
             {errors.title && (
@@ -263,7 +263,7 @@ export default function MassFormPage() {
                 type="date"
                 aria-describedby={errors.date ? 'mass-date-error' : undefined}
                 aria-invalid={!!errors.date}
-                className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 aria-[invalid=true]:border-error aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-error/20"
                 {...register('date')}
               />
               {errors.date && (
@@ -440,13 +440,7 @@ export default function MassFormPage() {
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-on-surface">
                     {p.name}
                   </span>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
-                      p.type === 'member'
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-secondary/10 text-secondary'
-                    }`}
-                  >
+                  <span className="shrink-0 rounded-full bg-surface-container px-2 py-0.5 text-xs font-semibold text-on-surface-variant">
                     {p.type === 'member' ? 'Membro' : 'Visitante'}
                   </span>
                   <button
@@ -465,12 +459,12 @@ export default function MassFormPage() {
 
           {/* Formulário inline de adição */}
           {addingType === 'member' && (
-            <div className="mb-3 flex gap-2">
+            <div className="mb-3 flex flex-wrap gap-2">
               <select
                 autoFocus
                 value={selectedMemberId}
                 onChange={(e) => setSelectedMemberId(e.target.value)}
-                className="flex-1 rounded-2xl border border-outline-variant bg-surface-container-low px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="min-w-0 flex-1 rounded-2xl border border-outline-variant bg-surface-container-low px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               >
                 <option value="">Selecionar membro…</option>
                 {availableMembers.map((m) => (
@@ -499,7 +493,7 @@ export default function MassFormPage() {
           )}
 
           {addingType === 'guest' && (
-            <div className="mb-3 flex gap-2">
+            <div className="mb-3 flex flex-wrap gap-2">
               <input
                 autoFocus
                 type="text"
@@ -507,7 +501,7 @@ export default function MassFormPage() {
                 onChange={(e) => setGuestName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && void handleAddGuest()}
                 placeholder="Nome do visitante…"
-                className="flex-1 rounded-2xl border border-outline-variant bg-surface-container-low px-3 py-2 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="min-w-0 flex-1 rounded-2xl border border-outline-variant bg-surface-container-low px-3 py-2 text-sm text-on-surface outline-none placeholder:text-outline focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
               <button
                 onClick={() => void handleAddGuest()}

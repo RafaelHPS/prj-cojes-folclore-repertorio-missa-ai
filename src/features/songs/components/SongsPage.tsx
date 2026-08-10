@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { formatDateTime } from '@/utils/date.util'
@@ -134,15 +134,15 @@ export default function SongsPage() {
       <header className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div>
           <nav className="mb-3 flex items-center gap-1.5 text-sm font-medium text-outline">
-            <span>Home</span>
+            <Link to="/" className="transition-colors hover:text-primary">
+              Início
+            </Link>
             <span aria-hidden="true" className="material-symbols-outlined text-xs">
               chevron_right
             </span>
             <span className="font-semibold text-primary">Músicas</span>
           </nav>
-          <h1 className="font-headline text-4xl font-extrabold tracking-tight text-on-surface lg:text-5xl">
-            Músicas
-          </h1>
+          <h1 className="font-headline text-2xl text-on-surface lg:text-3xl">Músicas</h1>
           <p className="mt-2 text-outline">
             {search
               ? `${filteredSongs.length} encontrada${filteredSongs.length !== 1 ? 's' : ''} de ${songs.length} no repertório`
@@ -407,12 +407,12 @@ function GridView({ songs, onEdit, onDelete, onView, canEdit, canDelete }: ViewP
 
           <div className="mt-2 flex flex-wrap gap-1.5">
             {song.key && (
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+              <span className="rounded-full bg-surface-container px-2.5 py-0.5 text-xs font-bold text-on-surface-variant">
                 {song.key}
               </span>
             )}
             {song.origin !== 'outros' && (
-              <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-xs font-semibold text-secondary">
+              <span className="rounded-full bg-surface-container px-2.5 py-0.5 text-xs font-semibold text-on-surface-variant">
                 {ORIGIN_LABEL[song.origin]}
                 {song.book_number && ` nº ${song.book_number}`}
               </span>
@@ -424,7 +424,7 @@ function GridView({ songs, onEdit, onDelete, onView, canEdit, canDelete }: ViewP
               {song.suggested_parts.map((p) => (
                 <span
                   key={p}
-                  className="rounded-full border border-outline-variant/40 bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
+                  className="rounded-full bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
                 >
                   {MASS_PART_LABEL[p]}
                 </span>
@@ -437,7 +437,7 @@ function GridView({ songs, onEdit, onDelete, onView, canEdit, canDelete }: ViewP
               {song.suggested_seasons.map((s) => (
                 <span
                   key={s}
-                  className="rounded-full border border-tertiary/30 bg-tertiary/5 px-2 py-0.5 text-xs font-medium text-tertiary"
+                  className="rounded-full bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
                 >
                   {LITURGICAL_SEASON_LABEL[s]}
                 </span>
@@ -518,12 +518,12 @@ function ListView({
                   <span className="break-words text-xs text-outline">{song.artist}</span>
                 )}
                 {song.key && (
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                  <span className="rounded-full bg-surface-container px-2 py-0.5 text-xs font-bold text-on-surface-variant">
                     {song.key}
                   </span>
                 )}
                 {song.origin !== 'outros' && (
-                  <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-semibold text-secondary">
+                  <span className="rounded-full bg-surface-container px-2 py-0.5 text-xs font-semibold text-on-surface-variant">
                     {ORIGIN_LABEL[song.origin]}
                     {song.book_number && ` nº ${song.book_number}`}
                   </span>
@@ -534,7 +534,7 @@ function ListView({
                   {song.suggested_parts.map((p) => (
                     <span
                       key={p}
-                      className="rounded-full border border-outline-variant/40 bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
+                      className="rounded-full bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
                     >
                       {MASS_PART_LABEL[p]}
                     </span>
@@ -546,7 +546,7 @@ function ListView({
                   {song.suggested_seasons.map((s) => (
                     <span
                       key={s}
-                      className="rounded-full border border-tertiary/30 bg-tertiary/5 px-2 py-0.5 text-xs font-medium text-tertiary"
+                      className="rounded-full bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
                     >
                       {LITURGICAL_SEASON_LABEL[s]}
                     </span>
@@ -648,7 +648,7 @@ function ListView({
                 dir={sortDir}
                 onSort={onSort}
               />
-              <th className="px-8 py-5 text-right text-xs font-bold uppercase tracking-wider text-outline">
+              <th className="sticky right-0 bg-surface-container-low px-8 py-5 text-right text-xs font-bold uppercase tracking-wider text-outline shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.12)]">
                 Ações
               </th>
             </tr>
@@ -672,7 +672,7 @@ function ListView({
                 <td className="px-6 py-5 text-on-surface-variant">{song.artist ?? '—'}</td>
                 <td className="px-6 py-5">
                   {song.key ? (
-                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+                    <span className="rounded-full bg-surface-container px-2.5 py-0.5 text-xs font-bold text-on-surface-variant">
                       {song.key}
                     </span>
                   ) : (
@@ -681,7 +681,7 @@ function ListView({
                 </td>
                 <td className="px-6 py-5">
                   {song.origin !== 'outros' ? (
-                    <span className="rounded-full bg-secondary/10 px-2.5 py-1 text-xs font-semibold text-secondary">
+                    <span className="rounded-full bg-surface-container px-2.5 py-1 text-xs font-semibold text-on-surface-variant">
                       {ORIGIN_LABEL[song.origin]}
                     </span>
                   ) : (
@@ -697,7 +697,7 @@ function ListView({
                       {song.suggested_parts.map((p) => (
                         <span
                           key={p}
-                          className="rounded-full border border-outline-variant/40 bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
+                          className="rounded-full bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
                         >
                           {MASS_PART_LABEL[p]}
                         </span>
@@ -713,7 +713,7 @@ function ListView({
                       {song.suggested_seasons.map((s) => (
                         <span
                           key={s}
-                          className="rounded-full border border-tertiary/30 bg-tertiary/5 px-2 py-0.5 text-xs font-medium text-tertiary"
+                          className="rounded-full bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant"
                         >
                           {LITURGICAL_SEASON_LABEL[s]}
                         </span>
@@ -773,8 +773,8 @@ function ListView({
                 <td className="px-6 py-5 text-xs text-outline">
                   {song.updated_at !== song.created_at ? formatDateTime(song.updated_at) : '—'}
                 </td>
-                <td className="px-8 py-5">
-                  <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                <td className="sticky right-0 bg-surface-container-lowest px-8 py-5 shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.08)]">
+                  <div className="flex items-center justify-end gap-2">
                     {canEdit && (
                       <button
                         onClick={() => onEdit(song)}

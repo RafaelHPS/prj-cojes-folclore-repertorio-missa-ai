@@ -19,25 +19,18 @@ interface StatCardProps {
   value: number | string
   icon: string
   to?: string
-  color?: string
 }
 
-function StatCard({ label, value, icon, to, color = 'text-primary bg-primary/5' }: StatCardProps) {
+function StatCard({ label, value, icon, to }: StatCardProps) {
   const content = (
     <div className="rounded-3xl border border-outline-variant/20 bg-surface-container-lowest p-6 tonal-shadow transition-all hover:shadow-md">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-outline">{label}</p>
-          <p className="mt-2 font-headline text-4xl font-extrabold tracking-tight text-on-surface">
-            {value}
-          </p>
-        </div>
-        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${color}`}>
-          <span aria-hidden="true" className="material-symbols-outlined">
-            {icon}
-          </span>
-        </div>
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary-container text-on-primary-container">
+        <span aria-hidden="true" className="material-symbols-outlined text-xl">
+          {icon}
+        </span>
       </div>
+      <p className="font-headline text-3xl text-on-surface">{value}</p>
+      <p className="mt-1 text-xs font-semibold text-on-surface-variant">{label}</p>
     </div>
   )
   return to ? <Link to={to}>{content}</Link> : content
@@ -102,35 +95,20 @@ export default function DashboardPage() {
     <div>
       {/* Page header */}
       <header className="mb-10">
-        <p className="text-sm font-medium capitalize text-outline">{todayLabel}</p>
-        <h1 className="font-headline mt-1 text-4xl font-extrabold tracking-tight text-on-surface lg:text-5xl">
-          {team?.name}
-        </h1>
+        <p className="text-xs font-bold uppercase tracking-wider text-outline">{todayLabel}</p>
+        <h1 className="font-headline mt-1.5 text-2xl text-on-surface lg:text-3xl">{team?.name}</h1>
         <p className="mt-2 text-outline">Bem-vindo ao seu painel de gestão litúrgica.</p>
       </header>
 
       {/* Stat cards */}
       <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard
-          label="Músicas no repertório"
-          value={songCount}
-          icon="music_note"
-          to="/musicas"
-          color="text-primary bg-primary/5"
-        />
-        <StatCard
-          label="Missas registradas"
-          value={massCount}
-          icon="church"
-          to="/missas"
-          color="text-secondary bg-secondary/5"
-        />
+        <StatCard label="Músicas no repertório" value={songCount} icon="music_note" to="/musicas" />
+        <StatCard label="Missas registradas" value={massCount} icon="church" to="/missas" />
         <StatCard
           label="Próximas celebrações"
           value={upcomingMasses.length}
-          icon="calendar_month"
+          icon="upcoming"
           to="/missas"
-          color="text-tertiary bg-tertiary/5"
         />
       </div>
 

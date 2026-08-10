@@ -1,11 +1,33 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Lista explícita de origens permitidas — nunca usar '*' numa function que
+// tem efeitos colaterais reais (envia convite, grava linha em `invites`).
+const ALLOWED_ORIGINS = [
+  'https://rafaelhps.github.io',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+]
+
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin') ?? ''
+  const headers: Record<string, string> = {
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    Vary: 'Origin',
+  }
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin
+  }
+  return headers
 }
 
 Deno.serve(async (req) => {
+  const CORS = corsHeaders(req)
+  const json = (body: unknown) =>
+    new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+    })
+
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
   try {
@@ -58,7 +80,7 @@ Deno.serve(async (req) => {
 
     // Envia e-mail de convite oficial do Supabase com link
     // Nota: o trigger on_auth_user_invited foi removido — não há mais conflito
-    const redirectTo = `${siteUrl}/aceitar-convite`
+    const redirectTo = `${siteUrl.replace(/\/$/, '')}/aceitar-convite`
     const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
       redirectTo,
       data: { team_id: teamId, role, invited_by: callerUser.id },
@@ -77,10 +99,3 @@ Deno.serve(async (req) => {
     return json({ error: message })
   }
 })
-
-function json(body: unknown) {
-  return new Response(JSON.stringify(body), {
-    status: 200,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
-  })
-}

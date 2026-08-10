@@ -27,7 +27,7 @@ export function FileBadges({ song, onView }: Props) {
             onView(f.label, bustCache(song[f.key]!, song.updated_at))
           }}
           aria-label={`Visualizar ${f.label}`}
-          className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary transition hover:bg-primary/20"
+          className="flex items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-low px-2.5 py-1 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
         >
           <span aria-hidden="true" className="material-symbols-outlined text-xs">
             {f.icon}
@@ -42,7 +42,7 @@ export function FileBadges({ song, onView }: Props) {
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
           aria-label={`Ouvir áudio de ${song.title}`}
-          className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary transition hover:bg-primary/20"
+          className="flex items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-low px-2.5 py-1 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
         >
           <span aria-hidden="true" className="material-symbols-outlined text-xs">
             headphones

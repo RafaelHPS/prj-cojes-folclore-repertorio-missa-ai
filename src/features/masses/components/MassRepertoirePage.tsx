@@ -190,7 +190,7 @@ function SortableSongRow({
             </div>
           )}
           {song.origin && song.origin !== 'outros' && (
-            <p className="mt-0.5 text-xs text-secondary">
+            <p className="mt-0.5 text-xs text-outline">
               {ORIGIN_LABEL[song.origin as keyof typeof ORIGIN_LABEL]}
               {song.book_number && ` · nº ${song.book_number}`}
             </p>
@@ -539,6 +539,7 @@ export default function MassRepertoirePage() {
       book_number: item.song.book_number ?? null,
       origin: item.song.origin ?? null,
       updated_at: item.song.updated_at,
+      audio_url: item.song.audio_url,
       partitura_url: item.song.partitura_url,
       letra_url: item.song.letra_url,
       cifra_url: item.song.cifra_url,
@@ -589,9 +590,7 @@ export default function MassRepertoirePage() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="font-headline text-3xl font-extrabold tracking-tight text-on-surface lg:text-4xl">
-              {mass.title}
-            </h1>
+            <h1 className="font-headline text-2xl text-on-surface lg:text-3xl">{mass.title}</h1>
             <p className="mt-1 text-sm text-outline">
               {formatDateShort(mass.date)}
               {mass.time && ` · ${formatTime(mass.time)}`}

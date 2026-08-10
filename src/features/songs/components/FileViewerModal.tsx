@@ -10,12 +10,26 @@ interface Props {
 export function FileViewerModal({ title, url, onClose }: Props) {
   const onCloseRef = useRef(onClose)
   const closedByBack = useRef(false)
+  const pendingBackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     onCloseRef.current = onClose
   })
 
   useEffect(() => {
+    // Em StrictMode (dev), o React roda setup→cleanup→setup deste efeito de
+    // propósito. Se um history.back() do cleanup "fantasma" chegasse a
+    // disparar, o popstate assíncrono resultante seria capturado pelo
+    // listener do segundo setup e fecharia o modal sozinho. Por isso o
+    // back() do cleanup é adiado (setTimeout 0) e cancelável: o próximo
+    // setup cancela o timer se ainda não disparou (= era só o StrictMode
+    // remontando), e só um cleanup "de verdade" (sem setup seguinte) deixa
+    // o timer disparar e desfazer o pushState.
+    if (pendingBackTimer.current) {
+      clearTimeout(pendingBackTimer.current)
+      pendingBackTimer.current = null
+    }
+
     window.history.pushState({ modal: 'viewer' }, '')
 
     function handlePopState() {
@@ -29,7 +43,10 @@ export function FileViewerModal({ title, url, onClose }: Props) {
       window.removeEventListener('popstate', handlePopState)
       // Fechou pelo X — remove a entrada que empurramos
       if (!closedByBack.current) {
-        window.history.back()
+        pendingBackTimer.current = setTimeout(() => {
+          pendingBackTimer.current = null
+          window.history.back()
+        }, 0)
       }
     }
   }, [])
@@ -40,17 +57,21 @@ export function FileViewerModal({ title, url, onClose }: Props) {
   const isPdf = ext === 'pdf'
 
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex flex-col bg-black/90">
-      <div className="flex flex-shrink-0 items-center justify-between bg-gray-900 px-6 py-3">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-[#140a08]/90">
+      <div className="flex flex-shrink-0 items-center justify-between px-6 py-3.5">
         <p className="truncate text-sm font-medium text-white">{title}</p>
-        <div className="ml-4 flex flex-shrink-0 items-center gap-3">
-          <a href={url} download className="text-xs text-gray-400 transition hover:text-white">
+        <div className="ml-4 flex flex-shrink-0 items-center gap-3.5">
+          <a
+            href={url}
+            download
+            className="text-xs font-semibold text-white/70 transition hover:text-white"
+          >
             ↓ Baixar
           </a>
           <button
             onClick={onClose}
             aria-label="Fechar visualizador"
-            className="text-xl leading-none text-gray-400 transition hover:text-white"
+            className="rounded-lg bg-white/10 p-1.5 text-xl leading-none text-white transition hover:bg-white/20"
           >
             ✕
           </button>
@@ -65,13 +86,13 @@ export function FileViewerModal({ title, url, onClose }: Props) {
         ) : (
           <div className="flex h-full items-center justify-center px-4 text-center">
             <div>
-              <p className="mb-6 text-gray-300">
+              <p className="mb-6 text-white/70">
                 Este tipo de arquivo não pode ser visualizado aqui.
               </p>
               <a
                 href={url}
                 download
-                className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
+                className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary transition hover:bg-secondary"
               >
                 ↓ Baixar arquivo
               </a>

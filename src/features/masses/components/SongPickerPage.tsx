@@ -52,6 +52,15 @@ interface LocationState {
   existingIds?: string[]
 }
 
+/** Extrai a mensagem de erro do Supabase (PostgrestError não é instanceof Error). */
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
+    return err.message
+  }
+  return 'Erro ao adicionar música.'
+}
+
 export default function SongPickerPage() {
   const { id: massId, part } = useParams<{ id: string; part: string }>()
   const { state } = useLocation() as { state: LocationState | null }
@@ -119,9 +128,12 @@ export default function SongPickerPage() {
     setIsAdding(true)
     try {
       await addSongToMass(massId, song.id, massPart, currentCount)
-      navigate(`/missas/${massId}/gerenciar`)
+      // replace: true — o seletor é uma etapa descartável; sem isso, o botão
+      // Voltar do navegador reaparece aqui com a lista desatualizada (a
+      // música recém-adicionada continuaria parecendo disponível).
+      navigate(`/missas/${massId}/gerenciar`, { replace: true })
     } catch (err) {
-      setAddError(err instanceof Error ? err.message : 'Erro ao adicionar música.')
+      setAddError(getErrorMessage(err))
       setIsAdding(false)
     }
   }
@@ -149,9 +161,7 @@ export default function SongPickerPage() {
 
       <div className="mb-6">
         <p className="text-xs font-bold uppercase tracking-widest text-outline">{partLabel}</p>
-        <h1 className="font-headline mt-1 text-3xl font-extrabold tracking-tight text-on-surface">
-          Adicionar música
-        </h1>
+        <h1 className="font-headline mt-1 text-xl text-on-surface">Adicionar música</h1>
       </div>
 
       {/* Busca */}
@@ -221,11 +231,21 @@ export default function SongPickerPage() {
               const hasAudio = !!song.audio_url
               return (
                 <li key={song.id} className="flex items-stretch">
-                  {/* Área clicável para selecionar — ocupa todo o espaço menos os botões de arquivo */}
-                  <button
-                    onClick={() => void handleSelect(song)}
-                    disabled={isAdding}
-                    className="min-w-0 flex-1 px-5 py-4 text-left transition hover:bg-surface-container-low disabled:opacity-60"
+                  {/* Área clicável para selecionar — ocupa todo o espaço menos os botões de arquivo.
+                      É um div (não button) porque contém botões de arquivo aninhados — button dentro
+                      de button é HTML inválido e causa erro de hidratação no React. */}
+                  <div
+                    role="button"
+                    tabIndex={isAdding ? -1 : 0}
+                    aria-disabled={isAdding}
+                    onClick={() => !isAdding && void handleSelect(song)}
+                    onKeyDown={(e) => {
+                      if ((e.key === 'Enter' || e.key === ' ') && !isAdding) {
+                        e.preventDefault()
+                        void handleSelect(song)
+                      }
+                    }}
+                    className="min-w-0 flex-1 cursor-pointer px-5 py-4 text-left transition hover:bg-surface-container-low aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
                   >
                     {/* Título + badge Sugerida */}
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -242,7 +262,7 @@ export default function SongPickerPage() {
                       <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                         {song.artist && <span className="text-xs text-outline">{song.artist}</span>}
                         {song.key && (
-                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                          <span className="rounded-full bg-surface-container px-2 py-0.5 text-xs font-bold text-on-surface-variant">
                             {song.key}
                           </span>
                         )}
@@ -251,7 +271,7 @@ export default function SongPickerPage() {
 
                     {/* Origem + Número */}
                     {song.origin !== 'outros' && BOOK_ORIGINS.includes(song.origin) && (
-                      <p className="mt-0.5 text-xs text-secondary">
+                      <p className="mt-0.5 text-xs text-outline">
                         {ORIGIN_LABEL[song.origin]}
                         {song.book_number && ` · nº ${song.book_number}`}
                       </p>
@@ -304,7 +324,7 @@ export default function SongPickerPage() {
                         )}
                       </div>
                     )}
-                  </button>
+                  </div>
 
                   {/* Indicador de carregamento à direita */}
                   {isAdding && (
@@ -325,7 +345,7 @@ export default function SongPickerPage() {
           {filtered.length} música{filtered.length !== 1 ? 's' : ''}
         </span>
         <button
-          onClick={() => navigate(backUrl)}
+          onClick={() => navigate(backUrl, { replace: true })}
           className="font-semibold text-primary hover:underline"
         >
           Cancelar

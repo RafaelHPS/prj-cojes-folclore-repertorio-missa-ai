@@ -107,8 +107,12 @@ export interface Invite {
 }
 
 export async function sendInvite(email: string, teamId: string, role: UserRole): Promise<void> {
+  // Inclui o base path (ex.: /prj-cojes-folclore-repertorio-missa-ai/) — o app é servido
+  // numa subpasta no GitHub Pages, então window.location.origin sozinho não é suficiente.
+  const siteUrl = (window.location.origin + import.meta.env.BASE_URL).replace(/\/$/, '')
+
   const { data, error } = await supabase.functions.invoke('invite-member', {
-    body: { email, teamId, role, siteUrl: window.location.origin },
+    body: { email, teamId, role, siteUrl },
   })
 
   if (error) throw new Error(error.message)

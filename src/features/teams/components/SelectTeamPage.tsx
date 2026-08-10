@@ -149,7 +149,7 @@ export default function SelectTeamPage() {
                       {team.slug && <p className="text-xs text-outline">{team.slug}</p>}
                     </div>
                   </div>
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                  <span className="rounded-full bg-surface-container px-3 py-1 text-xs font-bold text-on-surface-variant">
                     {ROLE_LABEL[team.role]}
                   </span>
                 </div>

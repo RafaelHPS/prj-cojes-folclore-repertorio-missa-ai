@@ -151,10 +151,10 @@ export default function LoginPage() {
               {isSent ? (
                 <div
                   role="alert"
-                  className="flex items-start gap-3 rounded-2xl bg-primary/5 px-4 py-4 text-sm text-primary"
+                  className="flex items-start gap-3 rounded-2xl bg-success/10 px-4 py-4 text-sm text-success"
                 >
                   <span aria-hidden="true" className="material-symbols-outlined text-base mt-0.5">
-                    check_circle
+                    mark_email_read
                   </span>
                   E-mail enviado! Verifique sua caixa de entrada.
                 </div>

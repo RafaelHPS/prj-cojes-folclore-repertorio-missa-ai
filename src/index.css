@@ -1,30 +1,32 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── Paleta litúrgica (Material Design 3) ── */
-  --color-primary:                  #bc0100;
+  /* ── Paleta litúrgica (Repertório de Missas — creme e terracota) ── */
+  --color-primary:                  #A32219;
   --color-on-primary:               #ffffff;
-  --color-primary-container:        #eb0000;
-  --color-on-primary-container:     #fffbff;
-  --color-secondary:                #b72114;
+  --color-primary-container:        #F6E4E1;
+  --color-on-primary-container:     #A32219;
+  --color-secondary:                #8A1B14;
   --color-on-secondary:             #ffffff;
-  --color-secondary-container:      #ff5541;
-  --color-tertiary:                 #5b5c5c;
+  --color-secondary-container:      #8A1B14;
+  --color-tertiary:                 #7A5C56;
   --color-on-tertiary:              #ffffff;
-  --color-tertiary-container:       #737575;
-  --color-background:               #fff8f6;
-  --color-surface:                  #fff8f6;
+  --color-tertiary-container:       #F3E6E3;
+  --color-background:               #FBF6F4;
+  --color-surface:                  #FBF6F4;
   --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low:    #fff0ee;
-  --color-surface-container:        #ffe9e6;
-  --color-surface-container-high:   #ffe2dd;
-  --color-surface-container-highest:#ffdad4;
-  --color-surface-dim:              #f8d1cb;
-  --color-on-surface:               #2b1613;
-  --color-on-surface-variant:       #603e39;
-  --color-outline:                  #956d67;
-  --color-outline-variant:          #ebbbb4;
-  --color-error:                    #ba1a1a;
+  --color-surface-container-low:    #FBF6F4;
+  --color-surface-container:        #F3E6E3;
+  --color-surface-container-high:   #F1DACF;
+  --color-surface-container-highest:#F0D5CD;
+  --color-surface-dim:              #EFD9D2;
+  --color-on-surface:               #2A1512;
+  --color-on-surface-variant:       #7A5C56;
+  --color-outline:                  #85706D;
+  --color-outline-variant:          #EAD9D5;
+  --color-error:                    #B23A2F;
+  --color-warning:                  #8A5A0A;
+  --color-success:                  #2F7D4F;
 
   /* ── Tipografia ── */
   --font-headline: "Plus Jakarta Sans", sans-serif;
@@ -39,8 +41,8 @@
 
   html {
     font-family: "Manrope", sans-serif;
-    background-color: #fff8f6;
-    color: #2b1613;
+    background-color: #FBF6F4;
+    color: #2A1512;
   }
 
   body {
@@ -66,10 +68,13 @@
 
 @layer utilities {
   .tonal-shadow {
-    box-shadow: 0 4px 20px rgba(188, 1, 0, 0.06);
+    box-shadow: 0 4px 20px rgba(163, 34, 25, 0.08);
   }
   .glass-nav {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+  }
+  .font-headline {
+    font-weight: 400 !important;
   }
 }

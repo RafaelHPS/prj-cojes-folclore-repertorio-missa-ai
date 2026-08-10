@@ -100,12 +100,12 @@ function SongCard({ item, index, onView }: SongCardProps) {
         <div className="mt-1 flex flex-wrap items-center gap-2">
           {song.artist && <span className="text-sm text-outline">{song.artist}</span>}
           {song.key && (
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+            <span className="rounded-full bg-surface-container px-2.5 py-0.5 text-xs font-bold text-on-surface-variant">
               {song.key}
             </span>
           )}
           {song.origin && song.origin !== 'outros' && (
-            <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-xs font-semibold text-secondary">
+            <span className="rounded-full bg-surface-container px-2.5 py-0.5 text-xs font-semibold text-on-surface-variant">
               {ORIGIN_LABEL[song.origin as keyof typeof ORIGIN_LABEL]}
               {song.book_number && ` · nº ${song.book_number}`}
             </span>
@@ -197,7 +197,7 @@ export default function MassDetailPage() {
       try {
         const [massData, songsData, participantsData] = await Promise.all([
           fetchPublicMass(id!),
-          fetchMassSongs(id!),
+          fetchMassSongs(id!).catch(() => [] as MassSongWithSong[]),
           fetchMassParticipants(id!).catch(() => [] as MassParticipant[]),
         ])
 
@@ -242,6 +242,7 @@ export default function MassDetailPage() {
       book_number: item.song.book_number ?? null,
       origin: item.song.origin ?? null,
       updated_at: item.song.updated_at,
+      audio_url: item.song.audio_url,
       partitura_url: item.song.partitura_url,
       letra_url: item.song.letra_url,
       cifra_url: item.song.cifra_url,
@@ -318,9 +319,7 @@ export default function MassDetailPage() {
             )}
           </div>
 
-          <h1 className="font-headline text-3xl font-extrabold tracking-tight text-on-surface sm:text-4xl">
-            {mass.title}
-          </h1>
+          <h1 className="font-headline text-2xl text-on-surface sm:text-3xl">{mass.title}</h1>
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-outline">
             <span className="flex items-center gap-1.5">

@@ -67,8 +67,8 @@ export default function AcceptInvitePage() {
 
         {displayStatus === 'success' && (
           <div className="mt-8">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-              <span aria-hidden="true" className="material-symbols-outlined text-3xl text-primary">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-success/10">
+              <span aria-hidden="true" className="material-symbols-outlined text-3xl text-success">
                 check_circle
               </span>
             </div>
@@ -81,9 +81,9 @@ export default function AcceptInvitePage() {
 
         {displayStatus === 'no_invite' && (
           <div className="mt-8">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-              <span aria-hidden="true" className="material-symbols-outlined text-3xl text-primary">
-                login
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-success/10">
+              <span aria-hidden="true" className="material-symbols-outlined text-3xl text-success">
+                verified
               </span>
             </div>
             <p className="font-headline text-lg font-bold text-on-surface">Acesso confirmado!</p>

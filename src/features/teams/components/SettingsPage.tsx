@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -55,9 +56,9 @@ const ROLE_LABEL: Record<UserRole, string> = {
 }
 
 const ROLE_COLOR: Record<UserRole, string> = {
-  admin: 'bg-primary/10 text-primary',
-  editor: 'bg-secondary/10 text-secondary',
-  contributor: 'bg-tertiary/10 text-tertiary-container',
+  admin: 'bg-primary-container text-on-primary-container',
+  editor: 'bg-surface-container text-on-surface-variant',
+  contributor: 'bg-surface-container text-on-surface-variant',
   viewer: 'bg-surface-container text-on-surface-variant',
 }
 
@@ -208,7 +209,7 @@ function ProfileSection() {
                 {profileStatus === 'saving' ? 'Salvando…' : 'Salvar perfil'}
               </button>
               {profileStatus === 'saved' && (
-                <span className="flex items-center gap-1 text-sm font-semibold text-primary">
+                <span className="flex items-center gap-1 text-sm font-semibold text-success">
                   <span aria-hidden="true" className="material-symbols-outlined text-base">
                     check_circle
                   </span>
@@ -244,7 +245,7 @@ function ProfileSection() {
             </div>
 
             {passwordStatus === 'saved' && !showPasswordForm && (
-              <p className="mt-2 flex items-center gap-1 text-sm font-semibold text-primary">
+              <p className="mt-2 flex items-center gap-1 text-sm font-semibold text-success">
                 <span aria-hidden="true" className="material-symbols-outlined text-base">
                   check_circle
                 </span>
@@ -965,15 +966,15 @@ export default function SettingsPage() {
       {/* Header */}
       <header className="mb-10">
         <nav className="mb-3 flex items-center gap-1.5 text-sm font-medium text-outline">
-          <span>Home</span>
+          <Link to="/" className="transition-colors hover:text-primary">
+            Início
+          </Link>
           <span aria-hidden="true" className="material-symbols-outlined text-xs">
             chevron_right
           </span>
           <span className="font-semibold text-primary">Configurações</span>
         </nav>
-        <h1 className="font-headline text-4xl font-extrabold tracking-tight text-on-surface lg:text-5xl">
-          Configurações
-        </h1>
+        <h1 className="font-headline text-2xl text-on-surface lg:text-3xl">Configurações</h1>
         <p className="mt-2 text-outline">
           {activeTab === 'account' && 'Gerencie seu perfil e senha.'}
           {activeTab === 'team' && 'Gerencie os dados e membros da equipe.'}
@@ -983,12 +984,15 @@ export default function SettingsPage() {
       </header>
 
       {/* Abas */}
-      <div className="mb-6 flex gap-1 rounded-2xl bg-surface-container-low p-1" role="tablist">
+      <div
+        className="mb-6 flex flex-wrap gap-1 rounded-2xl bg-surface-container-low p-1"
+        role="tablist"
+      >
         <button
           role="tab"
           aria-selected={activeTab === 'account'}
           onClick={() => setActiveTab('account')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+          className={`flex flex-none items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
             activeTab === 'account'
               ? 'bg-surface-container-lowest text-on-surface shadow-sm'
               : 'text-on-surface-variant hover:text-on-surface'
@@ -1004,7 +1008,7 @@ export default function SettingsPage() {
             role="tab"
             aria-selected={activeTab === 'team'}
             onClick={() => setActiveTab('team')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+            className={`flex flex-none items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
               activeTab === 'team'
                 ? 'bg-surface-container-lowest text-on-surface shadow-sm'
                 : 'text-on-surface-variant hover:text-on-surface'
@@ -1021,7 +1025,7 @@ export default function SettingsPage() {
             role="tab"
             aria-selected={activeTab === 'permissions'}
             onClick={() => setActiveTab('permissions')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+            className={`flex flex-none items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
               activeTab === 'permissions'
                 ? 'bg-surface-container-lowest text-on-surface shadow-sm'
                 : 'text-on-surface-variant hover:text-on-surface'
@@ -1038,7 +1042,7 @@ export default function SettingsPage() {
             role="tab"
             aria-selected={activeTab === 'audit'}
             onClick={() => setActiveTab('audit')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+            className={`flex flex-none items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
               activeTab === 'audit'
                 ? 'bg-surface-container-lowest text-on-surface shadow-sm'
                 : 'text-on-surface-variant hover:text-on-surface'
@@ -1130,7 +1134,7 @@ export default function SettingsPage() {
                     {teamSaveStatus === 'saving' ? 'Salvando…' : 'Salvar alterações'}
                   </button>
                   {teamSaveStatus === 'saved' && (
-                    <span className="flex items-center gap-1 text-sm font-semibold text-primary">
+                    <span className="flex items-center gap-1 text-sm font-semibold text-success">
                       <span aria-hidden="true" className="material-symbols-outlined text-base">
                         check_circle
                       </span>
@@ -1237,8 +1241,8 @@ export default function SettingsPage() {
                 </form>
 
                 {inviteStatus === 'sent' && (
-                  <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                    <p className="flex items-center gap-1.5 text-sm font-bold text-primary">
+                  <div className="mt-3 rounded-2xl border border-warning/30 bg-warning/10 p-4">
+                    <p className="flex items-center gap-1.5 text-sm font-bold text-warning">
                       <span aria-hidden="true" className="material-symbols-outlined text-base">
                         mark_email_read
                       </span>
@@ -1261,7 +1265,7 @@ export default function SettingsPage() {
               <div className="border-t border-outline-variant/10 px-6 pb-5">
                 <p className="mb-3 mt-4 text-sm font-bold text-on-surface">
                   Convites pendentes
-                  <span className="ml-2 rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-bold text-secondary">
+                  <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
                     {invites.length}
                   </span>
                 </p>

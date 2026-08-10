@@ -1,5 +1,6 @@
 import {
   PDFArray,
+  PDFBool,
   PDFDict,
   PDFDocument,
   PDFFont,
@@ -7,6 +8,7 @@ import {
   PDFNumber,
   PDFPage,
   PDFRef,
+  PDFString,
   StandardFonts,
   rgb,
 } from 'pdf-lib'
@@ -20,6 +22,7 @@ export interface MergeSong {
   book_number: string | null
   origin: string | null
   updated_at: string
+  audio_url: string | null
   partitura_url: string | null
   cifra_url: string | null
   letra_url: string | null
@@ -32,10 +35,10 @@ export interface MergeProgress {
 
 // ── Constantes visuais ────────────────────────────────────────
 
-const PRIMARY = rgb(0.24, 0.39, 0.78)
-const DARK = rgb(0.1, 0.1, 0.1)
-const GRAY = rgb(0.5, 0.5, 0.5)
-const LIGHT = rgb(0.78, 0.78, 0.78)
+const PRIMARY = rgb(0.639, 0.133, 0.098) // #A32219
+const DARK = rgb(0.165, 0.082, 0.071) // #2A1512
+const GRAY = rgb(0.478, 0.361, 0.337) // #7A5C56
+const LIGHT = rgb(0.847, 0.725, 0.706) // #D8B9B4
 
 const MODE_LABEL: Record<MergeMode, string> = {
   partitura: 'Partituras',
@@ -140,6 +143,77 @@ function createLinkAnnot(
   return doc.context.register(annot)
 }
 
+/**
+ * Cria uma anotação de link PDF para uma URL externa (ação URI) e retorna a PDFRef.
+ * Usado para o link de áudio na página separadora de cada música.
+ */
+function createUriLinkAnnot(
+  doc: PDFDocument,
+  url: string,
+  rect: [number, number, number, number],
+): PDFRef {
+  const [x1, y1, x2, y2] = rect
+
+  const action = PDFDict.withContext(doc.context)
+  action.set(PDFName.of('S'), PDFName.of('URI'))
+  action.set(PDFName.of('URI'), PDFString.of(url))
+  // Pede pro visualizador abrir em nova janela/aba — não é padrão do PDF para
+  // ações URI (spec só define isso para Launch/GoToR), então alguns leitores
+  // (ex.: visualizador embutido do navegador) podem ignorar e navegar na mesma aba.
+  action.set(PDFName.of('NewWindow'), PDFBool.True)
+
+  const annotRect = PDFArray.withContext(doc.context)
+  annotRect.push(PDFNumber.of(x1))
+  annotRect.push(PDFNumber.of(y1))
+  annotRect.push(PDFNumber.of(x2))
+  annotRect.push(PDFNumber.of(y2))
+
+  const border = PDFArray.withContext(doc.context)
+  border.push(PDFNumber.of(0))
+  border.push(PDFNumber.of(0))
+  border.push(PDFNumber.of(0))
+
+  const annot = PDFDict.withContext(doc.context)
+  annot.set(PDFName.of('Type'), PDFName.of('Annot'))
+  annot.set(PDFName.of('Subtype'), PDFName.of('Link'))
+  annot.set(PDFName.of('Rect'), annotRect)
+  annot.set(PDFName.of('Border'), border)
+  annot.set(PDFName.of('A'), action)
+
+  return doc.context.register(annot)
+}
+
+/**
+ * Desenha o texto "Ouvir áudio" com sublinhado e registra um link clicável (URI)
+ * para a URL externa, na página separadora que antecede a partitura/cifra.
+ */
+function drawAudioLink(
+  page: PDFPage,
+  doc: PDFDocument,
+  audioUrl: string,
+  x: number,
+  y: number,
+  font: PDFFont,
+): void {
+  const label = 'Ouvir áudio'
+  const size = 12
+  page.drawText(label, { x, y, size, font, color: PRIMARY })
+
+  const textWidth = font.widthOfTextAtSize(label, size)
+  page.drawLine({
+    start: { x, y: y - 2 },
+    end: { x: x + textWidth, y: y - 2 },
+    thickness: 0.75,
+    color: PRIMARY,
+  })
+
+  const annotRef = createUriLinkAnnot(doc, audioUrl, [x, y - 4, x + textWidth, y + size])
+  const existing = page.node.get(PDFName.of('Annots'))
+  const annotsArr = existing instanceof PDFArray ? existing : PDFArray.withContext(doc.context)
+  annotsArr.push(annotRef)
+  page.node.set(PDFName.of('Annots'), annotsArr)
+}
+
 // ── Merge principal ───────────────────────────────────────────
 
 /**
@@ -232,6 +306,10 @@ export async function mergeMassPdfs(
       if (mode === 'both') {
         const typeLabel = item.type === 'partitura' ? 'Partitura' : 'Cifra'
         sep.drawText(typeLabel, { x: 60, y: titleY - 10, size: 12, font: regular, color: PRIMARY })
+        titleY -= 22
+      }
+      if (item.song.audio_url) {
+        drawAudioLink(sep, merged, item.song.audio_url, 60, titleY - 22, bold)
       }
     } else if (mode === 'both') {
       // Mini separador para segundo tipo (cifra após partitura)
@@ -255,6 +333,9 @@ export async function mergeMassPdfs(
         font: regular,
         color: PRIMARY,
       })
+      if (item.song.audio_url) {
+        drawAudioLink(sep, merged, item.song.audio_url, 60, height / 2 - 44, bold)
+      }
     }
 
     // Copia páginas do PDF da música
@@ -272,7 +353,7 @@ export async function mergeMassPdfs(
         y: errPage.getSize().height / 2,
         size: 14,
         font: regular,
-        color: rgb(0.8, 0.2, 0.2),
+        color: rgb(0.698, 0.227, 0.184), // #B23A2F
       })
     }
   }
@@ -329,7 +410,7 @@ export async function mergeMassPdfs(
         start: { x: 60, y: subtitleY - 12 },
         end: { x: width - 60, y: subtitleY - 12 },
         thickness: 0.5,
-        color: rgb(0.85, 0.85, 0.85),
+        color: rgb(0.918, 0.851, 0.835), // #EAD9D5
       })
     } else {
       tocPage.drawText('ÍNDICE — continuação', {
@@ -343,7 +424,7 @@ export async function mergeMassPdfs(
         start: { x: 60, y: height - 70 },
         end: { x: width - 60, y: height - 70 },
         thickness: 0.5,
-        color: rgb(0.85, 0.85, 0.85),
+        color: rgb(0.918, 0.851, 0.835), // #EAD9D5
       })
     }
 
@@ -372,7 +453,7 @@ export async function mergeMassPdfs(
           y: rowY - 10,
           width: width - 100,
           height: ROW_H - 2,
-          color: rgb(0.97, 0.97, 0.99),
+          color: rgb(0.984, 0.965, 0.957), // #FBF6F4
         })
       }
 

@@ -209,7 +209,7 @@ export default function SongFormPage() {
         </span>
       </nav>
 
-      <h1 className="font-headline mb-8 text-3xl font-extrabold tracking-tight text-on-surface">
+      <h1 className="font-headline mb-8 text-xl text-on-surface">
         {isEdit ? (song?.title ?? 'Editar música') : 'Nova música'}
       </h1>
 
@@ -230,7 +230,7 @@ export default function SongFormPage() {
               placeholder="Nome da música"
               aria-describedby={errors.title ? 'song-title-error' : undefined}
               aria-invalid={!!errors.title}
-              className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20 aria-[invalid=true]:border-error aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-error/20"
               {...register('title')}
             />
             {errors.title && (
@@ -313,7 +313,7 @@ export default function SongFormPage() {
                 placeholder="Ex: 42"
                 aria-describedby={errors.book_number ? 'song-book-number-error' : undefined}
                 aria-invalid={!!errors.book_number}
-                className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20 aria-[invalid=true]:border-error aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-error/20"
                 {...register('book_number')}
               />
               {errors.book_number && (
@@ -373,8 +373,8 @@ export default function SongFormPage() {
                     aria-pressed={selected}
                     className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                       selected
-                        ? 'border-tertiary bg-tertiary text-on-tertiary'
-                        : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:border-tertiary/40 hover:text-tertiary'
+                        ? 'border-primary bg-primary text-on-primary'
+                        : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:border-primary/40 hover:text-primary'
                     }`}
                   >
                     {LITURGICAL_SEASON_LABEL[season]}

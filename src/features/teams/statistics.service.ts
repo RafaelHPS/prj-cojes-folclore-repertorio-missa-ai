@@ -39,6 +39,17 @@ export interface PartCount {
   count: number
 }
 
+export interface RecentUsageRow {
+  massSongId: string
+  songId: string
+  songTitle: string
+  songArtist: string | null
+  massId: string
+  massTitle: string
+  massDate: string // 'YYYY-MM-DD'
+  part: string
+}
+
 // ── Funções ───────────────────────────────────────────────────
 
 export async function fetchStatsSummary(teamId: string): Promise<StatsSummary> {
@@ -203,4 +214,58 @@ export async function fetchTopParts(teamId: string): Promise<PartCount[]> {
   return Array.from(counts.entries())
     .map(([part, count]) => ({ part, count }))
     .sort((a, b) => b.count - a.count)
+}
+
+/**
+ * Últimas músicas usadas em missas já celebradas (data <= hoje),
+ * ordenadas da mais recente para a mais antiga.
+ */
+export async function fetchRecentSongUsage(teamId: string, limit = 50): Promise<RecentUsageRow[]> {
+  const today = new Date().toISOString().slice(0, 10)
+
+  const { data: massData } = await supabase
+    .from('masses')
+    .select('id, title, date')
+    .eq('team_id', teamId)
+    .lte('date', today)
+    .order('date', { ascending: false })
+
+  if (!massData || massData.length === 0) return []
+
+  const masses = massData as { id: string; title: string; date: string }[]
+  const massIds = masses.map((m) => m.id)
+  const massById = new Map(masses.map((m) => [m.id, m]))
+
+  const { data } = await supabase
+    .from('mass_songs')
+    .select('id, mass_id, part, songs(id, title, artist)')
+    .in('mass_id', massIds)
+
+  type Row = {
+    id: string
+    mass_id: string
+    part: string
+    songs: { id: string; title: string; artist: string | null } | null
+  }
+
+  const rows: RecentUsageRow[] = []
+  for (const row of (data ?? []) as unknown as Row[]) {
+    if (!row.songs) continue
+    const mass = massById.get(row.mass_id)
+    if (!mass) continue
+    rows.push({
+      massSongId: row.id,
+      songId: row.songs.id,
+      songTitle: row.songs.title,
+      songArtist: row.songs.artist,
+      massId: mass.id,
+      massTitle: mass.title,
+      massDate: mass.date,
+      part: row.part,
+    })
+  }
+
+  rows.sort((a, b) => b.massDate.localeCompare(a.massDate))
+
+  return rows.slice(0, limit)
 }

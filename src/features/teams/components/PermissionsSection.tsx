@@ -19,12 +19,6 @@ const ROLE_LABEL: Record<UserRole, string> = {
   viewer: 'Visualizador',
 }
 
-const ROLE_COLOR: Record<string, string> = {
-  editor: 'text-blue-600',
-  contributor: 'text-violet-600',
-  viewer: 'text-outline',
-}
-
 // ── Toggle switch ─────────────────────────────────────────────
 
 interface ToggleProps {
@@ -143,8 +137,8 @@ export function PermissionsSection({ teamId }: Props) {
         </div>
         <div className="flex items-center gap-2">
           {savedAt && !isDirty && (
-            <span className="flex items-center gap-1 text-xs text-outline">
-              <span aria-hidden="true" className="material-symbols-outlined text-sm text-primary">
+            <span className="flex items-center gap-1 text-xs font-semibold text-success">
+              <span aria-hidden="true" className="material-symbols-outlined text-sm">
                 check_circle
               </span>
               Salvo
@@ -175,7 +169,7 @@ export function PermissionsSection({ teamId }: Props) {
           {/* Colunas editáveis */}
           {ROLES_EDITABLE.map((role) => (
             <div key={role} className="flex w-24 flex-col items-center gap-0.5">
-              <span className={`text-xs font-bold ${ROLE_COLOR[role]}`}>{ROLE_LABEL[role]}</span>
+              <span className="text-xs font-bold text-on-surface-variant">{ROLE_LABEL[role]}</span>
             </div>
           ))}
         </div>
