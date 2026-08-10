@@ -92,17 +92,6 @@ export function FileViewerModal({ title, url, onClose }: Props) {
         ) : isPdf && isMobile ? (
           <div className="flex h-full items-center justify-center px-4 text-center">
             <div>
-              <span
-                aria-hidden="true"
-                className="material-symbols-outlined mb-4 block text-5xl text-white/50"
-              >
-                picture_as_pdf
-              </span>
-              <p className="mb-6 text-white/70">
-                Visualização de PDF não é confiável neste navegador.
-                <br />
-                Abra em uma nova aba para ver o arquivo.
-              </p>
               <a
                 href={url}
                 target="_blank"
