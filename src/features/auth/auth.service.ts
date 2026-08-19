@@ -7,9 +7,12 @@ export async function signInWithEmail(email: string, password: string) {
 }
 
 export async function sendPasswordReset(email: string): Promise<void> {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/nova-senha`,
-  })
+  // Inclui o base path (ex.: /prj-cojes-folclore-repertorio-missa-ai/) — o app é
+  // servido numa subpasta no GitHub Pages, então window.location.origin sozinho
+  // aponta pra fora do site (mesmo bug já corrigido no fluxo de convite).
+  const redirectTo = `${(window.location.origin + import.meta.env.BASE_URL).replace(/\/$/, '')}/nova-senha`
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
   if (error) throw error
 }
 

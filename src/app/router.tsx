@@ -8,6 +8,7 @@ import { lazy, Suspense } from 'react'
 
 const LoginPage = lazy(() => import('@/features/auth/components/LoginPage'))
 const AcceptInvitePage = lazy(() => import('@/features/auth/components/AcceptInvitePage'))
+const NewPasswordPage = lazy(() => import('@/features/auth/components/NewPasswordPage'))
 const SelectTeamPage = lazy(() => import('@/features/teams/components/SelectTeamPage'))
 const DashboardPage = lazy(() => import('@/features/teams/components/DashboardPage'))
 const SongsPage = lazy(() => import('@/features/songs/components/SongsPage'))
@@ -40,6 +41,7 @@ export const router = createBrowserRouter(
       children: [
         { path: '/login', element: withSuspense(<LoginPage />) },
         { path: '/aceitar-convite', element: withSuspense(<AcceptInvitePage />) },
+        { path: '/nova-senha', element: withSuspense(<NewPasswordPage />) },
         { path: '/missas/:id', element: withSuspense(<MassDetailPage />) },
       ],
     },
