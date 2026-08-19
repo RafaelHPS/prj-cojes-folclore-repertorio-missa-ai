@@ -7,12 +7,13 @@ import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/app/app.store'
 import { useSession } from '@/hooks/useSession'
-import { updateUserPassword } from '@/features/teams/settings.service'
+import { updateUserPassword, updateUserProfile } from '@/features/teams/settings.service'
 
 type InviteStatus = 'set_password' | 'processing' | 'success' | 'no_invite' | 'error'
 
-const passwordSchema = z
+const setupSchema = z
   .object({
+    fullName: z.string().min(1, 'Nome é obrigatório').max(100, 'Nome muito longo'),
     newPassword: z.string().min(8, 'Mínimo 8 caracteres'),
     confirmPassword: z.string(),
   })
@@ -21,7 +22,7 @@ const passwordSchema = z
     path: ['confirmPassword'],
   })
 
-type PasswordFormData = z.infer<typeof passwordSchema>
+type SetupFormData = z.infer<typeof setupSchema>
 
 export default function AcceptInvitePage() {
   const session = useSession()
@@ -36,7 +37,7 @@ export default function AcceptInvitePage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<PasswordFormData>({ resolver: zodResolver(passwordSchema) })
+  } = useForm<SetupFormData>({ resolver: zodResolver(setupSchema) })
 
   // Derived — sem setState direto no corpo do efeito
   const noSession = !isSessionLoading && !session
@@ -50,11 +51,13 @@ export default function AcceptInvitePage() {
     setInviteStatus('set_password')
   }, [session, isSessionLoading])
 
-  async function onSubmitPassword(data: PasswordFormData) {
+  async function onSubmitPassword(data: SetupFormData) {
+    if (!session) return
     setInviteStatus('processing')
     setErrorMsg(null)
     try {
       await updateUserPassword(data.newPassword)
+      await updateUserProfile(session.user.id, data.fullName)
 
       const { data: rpcData, error } = await supabase.rpc('accept_pending_invite')
       if (error) throw error
@@ -93,8 +96,30 @@ export default function AcceptInvitePage() {
         {displayStatus === 'set_password' && (
           <form onSubmit={handleSubmit(onSubmitPassword)} noValidate className="mt-8 text-left">
             <p className="mb-4 text-center text-sm text-outline">
-              Antes de continuar, crie a senha que você vai usar para acessar sua conta.
+              Antes de continuar, complete seu cadastro.
             </p>
+            <div className="mb-3">
+              <label
+                htmlFor="invite-full-name"
+                className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+              >
+                Nome completo
+              </label>
+              <input
+                id="invite-full-name"
+                type="text"
+                autoFocus
+                placeholder="Seu nome"
+                aria-invalid={!!errors.fullName}
+                className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none placeholder:text-outline transition focus:border-primary focus:ring-2 focus:ring-primary/20 aria-[invalid=true]:border-error aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-error/20"
+                {...register('fullName')}
+              />
+              {errors.fullName && (
+                <p role="alert" className="mt-1 text-xs text-error">
+                  {errors.fullName.message}
+                </p>
+              )}
+            </div>
             <div className="mb-3">
               <label
                 htmlFor="invite-new-password"
@@ -105,7 +130,6 @@ export default function AcceptInvitePage() {
               <input
                 id="invite-new-password"
                 type="password"
-                autoFocus
                 aria-invalid={!!errors.newPassword}
                 className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 aria-[invalid=true]:border-error aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-error/20"
                 {...register('newPassword')}
