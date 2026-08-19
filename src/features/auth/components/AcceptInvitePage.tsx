@@ -1,48 +1,73 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/app/app.store'
 import { useSession } from '@/hooks/useSession'
+import { updateUserPassword } from '@/features/teams/settings.service'
 
-type InviteStatus = 'processing' | 'success' | 'no_invite' | 'error'
+type InviteStatus = 'set_password' | 'processing' | 'success' | 'no_invite' | 'error'
+
+const passwordSchema = z
+  .object({
+    newPassword: z.string().min(8, 'Mínimo 8 caracteres'),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: 'As senhas não coincidem',
+    path: ['confirmPassword'],
+  })
+
+type PasswordFormData = z.infer<typeof passwordSchema>
 
 export default function AcceptInvitePage() {
   const session = useSession()
   const isSessionLoading = useAppStore((s) => s.isSessionLoading)
   const navigate = useNavigate()
-  const processed = useRef(false)
+  const readyForPasswordForm = useRef(false)
 
   const [inviteStatus, setInviteStatus] = useState<InviteStatus | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<PasswordFormData>({ resolver: zodResolver(passwordSchema) })
 
   // Derived — sem setState direto no corpo do efeito
   const noSession = !isSessionLoading && !session
   const displayStatus = noSession ? 'error' : (inviteStatus ?? 'loading')
 
   useEffect(() => {
-    if (isSessionLoading || processed.current || !session) return
+    if (isSessionLoading || readyForPasswordForm.current || !session) return
+    readyForPasswordForm.current = true
+    // Todo acesso via convite precisa criar uma senha antes de entrar —
+    // o Supabase cria o usuário sem senha até esse passo.
+    setInviteStatus('set_password')
+  }, [session, isSessionLoading])
 
-    processed.current = true
+  async function onSubmitPassword(data: PasswordFormData) {
+    setInviteStatus('processing')
+    setErrorMsg(null)
+    try {
+      await updateUserPassword(data.newPassword)
 
-    async function processInvite() {
-      setInviteStatus('processing')
-      try {
-        const { data, error } = await supabase.rpc('accept_pending_invite')
-        if (error) throw error
+      const { data: rpcData, error } = await supabase.rpc('accept_pending_invite')
+      if (error) throw error
 
-        const result = data as { found: boolean } | null
-        const nextStatus: InviteStatus = result?.found ? 'success' : 'no_invite'
-        setInviteStatus(nextStatus)
-        setTimeout(() => navigate('/selecionar-equipe', { replace: true }), 2000)
-      } catch (err) {
-        setErrorMsg(err instanceof Error ? err.message : 'Erro ao processar convite.')
-        setInviteStatus('error')
-      }
+      const result = rpcData as { found: boolean } | null
+      const nextStatus: InviteStatus = result?.found ? 'success' : 'no_invite'
+      setInviteStatus(nextStatus)
+      setTimeout(() => navigate('/selecionar-equipe', { replace: true }), 2000)
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Erro ao processar convite.')
+      setInviteStatus('error')
     }
-
-    void processInvite()
-  }, [session, isSessionLoading, navigate])
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface px-4 text-center">
@@ -63,6 +88,66 @@ export default function AcceptInvitePage() {
               {displayStatus === 'loading' ? 'Verificando acesso…' : 'Configurando sua conta…'}
             </p>
           </div>
+        )}
+
+        {displayStatus === 'set_password' && (
+          <form onSubmit={handleSubmit(onSubmitPassword)} noValidate className="mt-8 text-left">
+            <p className="mb-4 text-center text-sm text-outline">
+              Antes de continuar, crie a senha que você vai usar para acessar sua conta.
+            </p>
+            <div className="mb-3">
+              <label
+                htmlFor="invite-new-password"
+                className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+              >
+                Nova senha
+              </label>
+              <input
+                id="invite-new-password"
+                type="password"
+                autoFocus
+                aria-invalid={!!errors.newPassword}
+                className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 aria-[invalid=true]:border-error aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-error/20"
+                {...register('newPassword')}
+              />
+              {errors.newPassword && (
+                <p role="alert" className="mt-1 text-xs text-error">
+                  {errors.newPassword.message}
+                </p>
+              )}
+            </div>
+            <div className="mb-5">
+              <label
+                htmlFor="invite-confirm-password"
+                className="mb-1.5 block text-sm font-semibold text-on-surface-variant"
+              >
+                Confirmar senha
+              </label>
+              <input
+                id="invite-confirm-password"
+                type="password"
+                aria-invalid={!!errors.confirmPassword}
+                className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 aria-[invalid=true]:border-error aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-error/20"
+                {...register('confirmPassword')}
+              />
+              {errors.confirmPassword && (
+                <p role="alert" className="mt-1 text-xs text-error">
+                  {errors.confirmPassword.message}
+                </p>
+              )}
+            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-on-primary transition hover:bg-secondary disabled:opacity-60"
+            >
+              {isSubmitting ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                'Criar senha e continuar'
+              )}
+            </button>
+          </form>
         )}
 
         {displayStatus === 'success' && (
