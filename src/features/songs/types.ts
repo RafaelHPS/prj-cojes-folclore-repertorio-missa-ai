@@ -5,6 +5,8 @@ import type { MassPart, LiturgicalSeason } from '@/types/database'
 export interface Song {
   id: string
   team_id: string
+  /** Código sequencial por equipe, exibido para a equipe identificar a música. */
+  code: number
   title: string
   artist: string | null
   key: string | null

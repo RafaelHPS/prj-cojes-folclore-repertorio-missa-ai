@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { formatDateShort } from '@/utils/date.util'
+import { formatSongCode } from '@/utils/song-code.util'
 import { ORIGIN_LABEL } from '@/features/songs/songs.schemas'
 import type { SongOrigin } from '@/features/songs/types'
 
@@ -192,6 +193,8 @@ export default function StatisticsPage() {
     const q = recentUsageSearch.toLowerCase()
     if (!q) return true
     return (
+      formatSongCode(row.songCode).includes(q) ||
+      String(row.songCode) === q ||
       row.songTitle.toLowerCase().includes(q) ||
       (row.songArtist ?? '').toLowerCase().includes(q) ||
       row.massTitle.toLowerCase().includes(q)
@@ -289,6 +292,9 @@ export default function StatisticsPage() {
                       </span>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-on-surface">
+                          <span className="mr-1.5 font-mono text-xs font-bold text-outline">
+                            {formatSongCode(song.code)}
+                          </span>
                           {song.title}
                         </p>
                         {song.artist && (
@@ -502,7 +508,12 @@ export default function StatisticsPage() {
                           className="transition-colors hover:bg-surface-container-low/30"
                         >
                           <td className="px-6 py-3">
-                            <p className="font-semibold text-on-surface">{row.songTitle}</p>
+                            <p className="font-semibold text-on-surface">
+                              <span className="mr-1.5 font-mono text-xs font-bold text-outline">
+                                {formatSongCode(row.songCode)}
+                              </span>
+                              {row.songTitle}
+                            </p>
                             {row.songArtist && (
                               <p className="text-xs text-outline">{row.songArtist}</p>
                             )}

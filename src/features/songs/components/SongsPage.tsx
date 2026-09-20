@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useActiveTeam } from '@/hooks/useActiveTeam'
 import { formatDateTime } from '@/utils/date.util'
 import { bustCache } from '@/utils/cache-bust.util'
+import { formatSongCode } from '@/utils/song-code.util'
 
 import { fetchSongs, deleteSong } from '../songs.service'
 import type { Song } from '../types'
@@ -16,7 +17,15 @@ import { FileViewerModal } from './FileViewerModal'
 const PER_PAGE = 24
 
 type ViewMode = 'grid' | 'list'
-type SortKey = 'title' | 'artist' | 'key' | 'origin' | 'book_number' | 'created_at' | 'updated_at'
+type SortKey =
+  | 'code'
+  | 'title'
+  | 'artist'
+  | 'key'
+  | 'origin'
+  | 'book_number'
+  | 'created_at'
+  | 'updated_at'
 type SortDir = 'asc' | 'desc'
 
 interface SortableThProps {
@@ -25,14 +34,16 @@ interface SortableThProps {
   current: SortKey
   dir: SortDir
   onSort: (k: SortKey) => void
+  /** Classes extras de largura/espaçamento; sobrescrevem o padding padrão. */
+  className?: string
 }
 
-function SortableTh({ label, sortKey, current, dir, onSort }: SortableThProps) {
+function SortableTh({ label, sortKey, current, dir, onSort, className = 'px-6' }: SortableThProps) {
   const isActive = current === sortKey
   return (
     <th
       onClick={() => onSort(sortKey)}
-      className="cursor-pointer select-none px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-outline transition hover:text-on-surface"
+      className={`cursor-pointer select-none py-5 text-left text-xs font-bold uppercase tracking-wider text-outline transition hover:text-on-surface ${className}`}
     >
       <span className="flex items-center gap-1">
         {label}
@@ -84,6 +95,8 @@ export default function SongsPage() {
     const q = search.toLowerCase()
     return songs.filter(
       (s) =>
+        formatSongCode(s.code).includes(q) ||
+        String(s.code) === q ||
         s.title.toLowerCase().includes(q) ||
         (s.artist ?? '').toLowerCase().includes(q) ||
         (s.key ?? '').toLowerCase().includes(q) ||
@@ -107,7 +120,8 @@ export default function SongsPage() {
   const sortedSongs = useMemo(() => {
     return [...filteredSongs].sort((a, b) => {
       let cmp = 0
-      if (sortKey === 'title') cmp = a.title.localeCompare(b.title, 'pt-BR')
+      if (sortKey === 'code') cmp = a.code - b.code
+      else if (sortKey === 'title') cmp = a.title.localeCompare(b.title, 'pt-BR')
       else if (sortKey === 'artist') cmp = (a.artist ?? '').localeCompare(b.artist ?? '', 'pt-BR')
       else if (sortKey === 'key') cmp = (a.key ?? '').localeCompare(b.key ?? '', 'pt-BR')
       else if (sortKey === 'origin') cmp = a.origin.localeCompare(b.origin, 'pt-BR')
@@ -204,6 +218,8 @@ export default function SongsPage() {
               }}
               className="rounded-xl border-none bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20"
             >
+              <option value="code-asc">Código ↑</option>
+              <option value="code-desc">Código ↓</option>
               <option value="title-asc">Nome A→Z</option>
               <option value="title-desc">Nome Z→A</option>
               <option value="artist-asc">Artista A→Z</option>
@@ -396,9 +412,14 @@ function GridView({ songs, onEdit, onDelete, onView, canEdit, canDelete }: ViewP
           className="group relative overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-lowest p-5 tonal-shadow transition-all hover:border-primary/20 hover:shadow-md"
         >
           {/* Icon */}
-          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/5 text-primary">
-            <span aria-hidden="true" className="material-symbols-outlined">
-              music_note
+          <div className="mb-3 flex items-center gap-2">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/5 text-primary">
+              <span aria-hidden="true" className="material-symbols-outlined">
+                music_note
+              </span>
+            </div>
+            <span className="rounded-lg bg-surface-container px-2 py-0.5 font-mono text-xs font-bold text-on-surface-variant">
+              {formatSongCode(song.code)}
             </span>
           </div>
 
@@ -512,7 +533,12 @@ function ListView({
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="break-words font-bold text-on-surface">{song.title}</p>
+              <p className="break-words font-bold text-on-surface">
+                <span className="mr-1.5 font-mono text-xs font-bold text-outline">
+                  {formatSongCode(song.code)}
+                </span>
+                {song.title}
+              </p>
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                 {song.artist && (
                   <span className="break-words text-xs text-outline">{song.artist}</span>
@@ -587,15 +613,24 @@ function ListView({
 
       {/* Desktop: tabela completa */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="min-w-[700px] w-full text-sm">
+        <table className="min-w-[900px] w-full text-sm">
           <thead>
             <tr className="bg-surface-container-low/50">
+              <SortableTh
+                label="Código"
+                sortKey="code"
+                current={sortKey}
+                dir={sortDir}
+                onSort={onSort}
+                className="w-px whitespace-nowrap pl-8 pr-4"
+              />
               <SortableTh
                 label="Título"
                 sortKey="title"
                 current={sortKey}
                 dir={sortDir}
                 onSort={onSort}
+                className="min-w-[200px] px-4"
               />
               <SortableTh
                 label="Artista"
@@ -659,7 +694,10 @@ function ListView({
                 key={song.id}
                 className="group transition-colors hover:bg-surface-container-low/30"
               >
-                <td className="px-8 py-5">
+                <td className="w-px whitespace-nowrap py-5 pl-8 pr-4 font-mono text-xs font-bold text-on-surface-variant">
+                  {formatSongCode(song.code)}
+                </td>
+                <td className="min-w-[200px] px-4 py-5">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-primary/5 text-primary">
                       <span aria-hidden="true" className="material-symbols-outlined text-lg">

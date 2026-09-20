@@ -11,6 +11,7 @@ export interface StatsSummary {
 
 export interface TopSong {
   id: string
+  code: number
   title: string
   artist: string | null
   origin: string
@@ -42,6 +43,7 @@ export interface PartCount {
 export interface RecentUsageRow {
   massSongId: string
   songId: string
+  songCode: number
   songTitle: string
   songArtist: string | null
   massId: string
@@ -96,13 +98,14 @@ export async function fetchTopSongs(teamId: string, limit = 10): Promise<TopSong
 
   const { data } = await supabase
     .from('mass_songs')
-    .select('song_id, songs(id, title, artist, origin, book_number)')
+    .select('song_id, songs(id, code, title, artist, origin, book_number)')
     .in('mass_id', massIds)
 
   type Row = {
     song_id: string
     songs: {
       id: string
+      code: number
       title: string
       artist: string | null
       origin: string
@@ -115,6 +118,7 @@ export async function fetchTopSongs(teamId: string, limit = 10): Promise<TopSong
     if (!row.songs) continue
     const entry = counts.get(row.songs.id) ?? {
       id: row.songs.id,
+      code: row.songs.code,
       title: row.songs.title,
       artist: row.songs.artist,
       origin: row.songs.origin,
@@ -238,14 +242,14 @@ export async function fetchRecentSongUsage(teamId: string, limit = 50): Promise<
 
   const { data } = await supabase
     .from('mass_songs')
-    .select('id, mass_id, part, songs(id, title, artist)')
+    .select('id, mass_id, part, songs(id, code, title, artist)')
     .in('mass_id', massIds)
 
   type Row = {
     id: string
     mass_id: string
     part: string
-    songs: { id: string; title: string; artist: string | null } | null
+    songs: { id: string; code: number; title: string; artist: string | null } | null
   }
 
   const rows: RecentUsageRow[] = []
@@ -256,6 +260,7 @@ export async function fetchRecentSongUsage(teamId: string, limit = 50): Promise<
     rows.push({
       massSongId: row.id,
       songId: row.songs.id,
+      songCode: row.songs.code,
       songTitle: row.songs.title,
       songArtist: row.songs.artist,
       massId: mass.id,
