@@ -46,6 +46,9 @@ export interface RecentUsageRow {
   songCode: number
   songTitle: string
   songArtist: string | null
+  songOrigin: string
+  /** Número/página registrada da música no hinário, quando houver. */
+  songBookNumber: string | null
   massId: string
   massTitle: string
   massDate: string // 'YYYY-MM-DD'
@@ -242,14 +245,21 @@ export async function fetchRecentSongUsage(teamId: string, limit = 50): Promise<
 
   const { data } = await supabase
     .from('mass_songs')
-    .select('id, mass_id, part, songs(id, code, title, artist)')
+    .select('id, mass_id, part, songs(id, code, title, artist, origin, book_number)')
     .in('mass_id', massIds)
 
   type Row = {
     id: string
     mass_id: string
     part: string
-    songs: { id: string; code: number; title: string; artist: string | null } | null
+    songs: {
+      id: string
+      code: number
+      title: string
+      artist: string | null
+      origin: string
+      book_number: string | null
+    } | null
   }
 
   const rows: RecentUsageRow[] = []
@@ -263,6 +273,8 @@ export async function fetchRecentSongUsage(teamId: string, limit = 50): Promise<
       songCode: row.songs.code,
       songTitle: row.songs.title,
       songArtist: row.songs.artist,
+      songOrigin: row.songs.origin,
+      songBookNumber: row.songs.book_number,
       massId: mass.id,
       massTitle: mass.title,
       massDate: mass.date,

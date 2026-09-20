@@ -134,9 +134,9 @@ export default function StatisticsPage() {
   const [recentUsagePage, setRecentUsagePage] = useState(1)
   const [recentUsageSearch, setRecentUsageSearch] = useState('')
   const [recentUsagePartFilter, setRecentUsagePartFilter] = useState('')
-  const [recentUsageSortKey, setRecentUsageSortKey] = useState<'song' | 'mass' | 'part' | 'date'>(
-    'date',
-  )
+  const [recentUsageSortKey, setRecentUsageSortKey] = useState<
+    'song' | 'book' | 'mass' | 'part' | 'date'
+  >('date')
   const [recentUsageSortDir, setRecentUsageSortDir] = useState<'asc' | 'desc'>('desc')
 
   useEffect(() => {
@@ -197,6 +197,7 @@ export default function StatisticsPage() {
       String(row.songCode) === q ||
       row.songTitle.toLowerCase().includes(q) ||
       (row.songArtist ?? '').toLowerCase().includes(q) ||
+      (row.songBookNumber ?? '').toLowerCase().includes(q) ||
       row.massTitle.toLowerCase().includes(q)
     )
   })
@@ -204,6 +205,12 @@ export default function StatisticsPage() {
   const sortedRecentUsage = [...filteredRecentUsage].sort((a, b) => {
     let cmp: number
     if (recentUsageSortKey === 'song') cmp = a.songTitle.localeCompare(b.songTitle, 'pt-BR')
+    else if (recentUsageSortKey === 'book')
+      cmp =
+        a.songOrigin.localeCompare(b.songOrigin, 'pt-BR') ||
+        (a.songBookNumber ?? '').localeCompare(b.songBookNumber ?? '', undefined, {
+          numeric: true,
+        })
     else if (recentUsageSortKey === 'mass') cmp = a.massTitle.localeCompare(b.massTitle, 'pt-BR')
     else if (recentUsageSortKey === 'part')
       cmp = (PART_LABEL[a.part] ?? a.part).localeCompare(PART_LABEL[b.part] ?? b.part, 'pt-BR')
@@ -470,6 +477,7 @@ export default function StatisticsPage() {
                       {(
                         [
                           { key: 'song', label: 'Música' },
+                          { key: 'book', label: 'Livro / Página' },
                           { key: 'mass', label: 'Missa' },
                           { key: 'part', label: 'Momento' },
                           { key: 'date', label: 'Data' },
@@ -497,7 +505,7 @@ export default function StatisticsPage() {
                   <tbody className="divide-y divide-outline-variant/10">
                     {pagedRecentUsage.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="px-6 py-8 text-center text-sm text-outline">
+                        <td colSpan={5} className="px-6 py-8 text-center text-sm text-outline">
                           Nenhum resultado encontrado.
                         </td>
                       </tr>
@@ -516,6 +524,24 @@ export default function StatisticsPage() {
                             </p>
                             {row.songArtist && (
                               <p className="text-xs text-outline">{row.songArtist}</p>
+                            )}
+                          </td>
+                          <td className="px-6 py-3">
+                            {row.songOrigin !== 'outros' || row.songBookNumber ? (
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {row.songOrigin !== 'outros' && (
+                                  <span className="rounded-full bg-surface-container px-2.5 py-0.5 text-xs font-semibold text-on-surface-variant">
+                                    {ORIGIN_LABEL[row.songOrigin as SongOrigin]}
+                                  </span>
+                                )}
+                                {row.songBookNumber && (
+                                  <span className="font-mono text-xs text-outline">
+                                    nº {row.songBookNumber}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-outline">—</span>
                             )}
                           </td>
                           <td className="px-6 py-3 text-on-surface-variant">{row.massTitle}</td>
