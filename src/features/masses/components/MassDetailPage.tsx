@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 
+import { useAppStore } from '@/app/app.store'
 import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
 import { bustCache } from '@/utils/cache-bust.util'
 import { FileViewerModal } from '@/features/songs/components/FileViewerModal'
@@ -181,6 +182,12 @@ function PartSection({ part, songs, onView }: PartSectionProps) {
 
 export default function MassDetailPage() {
   const { id } = useParams<{ id: string }>()
+  // App.tsx já sincroniza a sessão no store; aqui basta ler.
+  const session = useAppStore((s) => s.session)
+  const isSessionLoading = useAppStore((s) => s.isSessionLoading)
+  // Participantes não são públicos: o papel `anon` não tem acesso à tabela, então
+  // visitante deslogado nem chega a consultar.
+  const canSeeParticipants = !!session
   const [mass, setMass] = useState<Mass | null>(null)
   const [songs, setSongs] = useState<MassSongWithSong[]>([])
   const [participants, setParticipants] = useState<MassParticipant[]>([])
@@ -190,7 +197,7 @@ export default function MassDetailPage() {
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    if (!id) return
+    if (!id || isSessionLoading) return
 
     async function load() {
       setIsLoading(true)
@@ -198,7 +205,9 @@ export default function MassDetailPage() {
         const [massData, songsData, participantsData] = await Promise.all([
           fetchPublicMass(id!),
           fetchMassSongs(id!).catch(() => [] as MassSongWithSong[]),
-          fetchMassParticipants(id!).catch(() => [] as MassParticipant[]),
+          canSeeParticipants
+            ? fetchMassParticipants(id!).catch(() => [] as MassParticipant[])
+            : Promise.resolve([] as MassParticipant[]),
         ])
 
         if (!massData) {
@@ -214,7 +223,7 @@ export default function MassDetailPage() {
     }
 
     void load()
-  }, [id])
+  }, [id, isSessionLoading, canSeeParticipants])
 
   async function handleShare() {
     await navigator.clipboard.writeText(window.location.href)
