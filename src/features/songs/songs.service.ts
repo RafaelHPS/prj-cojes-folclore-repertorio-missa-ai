@@ -110,6 +110,28 @@ export async function updateSong(id: string, form: SongFormData): Promise<Song> 
   return song
 }
 
+/**
+ * Apaga a pasta da música no Storage. Fire-and-forget — nunca propaga erro.
+ *
+ * Roda depois do delete no banco, e não antes, porque é o delete no banco que
+ * passa pela RLS: inverter a ordem apagaria os arquivos de uma música que o
+ * usuário talvez nem tenha permissão de remover. Se a limpeza falhar, sobra um
+ * arquivo órfão — situação inofensiva e varrida por
+ * `scripts/cleanup-orphan-storage-files.mjs`.
+ */
+function removeSongFiles(teamId: string, songId: string): void {
+  void (async () => {
+    try {
+      const folder = `${teamId}/${songId}`
+      const { data } = await supabase.storage.from(BUCKET).list(folder)
+      if (!data || data.length === 0) return
+      await supabase.storage.from(BUCKET).remove(data.map((file) => `${folder}/${file.name}`))
+    } catch {
+      // fire-and-forget — nunca propaga erro
+    }
+  })()
+}
+
 export async function deleteSong(id: string): Promise<void> {
   // Pre-fetch para obter contexto de auditoria antes de deletar
   const { data: songData } = await supabase
@@ -121,6 +143,7 @@ export async function deleteSong(id: string): Promise<void> {
   if (error) throw error
   if (songData) {
     const s = songData as unknown as { id: string; team_id: string; title: string }
+    removeSongFiles(s.team_id, s.id)
     logAudit({
       teamId: s.team_id,
       action: 'delete',
