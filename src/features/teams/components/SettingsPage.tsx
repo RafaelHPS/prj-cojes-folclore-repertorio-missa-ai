@@ -28,6 +28,8 @@ import {
 } from '../settings.service'
 import type { TeamDetails, TeamMember, Invite, UserProfile } from '../settings.service'
 
+import { CancelInviteConfirmModal } from './CancelInviteConfirmModal'
+
 // ── Schemas de perfil e senha ─────────────────────────────────
 
 const profileSchema = z.object({
@@ -846,6 +848,7 @@ export default function SettingsPage() {
     'idle',
   )
   const [invites, setInvites] = useState<Invite[]>([])
+  const [inviteToCancel, setInviteToCancel] = useState<Invite | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<UserRole>('viewer')
   const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
@@ -1283,7 +1286,7 @@ export default function SettingsPage() {
                         </p>
                       </div>
                       <button
-                        onClick={() => void handleCancelInvite(invite.id)}
+                        onClick={() => setInviteToCancel(invite)}
                         aria-label={`Cancelar convite para ${invite.email}`}
                         className="rounded-xl p-2 text-outline transition hover:bg-error/5 hover:text-error"
                         title="Cancelar convite"
@@ -1299,6 +1302,14 @@ export default function SettingsPage() {
             )}
           </section>
         </div>
+      )}
+
+      {inviteToCancel && (
+        <CancelInviteConfirmModal
+          invite={inviteToCancel}
+          onClose={() => setInviteToCancel(null)}
+          onConfirm={() => handleCancelInvite(inviteToCancel.id)}
+        />
       )}
 
       {toRemove && currentUserId && (
