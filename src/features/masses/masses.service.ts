@@ -4,6 +4,8 @@ import type { Mass, MassParticipant } from './types'
 import type { MassFormData } from './masses.schemas'
 import type { MassPart } from '@/types/database'
 import { logAudit } from '@/features/teams/audit.service'
+import { parseLyrics } from '@/features/songs/lyrics.util'
+import type { LyricsSection } from '@/features/songs/types'
 
 export type MassFilter = 'upcoming' | 'past' | 'all'
 
@@ -209,7 +211,20 @@ export async function deleteMass(id: string): Promise<void> {
 // ── Gestão do repertório ──────────────────────────────────────
 
 const SONG_FIELDS =
-  'id, title, artist, key, origin, book_number, audio_url, singer_file_url, instrumental_file_url, partitura_url, letra_url, cifra_url, updated_at'
+  'id, title, artist, key, origin, book_number, audio_url, singer_file_url, instrumental_file_url, partitura_url, letra_url, cifra_url, lyrics, updated_at'
+
+type MassSongRow = Omit<MassSongWithSong, 'song' | 'added_by_name'> & {
+  songs: (Omit<MassSongWithSong['song'], 'lyrics'> & { lyrics: unknown }) | null
+  profiles: { full_name: string | null } | null
+}
+
+function toMassSongWithSong({ songs, profiles, ...row }: MassSongRow): MassSongWithSong {
+  return {
+    ...row,
+    song: { ...songs!, lyrics: parseLyrics(songs!.lyrics) },
+    added_by_name: profiles?.full_name ?? null,
+  }
+}
 
 const MASS_SONG_SELECT = `id, mass_id, song_id, part, position, added_by, created_at, songs(${SONG_FIELDS}), profiles(full_name)`
 
@@ -237,13 +252,8 @@ export async function addSongToMass(
 
   if (error) throw error
 
-  type RawRow = Omit<MassSongWithSong, 'song' | 'added_by_name'> & {
-    songs: MassSongWithSong['song'] | null
-    profiles: { full_name: string | null } | null
-  }
-
-  const row = data as unknown as RawRow
-  const result = { ...row, song: row.songs!, added_by_name: row.profiles?.full_name ?? null }
+  const row = data as unknown as MassSongRow
+  const result = toMassSongWithSong(row)
 
   // Auditoria: busca teamId via mass (fire-and-forget)
   void (async () => {
@@ -364,6 +374,7 @@ export interface MassSongWithSong {
     partitura_url: string | null
     letra_url: string | null
     cifra_url: string | null
+    lyrics: LyricsSection[] | null
     updated_at: string
   }
 }
@@ -384,14 +395,9 @@ export async function fetchMassSongs(massId: string): Promise<MassSongWithSong[]
 
   if (error) throw error
 
-  type RawRow = Omit<MassSongWithSong, 'song' | 'added_by_name'> & {
-    songs: MassSongWithSong['song'] | null
-    profiles: { full_name: string | null } | null
-  }
-
-  return ((data ?? []) as unknown as RawRow[])
+  return ((data ?? []) as unknown as MassSongRow[])
     .filter((r) => r.songs !== null)
-    .map((r) => ({ ...r, song: r.songs!, added_by_name: r.profiles?.full_name ?? null }))
+    .map(toMassSongWithSong)
 }
 
 // ── Participantes ─────────────────────────────────────────────

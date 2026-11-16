@@ -7,6 +7,7 @@ import { fetchSongs } from '@/features/songs/songs.service'
 import type { Song } from '@/features/songs/types'
 import { ORIGIN_LABEL, BOOK_ORIGINS } from '@/features/songs/songs.schemas'
 import { FileViewerModal } from '@/features/songs/components/FileViewerModal'
+import { LyricsButton } from '@/features/songs/components/LyricsButton'
 import type { MassPart } from '@/types/database'
 
 import { addSongToMass, fetchMassSongs } from '../masses.service'
@@ -278,11 +279,18 @@ export default function SongPickerPage() {
                     )}
 
                     {/* Ícones de arquivos disponíveis — clicáveis inline */}
-                    {(availableFiles.length > 0 || hasAudio) && (
+                    {(availableFiles.length > 0 || hasAudio || song.has_lyrics) && (
                       <div
                         className="mt-2 flex flex-wrap gap-1.5"
                         onClick={(e) => e.stopPropagation()}
                       >
+                        {song.has_lyrics && (
+                          <LyricsButton
+                            song={song}
+                            iconClassName="text-sm leading-none"
+                            className="flex items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-low px-2.5 py-1 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+                          />
+                        )}
                         {availableFiles.map((f) => (
                           <button
                             key={f.key}

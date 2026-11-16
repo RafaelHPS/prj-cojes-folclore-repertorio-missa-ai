@@ -20,9 +20,23 @@ export interface Song {
   partitura_url: string | null
   letra_url: string | null
   cifra_url: string | null
+  /** Coluna gerada: a letra em si (`lyrics`) só é carregada ao abrir a música. */
+  has_lyrics: boolean
   created_by: string | null
   created_at: string
   updated_at: string
+}
+
+export type LyricsSectionType = 'refrain' | 'stanza' | 'other'
+
+/** Um bloco da letra, na ordem em que aparece impresso no livro. */
+export interface LyricsSection {
+  type: LyricsSectionType
+  /** Marcador impresso ("R.", "1.", "S:"), ou null quando não há. */
+  label: string | null
+  lines: string[]
+  /** Repetição do bloco inteiro ("bis", "3x"), ou null. */
+  repeat: string | null
 }
 
 export interface SongForm {

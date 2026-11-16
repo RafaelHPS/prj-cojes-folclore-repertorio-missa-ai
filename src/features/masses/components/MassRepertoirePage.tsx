@@ -24,6 +24,7 @@ import { supabase } from '@/lib/supabase'
 import { fetchSongs } from '@/features/songs/songs.service'
 import { ORIGIN_LABEL } from '@/features/songs/songs.schemas'
 import { FileViewerModal } from '@/features/songs/components/FileViewerModal'
+import { LyricsButton } from '@/features/songs/components/LyricsButton'
 import type { Song } from '@/features/songs/types'
 import type { MassPart } from '@/types/database'
 
@@ -208,9 +209,16 @@ function SortableSongRow({
           {(() => {
             const files = FILE_META.filter((f) => !!song[f.key as FileKey])
             const hasAudio = !!song.audio_url
-            if (files.length === 0 && !hasAudio) return null
+            if (files.length === 0 && !hasAudio && !song.lyrics) return null
             return (
               <div className="mt-2 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
+                {song.lyrics && (
+                  <LyricsButton
+                    song={song}
+                    iconClassName="text-sm leading-none"
+                    className="flex items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-low px-2.5 py-1 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+                  />
+                )}
                 {files.map((f) => (
                   <button
                     key={f.key}

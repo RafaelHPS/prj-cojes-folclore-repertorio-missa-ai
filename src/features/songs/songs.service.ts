@@ -1,10 +1,18 @@
 import { supabase } from '@/lib/supabase'
-import type { Song } from './types'
+import type { LyricsSection, Song } from './types'
 import type { SongFormData } from './songs.schemas'
 import { BOOK_ORIGINS } from './songs.schemas'
+import { parseLyrics } from './lyrics.util'
 import { logAudit } from '@/features/teams/audit.service'
 
 const BUCKET = 'song-files'
+
+/**
+ * Colunas da listagem: tudo menos `lyrics`, que somaria ~2 MB a cada abertura
+ * do repertório. A letra é buscada sob demanda por `fetchSongLyrics`.
+ */
+const SONG_LIST_COLUMNS =
+  'id, team_id, code, title, artist, key, origin, book_number, suggested_parts, suggested_seasons, audio_url, singer_file_url, instrumental_file_url, partitura_url, letra_url, cifra_url, has_lyrics, created_by, created_at, updated_at'
 
 export async function fetchSongCount(teamId: string): Promise<number> {
   const { count, error } = await supabase
@@ -24,7 +32,7 @@ export async function fetchSongs(teamId: string): Promise<Song[]> {
   while (true) {
     const { data, error } = await supabase
       .from('songs')
-      .select('*')
+      .select(SONG_LIST_COLUMNS)
       .eq('team_id', teamId)
       .order('title')
       .range(from, from + PAGE_SIZE - 1)
@@ -44,6 +52,14 @@ export async function fetchSongById(id: string): Promise<Song | null> {
   const { data, error } = await supabase.from('songs').select('*').eq('id', id).maybeSingle()
   if (error) throw error
   return data as unknown as Song | null
+}
+
+/** Busca a letra estruturada da música; null quando ela não tem letra cadastrada. */
+export async function fetchSongLyrics(id: string): Promise<LyricsSection[] | null> {
+  const { data, error } = await supabase.from('songs').select('lyrics').eq('id', id).maybeSingle()
+  if (error) throw error
+  const row: unknown = data
+  return parseLyrics(typeof row === 'object' && row !== null && 'lyrics' in row ? row.lyrics : null)
 }
 
 export async function createSong(teamId: string, form: SongFormData): Promise<Song> {

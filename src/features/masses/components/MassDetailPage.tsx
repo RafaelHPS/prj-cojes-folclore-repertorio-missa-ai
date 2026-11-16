@@ -5,6 +5,7 @@ import { useAppStore } from '@/app/app.store'
 import { formatDateShort, formatTime, formatDateTime } from '@/utils/date.util'
 import { bustCache } from '@/utils/cache-bust.util'
 import { FileViewerModal } from '@/features/songs/components/FileViewerModal'
+import { LyricsButton } from '@/features/songs/components/LyricsButton'
 
 import { ORIGIN_LABEL } from '@/features/songs/songs.schemas'
 
@@ -113,8 +114,15 @@ function SongCard({ item, index, onView }: SongCardProps) {
           )}
         </div>
 
-        {(files.length > 0 || audioUrl) && (
+        {(files.length > 0 || audioUrl || song.lyrics) && (
           <div className="mt-3 flex flex-wrap gap-2">
+            {song.lyrics && (
+              <LyricsButton
+                song={song}
+                iconClassName="text-sm"
+                className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/10"
+              />
+            )}
             {files.map((f) => (
               <button
                 key={f.label}

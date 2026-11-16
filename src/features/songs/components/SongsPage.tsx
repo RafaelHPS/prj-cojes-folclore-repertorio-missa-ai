@@ -13,6 +13,7 @@ import { ORIGIN_LABEL, MASS_PART_LABEL, LITURGICAL_SEASON_LABEL } from '../songs
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { FileBadges } from './FileBadges'
 import { FileViewerModal } from './FileViewerModal'
+import { LyricsButton } from './LyricsButton'
 
 const PER_PAGE = 24
 
@@ -763,6 +764,13 @@ function ListView({
                 </td>
                 <td className="px-6 py-5">
                   <div className="flex flex-wrap gap-1.5">
+                    {song.has_lyrics && (
+                      <LyricsButton
+                        song={song}
+                        iconClassName="hidden"
+                        className="text-xs font-semibold text-primary hover:underline"
+                      />
+                    )}
                     {song.partitura_url && (
                       <button
                         onClick={() =>
@@ -799,7 +807,8 @@ function ListView({
                         Áudio
                       </a>
                     )}
-                    {!song.partitura_url &&
+                    {!song.has_lyrics &&
+                      !song.partitura_url &&
                       !song.letra_url &&
                       !song.cifra_url &&
                       !song.audio_url && <span className="text-xs text-outline">—</span>}

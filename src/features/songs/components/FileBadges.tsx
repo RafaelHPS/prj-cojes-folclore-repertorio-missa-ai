@@ -1,10 +1,15 @@
 import type { Song } from '../types'
 import { bustCache } from '@/utils/cache-bust.util'
 
+import { LyricsButton } from './LyricsButton'
+
 interface Props {
   song: Song
   onView: (label: string, url: string) => void
 }
+
+const BADGE_CLASS =
+  'flex items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-low px-2.5 py-1 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary'
 
 const FILE_FIELDS = [
   { key: 'partitura_url', label: 'Partitura', icon: 'description' },
@@ -15,10 +20,11 @@ const FILE_FIELDS = [
 export function FileBadges({ song, onView }: Props) {
   const existing = FILE_FIELDS.filter((f) => !!song[f.key])
   const hasAudio = !!song.audio_url
-  if (existing.length === 0 && !hasAudio) return null
+  if (existing.length === 0 && !hasAudio && !song.has_lyrics) return null
 
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
+      {song.has_lyrics && <LyricsButton song={song} className={BADGE_CLASS} />}
       {existing.map((f) => (
         <button
           key={f.key}
@@ -27,7 +33,7 @@ export function FileBadges({ song, onView }: Props) {
             onView(f.label, bustCache(song[f.key]!, song.updated_at))
           }}
           aria-label={`Visualizar ${f.label}`}
-          className="flex items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-low px-2.5 py-1 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+          className={BADGE_CLASS}
         >
           <span aria-hidden="true" className="material-symbols-outlined text-xs">
             {f.icon}
@@ -42,7 +48,7 @@ export function FileBadges({ song, onView }: Props) {
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
           aria-label={`Ouvir áudio de ${song.title}`}
-          className="flex items-center gap-1 rounded-full border border-outline-variant/40 bg-surface-container-low px-2.5 py-1 text-xs font-semibold text-on-surface-variant transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+          className={BADGE_CLASS}
         >
           <span aria-hidden="true" className="material-symbols-outlined text-xs">
             headphones
